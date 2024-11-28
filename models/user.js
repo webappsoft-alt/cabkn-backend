@@ -103,6 +103,7 @@ function validateUser(user) {
     phone: Joi.string().min(0).max(1024).required(),
     gender: Joi.string().min(0).max(1024).optional(),
     referral: Joi.string().min(0).max(1024).optional(),
+    image: Joi.string().min(0).max(1024).optional(),
   };
 
   const schema = Joi.object({
