@@ -9,10 +9,9 @@ const { sendNotification } = require('../controllers/notificationCreateService')
 
 const connectedUsers = {};
 
-module.exports = function (server) {
+module.exports = function (server,app) {
 
   const io = require("socket.io")(server)
-
 
   io.on('connection', (socket) => {
 
@@ -166,6 +165,8 @@ module.exports = function (server) {
         console.log(`User ${userId} disconnected`);
       }
     });
+
+    app.set('socketio', io);
   });
 }
 
