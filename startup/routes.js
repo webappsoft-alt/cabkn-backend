@@ -4,7 +4,7 @@ const auth = require('../routes/auth');
 const users = require('../routes/users');
 const uploadImages = require('../routes/uploadImages');
 // const postRoutes = require('../routes/postRoutes');
-// const categoryRoute = require('../routes/categoryRoute');
+const categoryRoute = require('../routes/categoryRoute');
 // const couponRoute = require('../routes/couponRoute');
 // const jadeRoutes = require('../routes/jadePaymentRoutes');
 // const resellRoutes = require('../routes/resellRoutes');
@@ -19,7 +19,7 @@ module.exports = function (app) {
   app.use('/api/auth', auth);
   app.use('/api/users', users);
   app.use('/api/image', uploadImages);
-  // app.use('/api/category', categoryRoute);
+  app.use('/api/category', categoryRoute);
   // app.use('/api/banner', BannerRoute);
   // app.use('/api/coupon', couponRoute);
   // app.use('/api/event',  postRoutes);
