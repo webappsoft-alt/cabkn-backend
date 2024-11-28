@@ -321,13 +321,13 @@ router.post("/check-phone", async (req, res) => {
 
 router.put("/update-user", auth, async (req, res) => {
   const {
-    name,image,interests,location,address
+    name,image,interests,location,address,dob,gender,referral
   } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      name,image,interests,location,address
+      name,image,interests,location,address,dob,gender,referral
     }).filter(([key, value]) => value !== undefined)
   );
 
