@@ -8,6 +8,7 @@ const {
   passwordApiBodyValidate,
   generateIdToken,
   emailApiBodyValidate,
+  phoneApiBodyValidate,
 } = require("../models/user");
 const express = require("express");
 const { sendEmail } = require("../controllers/emailservice");
@@ -27,20 +28,19 @@ router.get("/me", auth, async (req, res) => {
 });
 
 router.post("/forget-password", async (req, res) => {
-  const { error } = emailApiBodyValidate(req.body);
+  const { error } = phoneApiBodyValidate(req.body);
 
   if (error) return res.status(400).send({ message: error.details[0].message });
 
-  const { email } = req.body;
-  const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
+  const { phone } = req.body;
 
-  const user = await User.findOne({ email: lowerCaseEmail });
+  const user = await User.findOne({ phone: phone });
 
   if (!user)
     return res
       .status(400)
       .send({
-        message: "User is not registered with that Phone number or email",
+        message: "User is not registered with that Phone number",
       });
 
   if (user.status == "deleted")
@@ -50,11 +50,12 @@ router.post("/forget-password", async (req, res) => {
         message: "User has been deleted. Contact admin for further support.",
       });
 
-  let verificationCode = generateCode();
+  // let verificationCode = generateCode();
+  let verificationCode = 1234;
 
-  await sendEmail(email, verificationCode);
+  // await sendEmail(email, verificationCode);
   await User.findOneAndUpdate(
-    { email: lowerCaseEmail },
+    { phone: phone },
     { code: verificationCode }
   );
 
@@ -129,33 +130,33 @@ router.put("/change-password", auth, async (req, res) => {
 });
 
 router.post("/send-code", async (req, res) => {
-  const { error } = emailApiBodyValidate(req.body);
+  const { error } = phoneApiBodyValidate(req.body);
   if (error)
     return res
       .status(400)
       .send({ success: false, message: error.details[0].message });
 
-  const { email } = req.body;
-  const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
+  const { phone } = req.body;
 
   try {
-    const existingUser = await User.findOne({ email: lowerCaseEmail });
+    const existingUser = await User.findOne({ phone: phone });
 
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(400).json({ message: "Phone already registered" });
     }
 
-    const verificationCode = generateCode();
-    await sendEmail(email, verificationCode);
+    // const verificationCode = generateCode();
+    const verificationCode = 1234;
+    // await sendEmail(email, verificationCode);
 
-    const existingTempUser = await TempUser.findOne({ email: lowerCaseEmail });
+    const existingTempUser = await TempUser.findOne({ phone: phone });
     if (existingTempUser) {
       await TempUser.findByIdAndUpdate(existingTempUser._id, {
         code: verificationCode,
       });
     } else {
       const tempVerification = new TempUser({
-        email: lowerCaseEmail,
+        phone: phone,
         code: verificationCode,
       });
       await tempVerification.save();
@@ -172,12 +173,10 @@ router.post("/send-code", async (req, res) => {
 
 router.post("/verify-otp/registration", async (req, res) => {
   try {
-    const { email, code } = req.body;
-
-    const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
+    const { phone, code } = req.body;
 
     const verificationRecord = await TempUser.findOne({
-      email: lowerCaseEmail,
+      phone: lowerCaseEmail,
     });
 
     if (!verificationRecord || Number(verificationRecord.code) !== Number(code)) {
@@ -211,7 +210,7 @@ router.post("/signup/:type", async (req, res) => {
     const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
     const verificationRecord = await TempUser.findOne({
-      email: lowerCaseEmail,
+      phone: phone,
     });
 
     if (!verificationRecord || Number(verificationRecord.code) !== Number(code)) {
