@@ -16,6 +16,13 @@ const userSchema = new mongoose.Schema({
     maxlength: 255,
     unique: true,
   },
+  phone: {
+    type: String,
+    required: true,
+    minlength: 5,
+    maxlength: 255,
+    unique: true,
+  },
   password: {
     type: String,
     required: true,
@@ -32,9 +39,10 @@ const userSchema = new mongoose.Schema({
     },
   },
   address:String,
-  interests:[{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   image:String,
   fcmtoken: String,
+  dob: String,
+  gender: String,
   cus_id:String,
   code: {
     type: Number,
@@ -53,7 +61,7 @@ const userSchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'customer',
-    enum: ['customer',"owner",'admin']
+    enum: ['customer',"driver",'admin']
   },
   login_type: {
     type: String,

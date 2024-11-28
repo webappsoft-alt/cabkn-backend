@@ -18,7 +18,6 @@ const { TempUser } = require("../models/TempUser");
 const admin = require("../middleware/admin");
 const Event = require("../models/Event");
 const Purchase = require("../models/Purchase");
-const { sendNotification } = require("../controllers/notificationCreateService");
 const moment = require('moment');
 const firebaseadmin = require("firebase-admin");
 
@@ -203,11 +202,11 @@ router.post("/signup/:type", async (req, res) => {
 
     const { type } = req.params;
 
-    const validTypes = ['customer','owner'];
+    const validTypes = ['customer',"driver"];
 
     if (!validTypes.includes(type)) return res.status(400).send({ success: false, message: "Invalid type" });
 
-    const { name, password, email, fcmtoken,code } = req.body;
+    const { name, password, email, fcmtoken,code,dob,phone,gender } = req.body;
 
     const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
@@ -223,10 +222,11 @@ router.post("/signup/:type", async (req, res) => {
 
     const user = await User.findOne({ email: lowerCaseEmail });
 
-    if (user)
-      return res
-        .status(400)
-        .send({ success: false, message: "Email already registered" });
+    if (user) return res.status(400).send({ success: false, message: "Email already registered" });
+
+    const phoneuser = await User.findOne({ phone: phone });
+
+    if (phoneuser) return res.status(400).send({ success: false, message: "Phone already registered" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -236,7 +236,10 @@ router.post("/signup/:type", async (req, res) => {
       name,
       email: lowerCaseEmail,
       fcmtoken,
-      type: type
+      type: type,
+      dob,
+      phone,
+      gender 
     });
 
     await newUser.save();
@@ -303,11 +306,16 @@ router.post("/check-email", async (req, res) => {
   res.send({ success: true, message: "Email doesn't existed" });
 });
 
-router.post("/conversion", async (req, res) => {
+router.post("/check-phone", async (req, res) => {
+  const { phone } = req.body;
 
-  const {amount}=req.body
+  const user = await User.findOne({ phone: phone });
+  if (user)
+    return res
+      .status(400)
+      .send({ success: false, message: "Phone already existed" });
 
-  res.send({ success: true, convertedAmount:Number(amount)*0.37 });
+  res.send({ success: true, message: "Phone doesn't existed" });
 });
 
 router.put("/update-user", auth, async (req, res) => {

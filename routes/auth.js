@@ -2,6 +2,7 @@ const Joi = require('joi');
 const bcrypt = require('bcryptjs');
 const { User, generateAuthToken } = require('../models/user');
 const express = require('express');
+const { generateRandomString, ticketCode } = require('../controllers/generateCode');
 const router = express.Router();
 
 function uid() {
@@ -49,7 +50,7 @@ router.post('/:type?', async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(uid(), salt);
 
-      const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:"customer" });
+      const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:"customer",phone:ticketCode() });
 
       await newUser.save();
 
