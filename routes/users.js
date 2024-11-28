@@ -22,7 +22,7 @@ const moment = require('moment');
 const firebaseadmin = require("firebase-admin");
 
 router.get("/me", auth, async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password").populate("interests").lean();
+  const user = await User.findById(req.user._id).select("-password").lean();
   res.send({ success: true, user: user });
 });
 
