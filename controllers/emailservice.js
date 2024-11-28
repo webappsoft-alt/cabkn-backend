@@ -19,8 +19,8 @@ exports.sendEmail = async (email, code) => {
      const mailOptions = {
           from: 'Support@ticketkn.com',
           to: email, // Replace with the recipient's email address
-          subject: 'TicketKN app Verification',
-          text: 'Your TicketKN app verification code is ' + code,
+          subject: 'Rider app Verification',
+          text: 'Your Rider app verification code is ' + code,
      };
 
      // Send the email
