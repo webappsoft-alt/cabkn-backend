@@ -41,23 +41,23 @@ router.post('/admin', async (req, res) => {
 
 router.post('/:type?', async (req, res) => {
   if (req.params.type == 'social-login') {
-    const { email, fcmtoken,name } = req.body;
+    const { email, fcmtoken,name,type } = req.body;
     const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
-    const user = await User.findOne({ email:lowerCaseEmail });
+    const user = await User.findOne({ email:lowerCaseEmail,type });
 
-    if (!user) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(uid(), salt);
+    // if (!user) {
+    //   const salt = await bcrypt.genSalt(10);
+    //   const hashedPassword = await bcrypt.hash(uid(), salt);
 
-      const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:"customer",phone:ticketCode() });
+    //   const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:"customer",phone:ticketCode() });
 
-      await newUser.save();
+    //   await newUser.save();
 
-      const token = generateAuthToken(newUser._id, newUser.type);
+    //   const token = generateAuthToken(newUser._id, newUser.type);
 
-      return res.send({ success: true, message: 'Account created successfully', token: token, user: newUser });
-    }
+    //   return res.send({ success: true, message: 'Account created successfully', token: token, user: newUser });
+    // }
 
     if (user.status == 'deleted') return res.status(400).send({ success: false, message: 'User has been deleted. Contact admin for further support.' });
 
@@ -74,10 +74,10 @@ router.post('/:type?', async (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send({ success: false, message: error.details[0].message });
 
-  const { email, password, fcmtoken } = req.body;
+  const { email, password, fcmtoken,type } = req.body;
   const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
-  const user = await User.findOne({ email:lowerCaseEmail });
+  const user = await User.findOne({ email:lowerCaseEmail,type });
 
   if (!user) return res.status(400).send({ success: false, message: 'Invalid credentials' });
 
@@ -101,7 +101,8 @@ function validate(req) {
   const emailSchema = {
     email: Joi.string().min(5).max(255).email(),
     password: Joi.string().min(5).max(255).required(),
-    fcmtoken: Joi.string().min(0).max(1024).allow(null).optional()
+    fcmtoken: Joi.string().min(0).max(1024).allow(null).optional(),
+    type: Joi.string().min(0).max(1024).optional(),
   };
 
   const schema = Joi.object(emailSchema)
