@@ -205,7 +205,7 @@ router.post("/signup/:type", async (req, res) => {
 
     if (!validTypes.includes(type)) return res.status(400).send({ success: false, message: "Invalid type" });
 
-    const { name, password, email, fcmtoken,code,dob,phone,gender,referral,image } = req.body;
+    const { name, password, email, fcmtoken,code,dob,phone,gender,referral,image,docs,insurancetype,ride_type } = req.body;
 
     const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
@@ -236,15 +236,18 @@ router.post("/signup/:type", async (req, res) => {
       email: lowerCaseEmail,
       fcmtoken,
       type: type,
-      dob,
+      dob:dob||"",
       phone,
-      gender,
-      referral,
-      image
+      gender:gender||"",
+      referral:referral||"",
+      image:image||"",
+      docs:docs||[],
+      insurancetype:insurancetype||"",
+      ride_type:ride_type||"ride"
     });
 
     await newUser.save();
-    await TempUser.deleteOne({ email: lowerCaseEmail });
+    await TempUser.deleteOne({ phone: phone });
 
     const token = generateAuthToken(newUser._id, newUser.type);
 

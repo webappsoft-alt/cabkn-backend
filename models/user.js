@@ -111,6 +111,9 @@ function validateUser(user) {
     gender: Joi.string().min(0).max(1024).optional(),
     referral: Joi.string().min(0).max(1024).optional(),
     image: Joi.string().min(0).max(1024).optional(),
+    insurancetype: Joi.string().min(0).max(1024).optional(),
+    ride_type: Joi.string().min(0).max(1024).optional(),
+    docs: Joi.array().min(0).max(1024).optional(),
   };
 
   const schema = Joi.object({
