@@ -201,7 +201,7 @@ router.post("/signup/:type", async (req, res) => {
 
     const { type } = req.params;
 
-    const validTypes = ['customer',"driver"];
+    const validTypes = ['customer',"rider"];
 
     if (!validTypes.includes(type)) return res.status(400).send({ success: false, message: "Invalid type" });
 

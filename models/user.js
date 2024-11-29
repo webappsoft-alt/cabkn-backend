@@ -69,7 +69,7 @@ const userSchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'customer',
-    enum: ['customer',"driver",'admin']
+    enum: ['customer',"rider",'admin']
   },
   login_type: {
     type: String,
