@@ -9,7 +9,7 @@ const categoryRoute = require('../routes/categoryRoute');
 // const jadeRoutes = require('../routes/jadePaymentRoutes');
 // const resellRoutes = require('../routes/resellRoutes');
 const messageRoutes = require('../routes/messageRoutes');
-// const notificationRoute = require('../routes/notificationRoute');
+const notificationRoute = require('../routes/notificationRoute');
 // const walletRoute = require('../routes/walletRoute');
 const authMiddleware = require('../middleware/auth');
 // const BannerRoute = require('../routes/BannerRoute');
@@ -27,7 +27,7 @@ module.exports = function (app) {
   // app.use('/api/resell',resellRoutes);
   // // app.use('/api/food', authMiddleware,foodRoutes);
   app.use('/api/msg',authMiddleware, messageRoutes);
-  // app.use('/api/notification',authMiddleware, notificationRoute);
+  app.use('/api/notification',authMiddleware, notificationRoute);
   // app.use('/api/wallet',authMiddleware, walletRoute);
   // app.use('/api/support', supportRoute);
   app.use(error);
