@@ -16,14 +16,6 @@ const notificationSchema = new mongoose.Schema({
     default: 'message',
     enum: ['message',"purchase",'noti','transfer']
   },
-  event: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event'
-  },
-  purchase: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Purchase'
-  },
   description: {
     type: String,
     required: true,
