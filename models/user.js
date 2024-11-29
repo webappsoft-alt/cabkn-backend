@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
   referral: String,
   gender: String,
   cus_id:String,
+  insurancetype:String,
+  docs:[String],
+  ride_type: {
+    type: String,
+    default: 'ride',
+    enum: ['ride', 'parcel', "both"]
+  },
   code: {
     type: Number,
     minlength: 0,

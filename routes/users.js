@@ -176,7 +176,7 @@ router.post("/verify-otp/registration", async (req, res) => {
     const { phone, code } = req.body;
 
     const verificationRecord = await TempUser.findOne({
-      phone: lowerCaseEmail,
+      phone: phone,
     });
 
     if (!verificationRecord || Number(verificationRecord.code) !== Number(code)) {
