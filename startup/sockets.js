@@ -332,6 +332,11 @@ module.exports = function (server,app) {
          });
          io.to(senderId).emit('update-request-customer', {success:true,title: 'Offer accepted',message:`Your order has been started.`});
          io.to(request.user._id.toString()).emit('update-request-rider', {success:true,title: 'Offer accepted',message:`Your offer have been accepted by `+order?.user?.name+" and your order has been started."});
+         const userIds=await User.find({type:"rider",status:"online",_id:{$ne:request.user._id.toString()}}).select("fcmtoken").lean()
+
+         for (let user of userIds) {
+          io.to(user._id.toString()).emit('filter-request-rider', {request:orderId,success:true});
+         }
        }
      } catch (error) {
        socket.emit('receive_request_error', error.message);
