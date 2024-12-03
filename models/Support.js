@@ -14,10 +14,6 @@ const supportSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  phone: {
-    type: String,
-    required: true,
-  },
   msg: {
     type: String,
     required: true,
