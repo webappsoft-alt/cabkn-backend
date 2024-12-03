@@ -1,16 +1,20 @@
 const mongoose = require('mongoose');
 
 const supportSchema = new mongoose.Schema({
-  // user: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: 'user',
-  //   required: true,
-  // },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true,
+  },
   name: {
     type: String,
     required: true,
   },
   email: {
+    type: String,
+    required: true,
+  },
+  phone: {
     type: String,
     required: true,
   },

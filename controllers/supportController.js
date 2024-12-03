@@ -3,14 +3,15 @@ const { sendNotification } = require("./notificationCreateService");
 
 exports.create = async (req, res) => {
   try {
-    const { name, email, msg } = req.body;
+    const { name, email, msg,phone } = req.body;
     const userId = req.user._id;
 
     const support = new Support({
       user:userId,
       name, 
       email, 
-      msg
+      msg,
+      phone
     });
 
     await support.save();

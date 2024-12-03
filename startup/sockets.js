@@ -1,11 +1,14 @@
 const config = require('config');
 const jwt = require('jsonwebtoken');
+const admin = require("firebase-admin");
 
 // Models
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { User } = require('../models/user');
 const { sendNotification } = require('../controllers/notificationCreateService');
+const { updateUserLocation, getUsersInRadius } = require('../controllers/UserLocation');
+const Order = require('../models/Order');
 
 const connectedUsers = {};
 
@@ -147,6 +150,95 @@ module.exports = function (server,app) {
       io.to(recipientId).emit('seen-msg', { seen: true, recipientId });
     });
 
+    socket.on('location-update', async ({ longitude, latitude, address,fcmToken }) => {
+      const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
+
+      await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
+  
+      io.to(senderId).emit('location-update', { message : "Location Update successfully!" });
+    });
+
+    // Handle private messages
+    socket.on('send-request-customer', async ({ address,start_lat,start_lng, start_address,end_lat,end_lng,end_address,price }) => {
+     try {
+       const senderId = Object.keys(connectedUsers).find(
+         (key) => connectedUsers[key] === socket.id
+       );
+ 
+       let userIds=[]
+       const users = await getUsersInRadius(start_lng, start_lat, 5, address)
+ 
+ 
+       if ( users.length == 0 ) {
+         userIds = await getUsersInRadius(start_lng, start_lat, 15, address)
+         if (userIds.length == 0 ) {
+           return io.to(senderId).emit('send-request-customer', { success:false , title: 'Request Error',message:"No users found in that area."});
+         }
+       }
+       const fcmTokens = [...new Set(userIds.map(item => item.fcmToken).filter(item=>item!==undefined||item!==""))];
+       userIds = [...new Set(userIds.map(item => item.userId).filter(item=>item!==undefined||item!==""))];
+ 
+       const newRequest = new Order({
+         user: senderId,
+         price,
+         start_location:{
+           type:"Point",
+           coordinates: [Number(start_lng),Number(start_lat)],
+         },
+         end_location:{
+           type:"Point",
+           coordinates: [Number(end_lng),Number(end_lat)],
+         },
+         start_address,
+         end_address,
+       });
+ 
+       await newRequest.save()
+       const request=await Order.findById(newRequest._id).populate("user")
+       io.to(senderId).emit('send-request-customer', {request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
+        
+       for (let user of userIds) {
+         io.to(user.toString()).emit('recieve-request-rider', {request,success:true, title: 'New Request',message:"You have received a new request."});
+       }
+ 
+       // Ensure all values in data are strings
+     const messageData = {
+       messageType: "request",
+       ...Object.fromEntries(
+         Object.entries(request).map(([key, value]) => [key, String(value)])
+       ) // Ensure all fields in newUpdateFields are strings
+     };
+       // Create an array of message objects for each token
+     const messages = fcmTokens.map(token => ({
+       token: token,
+       data: messageData || {}, 
+       notification: {
+           title: 'New Request',
+           body: 'You have received a new request.',
+       },
+       android: {
+           notification: {
+               sound: 'default',
+           },
+       },
+       apns: {
+           payload: {
+               aps: {
+                   sound: 'default',
+               },
+           },
+       },
+     }));
+ 
+      await admin.messaging().sendEach(messages)
+ 
+     } catch (error) {
+       console.error('Error sending private message:', error.message);
+       // Handle error
+       socket.emit('receive_request_error', error.message);
+     }
+    });
+
     socket.on('seen-group-msg', async ({ conversationId }) => {
       const senderId = Object.keys(connectedUsers).find(
         (key) => connectedUsers[key] === socket.id
@@ -155,6 +247,7 @@ module.exports = function (server,app) {
       await conversationAllseen(senderId, conversationId)
       io.to(senderId).emit('seen-msg', { seen: true, conversationId });
     });
+    
     socket.on('disconnect', () => {
       // Remove user from connected users on disconnection
       const userId = Object.keys(connectedUsers).find(

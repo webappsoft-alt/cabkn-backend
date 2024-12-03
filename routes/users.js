@@ -11,9 +11,7 @@ const {
   phoneApiBodyValidate,
 } = require("../models/user");
 const express = require("express");
-const { sendEmail } = require("../controllers/emailservice");
 const passwordauth = require("../middleware/passwordauth");
-const { generateCode } = require("../controllers/generateCode");
 const router = express.Router();
 const { TempUser } = require("../models/TempUser");
 const admin = require("../middleware/admin");

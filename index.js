@@ -34,6 +34,7 @@ require('./startup/logging')();
 require('./startup/routes')(app);
 require('./startup/db')();
 require('./startup/validation')();
+require('./startup/redisClient')
 
 const port = process.env.PORT || 5400;
 const server = app.listen(port, () => logger.info(`Listening on port  ${port}...`));

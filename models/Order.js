@@ -1,0 +1,52 @@
+const mongoose = require('mongoose');
+
+const orderSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true,
+  },
+  to_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+  },
+  price:{
+    type: Number,
+    default: 0,
+  },
+  start_location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+    },
+    coordinates: {
+      type: [Number],
+    },
+  },
+  start_address: String,
+  end_address: String,
+  end_location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+    },
+    coordinates: {
+      type: [Number],
+    },
+  },
+  paymentId:String,
+  status: {
+    type: String,
+    default: 'pending',
+    enum: ['pending', 'accepted',"completed",'cancelled']
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
+});
+
+orderSchema.index({ location: '2dsphere' });
+
+module.exports = mongoose.model('Order', orderSchema);
