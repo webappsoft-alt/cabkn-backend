@@ -196,6 +196,7 @@ module.exports = function (server,app) {
        const request=await Order.findById(newRequest._id).populate("user")
        io.to(senderId).emit('send-request-customer', {request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
+       console.log("userIds=====",userIds)
        for (let user of userIds) {
          io.to(user.toString()).emit('recieve-request-rider', {request,success:true, title: 'New Request',message:"You have received a new request."});
        }
