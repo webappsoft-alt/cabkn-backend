@@ -1,6 +1,34 @@
 const Order = require("../models/Order");
 const Request = require("../models/Request");
 
+exports.fetchrequestOrder = async (req, res) => {
+  let query = {};
+  const userId = req.user._id;
+
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  query.status = "pending";
+  query.rejected_by = {$nin:userId};
+  query.accepted_by = {$nin:userId};
+  query.userIds = {$in:userId};
+  const pageSize = 10;
+
+  try {
+    const applications = await Order.find(query).sort({ _id: -1 }).populate("user").limit(pageSize).lean();
+
+    if (applications.length > 0) {
+      res.status(200).json({ success: true, requests: applications });
+    } else {
+      res.status(200).json({ success: false,requests:[], message: "No more requests found" });
+    }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.fetchrequestOrderOffers = async (req, res) => {
   let query = {};
   const userId = req.user._id;

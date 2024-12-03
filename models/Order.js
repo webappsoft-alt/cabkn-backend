@@ -10,6 +10,18 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
   },
+  userIds: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+  }],
+  rejected_by: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+  }],
+  accepted_by: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+  }],
   price:{
     type: Number,
     default: 0,

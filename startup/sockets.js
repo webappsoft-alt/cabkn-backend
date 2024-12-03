@@ -171,7 +171,7 @@ module.exports = function (server,app) {
  
  
        if (userIds.length == 0 ) {
-           return io.to(senderId).emit('send-request-customer', { success:false , title: 'Request Error',message:"No users found in that area."});
+          return io.to(senderId).emit('send-request-customer', { success:false , title: 'Request Error',message:"No users found in that area."});
        }
        const fcmTokens = [...new Set(userIds.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
        userIds = [...new Set(userIds.map(item => item._id).filter(item=>item!==undefined||item!==""))];
@@ -189,7 +189,8 @@ module.exports = function (server,app) {
          },
          start_address,
          end_address,
-         type
+         type,
+         userIds:userIds
        });
  
        await newRequest.save()
@@ -284,6 +285,7 @@ module.exports = function (server,app) {
         }
 
         if (status=='rejected') {
+          await Order.findByIdAndUpdate(requestId,{$addToSet:{rejected_by:senderId}})
           io.to(senderId).emit('update-request-ride', {success:true,request:order,title: 'Request Update',message:"Request rejected successfully!"});
         }else{
 
@@ -293,6 +295,8 @@ module.exports = function (server,app) {
              to_id:order.user._id,
              price:price,
             });
+
+            await Order.findByIdAndUpdate(requestId,{$addToSet:{accepted_by:senderId}})
 
             await newRequest.save()
 
