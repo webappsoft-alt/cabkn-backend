@@ -9,8 +9,8 @@ exports.sendNotification = async ({
      type = '',
      title = '',
      fcmtoken = '',
-     event="",
-     purchase=""
+     order="",
+     request=""
 }) => {
      try {
 
@@ -22,8 +22,8 @@ exports.sendNotification = async ({
           type,
           description,
           title,
-          event,
-          purchase
+          request,
+          order
      }).filter(([key, value]) => value !== "")
    );
  
