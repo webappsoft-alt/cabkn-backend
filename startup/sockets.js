@@ -165,6 +165,8 @@ module.exports = function (server,app) {
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
        );
+
+       console.log("send-request-customer========>>>")
  
        let userIds=await User.find({type:"rider",status:"online"}).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
