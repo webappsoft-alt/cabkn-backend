@@ -240,6 +240,36 @@ module.exports = function (server,app) {
      }
     });
 
+     // Handle private messages
+     socket.on('delete-request-customer', async ({ requestId }) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+        const order=await Order.findOne({_id:requestId,user:senderId})
+
+        if (!order) {
+          io.to(senderId).emit('delete-request-customer', {success:false,request:order,title: 'Order Delete',message:"Request Id is invalid"});
+         return;
+       }
+
+        if (order.status !== 'pending') {
+           io.to(senderId).emit('delete-request-customer', {success:false,request:order,title: 'Order Delete',message:"You can't delete that request as this has already been assign as an order to someone else."});
+          return;
+        }
+        await Order.findByIdAndDelete(requestId)
+        const userIds=await User.find({type:"rider",status:"online"}).select("fcmtoken").lean()
+ 
+        io.to(senderId).emit('delete-request-customer', {success:true,request:order,title: 'Order Delete',message:"Request deleted successfully!"});
+
+        for (let user of userIds) {
+         io.to(user._id.toString()).emit('filter-request-rider', {request:requestId,success:true});
+        }
+      } catch (error) {
+        socket.emit('receive_request_error', error.message);
+      }
+     });
+
     // Handle private messages
     socket.on('update-request-rider', async ({ requestId,price,status }) => {
       try {
