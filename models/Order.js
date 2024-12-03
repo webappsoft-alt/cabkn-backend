@@ -40,6 +40,11 @@ const orderSchema = new mongoose.Schema({
     default: 'pending',
     enum: ['pending', 'accepted',"completed",'cancelled']
   },
+  type: {
+    type: String,
+    default: 'parcel',
+    enum: ['parcel', 'driver']
+  },
   createdAt: {
     type: Date,
     default: Date.now,
