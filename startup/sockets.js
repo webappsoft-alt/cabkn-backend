@@ -160,7 +160,7 @@ module.exports = function (server,app) {
     // });
 
     // Handle private messages
-    socket.on('send-request-customer', async ({ address,start_lat,start_lng, start_address,end_lat,end_lng,end_address,price,type }) => {
+    socket.on('send-request-customer', async ({ start_lat,start_lng, start_address,end_lat,end_lng,end_address,price,type }) => {
      try {
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
