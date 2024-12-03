@@ -32,7 +32,7 @@ exports.fetchrequestOrderOffers = async (req, res) => {
 exports.getAllEmployeeApplication = async (req, res) => {
   let query = {};
   const userId = req.user._id;
-  const { status } = req.body;
+  const { status } = req.params;
 
   const validStatuses = ["all", 'accepted', "completed",'cancelled']
 
