@@ -85,6 +85,7 @@ module.exports = function (server,app) {
           title :"New Message",
           fcmtoken :otherUser?.fcmtoken,
       })
+      console.log("asdasdas",savedMessage)
       return callback(savedMessage);
       } catch (error) {
         console.error('Error sending private message:', error.message);
