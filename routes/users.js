@@ -15,10 +15,9 @@ const passwordauth = require("../middleware/passwordauth");
 const router = express.Router();
 const { TempUser } = require("../models/TempUser");
 const admin = require("../middleware/admin");
-const Event = require("../models/Event");
-const Purchase = require("../models/Purchase");
 const moment = require('moment');
 const firebaseadmin = require("firebase-admin");
+const like = require("../models/like");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -451,227 +450,6 @@ router.get('/search/:id/:search?', auth , async (req, res) => {
   res.send({ success: true, users: users,count: { totalPage: totalPages, currentPageSize: users.length } });
 });
 
-function findDateIndex(createdAt,dates) {
-  for (let i = 0; i < dates.length - 1; i++) {
-    if (moment(createdAt).isBetween(dates[i], dates[i + 1], null, '[)')) {
-      return i + 1; // Increment y value of the next date
-    }
-  }
-  // If the date is after the last date in the array
-  if (moment(createdAt).isSameOrAfter(dates[dates.length - 1])) {
-    return dates.length - 1;
-  }
-  return -1;
-}
-
-
-router.get('/dashboard',[auth, admin],async (req, res) => {
-  const totalUsers = await User.countDocuments({type:"customer"});
-
-   // Get users registered yesterday
-   const today = new Date();
-   const yesterday = new Date(today);
-   yesterday.setDate(today.getDate() - 1);
-   const yesterdayUsers = await User.countDocuments({
-    createdAt: { $gte: yesterday, $lt: today },
-       type:"customer"
-   });
-   // Get the number of users until yesterday
-   const totalUsersYesterday = totalUsers - yesterdayUsers;
-   // Calculate growth percentage
-   let growth = 0;
-   if (totalUsersYesterday > 0) {
-       growth = ((totalUsers - totalUsersYesterday) / totalUsersYesterday) * 100;
-   }
-
-  const totalownerUsers = await User.countDocuments({type:"owner"});
-
-   const yesterdayownerUsers = await User.countDocuments({
-    createdAt: { $gte: yesterday, $lt: today },
-       type:"owner"
-   });
-   // Get the number of users until yesterday
-   const totalownerUsersYesterday = totalownerUsers - yesterdayownerUsers;
-   // Calculate growth percentage
-   let growthowner = 0;
-   if (totalownerUsersYesterday > 0) {
-      growthowner = ((totalownerUsers - totalownerUsersYesterday) / totalownerUsersYesterday) * 100;
-   }
-
-
-   const totalOrder = await Event.countDocuments({status:"active"});
-
-   const yesterdayOrder = await Event.countDocuments({
-    createdAt: { $gte: yesterday, $lt: today },
-    status:"active"
-   });
-   // Get the number of users until yesterday
-   const totalOrderYesterday = totalOrder - yesterdayOrder;
-   // Calculate growth percentage
-   let growthOrder = 0;
-   if (totalOrderYesterday > 0) {
-      growthOrder = ((totalOrder - totalOrderYesterday) / totalOrderYesterday) * 100;
-   }
-
-   const purchases = await Purchase.find({resel_by: { $exists: false },}).select("totalPrice createdAt").sort({ _id: -1 }).lean();
-   const totalPurchase = await Purchase.find({resel_by: { $exists: true },}).select("totalPrice createdAt").sort({ _id: -1 }).lean();
- 
- 
-   const totalPayments=purchases.reduce((a,b)=>a + Number(b.totalPrice),0)
-   const totalOtherPayments=totalPurchase.reduce((a,b)=>a + Number(b.totalPrice),0)
- 
-   const eightPerc=Number(totalPayments) * 0.08
-  //  const twoPerc=Number(totalPayments) * 0.02
-   const twentPerc=Number(totalOtherPayments) * 0.20
-   const eightResel=Number(totalOtherPayments) * 0.08
-
-   const now = new Date();
-   let dates = [];
-   for (let i = 0; i < 12; i++) {
-    let date = new Date(now);
-    date.setMonth(now.getMonth() - i);
-    dates.unshift(date.toISOString());
-  }
-  const startDate = moment().startOf('year');
-  const todayEnd = moment().endOf('day');
- 
-  const orders = await Purchase.find({createdAt: { $gte: startDate, $lte: todayEnd }}).select("totalPrice createdAt resel_by").lean()
- 
-   // Initialize the graph array
-   let graph = dates.map(date => ({ x: date, earnings:0 }));
-  
-   // Increment the y value for the correct date ranges
-   orders.forEach(order => {
-     const index = findDateIndex(order.createdAt,dates);
-     if (index !== -1 && index < graph.length) {
-       let earnings=0
-       if (order.resel_by==undefined) {
-        earnings=Number(order.totalPrice) * 0.10
-      }else{
-        earnings=Number(order.totalPrice) * 0.28
-      }
-      graph[index].earnings = graph[index].earnings+earnings;
-     }
-   });
- 
-   let newGraph = graph.map(obj => {
-     return { ["x"]: moment(obj.x).format('MMM'), ["y"]: obj.earnings};
-   });
- 
-  
-  res.send({ success: true, 
-    totalEarnings:eightPerc+twentPerc+eightResel,
-    totalPayments:totalPayments,
-    graph:newGraph,
-    rentee:{
-      totalUsers,
-      growth: growth.toFixed(2),
-      status: growth >= 0 ? 'positive' : 'negative'
-    },
-    owner:{
-      totalUsers:totalownerUsers,
-      growth: growthowner.toFixed(2),
-      status: growthowner >= 0 ? 'positive' : 'negative'
-    },
-    events:{
-      totalEvents:totalOrder,
-      growth: growthOrder.toFixed(2),
-      status: growthOrder >= 0 ? 'positive' : 'negative'
-    },
-   });
-});
-
-router.get('/owner-dashboard',auth, async (req, res) => {
-  const userId=req.user._id
-  const totalActiveEvents = await Event.countDocuments({user:userId,status:"active"});
-
-  const events = await Event.find({user:userId,status:"active"}).select("status")
-
-  const totalEvents=events.map(item=>item._id)
-
-   // Get users registered yesterday
-   const today = new Date();
-   const yesterday = new Date(today);
-   yesterday.setDate(today.getDate() - 1);
-
-   const yesterdayActiveEvents = await Event.countDocuments({
-    createdAt: { $gte: yesterday, $lt: today },
-    user:userId,status:"active"
-   });
-
-   const totalActiveEventsYesterday = totalActiveEvents - yesterdayActiveEvents;
-   // Calculate growth percentage
-   let growth = 0;
-   if (totalActiveEventsYesterday > 0) {
-       growth = ((totalActiveEvents - totalActiveEventsYesterday) / totalActiveEventsYesterday) * 100;
-   }
-
-
-
-  const totalPurchases = await Purchase.find({event:{$in:totalEvents},resel_by: { $exists: false }}).select("ownerPrice");
-
-   const yesterdayPurchases = await Purchase.find({
-    createdAt: { $gte: yesterday, $lt: today },
-    event:{$in:totalEvents},
-    resel_by: { $exists: false }
-   }).select("ownerPrice")
-   // Get the number of users until yesterday
-   const totalPurchasesYesterday = totalPurchases.length - yesterdayPurchases.length;
-   // Calculate growth percentage
-   let growthowner = 0;
-   if (totalPurchasesYesterday > 0) {
-      growthowner = ((totalPurchases.length - totalPurchasesYesterday) / totalPurchasesYesterday) * 100;
-   }
-
-   const toalEarnings=totalPurchases.reduce((a,b)=>a+Number(b.ownerPrice),0)
-   // Get the number of users until yesterday
-   const totalEarningsYesterday = toalEarnings - yesterdayPurchases.reduce((a,b)=>a+Number(b.ownerPrice),0);
-   // Calculate growth percentage
-   let growthEarnings = 0;
-   if (totalPurchasesYesterday > 0) {
-     growthEarnings = ((toalEarnings - totalEarningsYesterday) / totalEarningsYesterday) * 100;
-   }
-
-
-   const totalUpcomingEvents = await Event.countDocuments({user:userId,status:"active"});
-
-   const yesterdayUpcomingEvents = await Event.countDocuments({
-    createdAt: { $gte: yesterday, $lt: today },
-    user:userId,status:"active"
-   });
-
-   const totalUpcomingEventsYesterday = totalUpcomingEvents - yesterdayUpcomingEvents;
-   // Calculate growth percentage
-   let growthUpcoming = 0;
-   if (totalUpcomingEventsYesterday > 0) {
-    growthUpcoming = ((totalUpcomingEvents - totalUpcomingEventsYesterday) / totalUpcomingEventsYesterday) * 100;
-   }
-
-  res.send({ success: true, 
-    events:{
-      total:totalActiveEvents,
-      growth: growth.toFixed(2),
-      status: growth >= 0 ? 'positive' : 'negative'
-    },
-    purchase:{
-      total:totalPurchases.length,
-      growth: growthowner.toFixed(2),
-      status: growthowner >= 0 ? 'positive' : 'negative'
-    },
-    earnings:{
-      total:toalEarnings,
-      growth: growthEarnings.toFixed(2),
-      status: growthEarnings >= 0 ? 'positive' : 'negative'
-    },
-
-    upcomingevents:{
-      total:totalUpcomingEvents,
-      growth: growthUpcoming.toFixed(2),
-      status: growthUpcoming >= 0 ? 'positive' : 'negative'
-    },
-   });
-});
-
 router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
 
   const {type}=req.params;
@@ -711,6 +489,108 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
 
   res.send({ success: true, message: 'notification sent successfully', });
 });
+
+router.post('/like/:userId', auth,  async (req, res) => {
+  try {
+    const otherUser = req.params.userId;
+    const userId = req.user._id;
+
+    const existingLike = await like.findOne({ user: userId, otherUser: otherUser });
+
+    if (existingLike) {
+      return await dislike(otherUser, res, userId);
+    }
+    const likePost = new like({
+      user: userId,
+      otherUser: otherUser
+    });
+
+
+    const updatedPost = await User.findByIdAndUpdate(
+      userId,
+      { $push: { likes: likePost._id } },
+      { new: true }
+    ).populate("user")
+
+    if (!updatedPost) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await likePost.save()
+
+    res.status(200).json({ message: 'Like added successfully', user: updatedPost });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+const dislike = async (otherUser, res, userId) => {
+  try {
+
+    const deletedLike = await like.findOneAndDelete({ otherUser: otherUser,user: userId, });
+
+    if (!deletedLike) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    const updatedPost = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { likes: deletedLike._id } },
+      { new: true }
+    );
+
+    if (!updatedPost) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'Like deleted successfully', user: updatedPost });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+router.post('/favorite/:id', [auth, admin], async (req, res) => {
+  const userId = req.user._id
+  const lastId = parseInt(req.params.id)||1;
+
+    // Check if lastId is a valid number
+    if (isNaN(lastId) || lastId < 0) {
+      return res.status(400).json({ error: 'Invalid last_id' });
+    }
+
+    let query={};
+  
+    const pageSize = 10;
+    
+    const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+    query.user = userId;
+
+  try {
+    const likedJobs = await like.find(query).populate("otherUser").sort({ _id: -1 }).skip(skip).limit(pageSize).lean();
+
+      const totalCount = await like.countDocuments(query);
+      const totalPages = Math.ceil(totalCount / pageSize);
+    
+
+    const jobs = likedJobs.map((like) => like.otherUser);
+    if (jobs.length > 0) {
+      const UpdateFav = jobs.map(order => {
+        return {
+          ...order,       // Spread operator to copy existing properties
+          likes: true // Adding new key with a value
+        };
+      });
+      res.status(200).json({ success: true, users: UpdateFav,count: { totalPage: totalPages, currentPageSize: jobs.length }  });
+    } else {
+      res.status(200).json({ success: false, message: 'No more favorite users found',users:[] ,count: { totalPage: totalPages, currentPageSize: jobs.length } });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 
 module.exports = router;

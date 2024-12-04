@@ -68,8 +68,12 @@ exports.getAllEmployeeApplication = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
-  if (req.body.id) {
-    query._id = { $lt: req.body.id };
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  if (req.body.bookingtype) {
+    query.bookingtype = req.body.bookingtype;
   }
   query.to_id = userId;
 
@@ -106,8 +110,12 @@ exports.getAllSellerApplication = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
-  if (req.params.id) {
+   if (req.params.id) {
     query._id = { $lt: req.params.id };
+  }
+  
+  if (req.body.bookingtype) {
+    query.bookingtype = req.body.bookingtype;
   }
 
   query.user = userId;

@@ -6,9 +6,9 @@ const likeSchema = new mongoose.Schema({
     ref: 'user',
     required: true,
   },
-  event: {
+  otherUser: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event',
+    ref: 'user',
   },
 });
 
