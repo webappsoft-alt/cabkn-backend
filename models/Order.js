@@ -57,6 +57,8 @@ const orderSchema = new mongoose.Schema({
     },
   },
   paymentId:String,
+  customer_rating:String,
+  driver_rating:String,
   status: {
     type: String,
     default: 'pending',
@@ -79,6 +81,6 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-orderSchema.index({ location: '2dsphere' });
+// orderSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Order', orderSchema);

@@ -1,7 +1,7 @@
+const Order = require('../models/Order');
 const Rating = require('../models/Rating');
 const { User } = require('../models/user');
 const { sendNotification } = require('./notificationCreateService');
-const Event = require("../models/Event");
 
 function calculateAverage(initialValue, numberToAdd) {
   if (initialValue == 0) return Number(numberToAdd)
@@ -14,44 +14,36 @@ function calculateAverage(initialValue, numberToAdd) {
 
 exports.createRating = async (req, res) => {
   try {
-    const { to_id, event, speed, passing,shooting,dribling,review } = req.body;
+    const { to_id, order, rating,review } = req.body;
     const userId = req.user._id;
-    const sumRating=Number(speed)+Number(passing)+Number(shooting)+Number(dribling)
-    const avgRating=Number(sumRating) / 4
 
     const ratings = new Rating({
       user: userId,
-      to_id, event, speed, passing,shooting,dribling,avgRating:avgRating,review
+      to_id, order, rating,review
     });
 
     
     const user = await User.findById(to_id)
-    const loginUser = await User.findById(userId)
-    const events = await Event.findById(event)
+    const loginUser = await User.findById(userId).lean()
+    const events = await Order.findById(order)
     
     if (!user) return res.status(400).json({ message: 'User does not exist for that ID.' });
     
-    if (!events) return res.status(400).json({ message: 'Event does not exist for that ID.' });
-
-    user.rating.rat_status= avgRating > user.rating.avgRating ?"increase":"decrease"
+    if (!events) return res.status(400).json({ message: 'Order does not exist for that ID.' });
     
-    user.rating.dribling = calculateAverage(user.rating.dribling || 0, dribling)
-    user.rating.speed = calculateAverage(user.rating.speed || 0, speed)
-    user.rating.passing = calculateAverage(user.rating.passing || 0, passing)
-    user.rating.shooting = calculateAverage(user.rating.shooting || 0, shooting)
-    user.rating.avgRating = calculateAverage(user.rating.avgRating || 0, avgRating)
-    user.rating.totalReviews = user.rating.totalReviews + 1
+    user.rating = calculateAverage(user.rating || 0, rating )
+    user.totalReviews = user.totalReviews + 1
     
     await user.save()
     
     await sendNotification({
       user: userId,
       to_id: to_id,
-      description: "You have got new rating from "+loginUser.fname+" "+loginUser.lname + " in "+events.name+" event.",
+      description: "You have got new rating from "+loginUser.name+" in an order.",
       type: "rating",
       title: "New Rating",
       fcmtoken:  user.fcmtoken||"",
-      event:event
+      order:order
     });
     
     await ratings.save();

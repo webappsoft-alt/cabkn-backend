@@ -9,6 +9,7 @@ const notificationRoute = require('../routes/notificationRoute');
 const authMiddleware = require('../middleware/auth');
 const supportRoute = require('../routes/supportRoute');
 const orderRoutes = require('../routes/orderRoutes');
+const ratingRoutes = require('../routes/ratingRoutes');
 
 module.exports = function (app) {
   app.use(express.json());
@@ -17,6 +18,7 @@ module.exports = function (app) {
   app.use('/api/image', uploadImages);
   app.use('/api/category', categoryRoute);
   app.use('/api/order',authMiddleware, orderRoutes);
+  app.use('/api/rating',authMiddleware, ratingRoutes);
   app.use('/api/msg',authMiddleware, messageRoutes);
   app.use('/api/notification',authMiddleware, notificationRoute);
   app.use('/api/support', supportRoute);

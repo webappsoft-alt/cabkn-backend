@@ -14,7 +14,7 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'message',
-    enum: ['message','support','offer','order']
+    enum: ['message','support','offer','order','rating']
   },
   order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' }, 
   request: { type: mongoose.Schema.Types.ObjectId, ref: 'Request' }, 

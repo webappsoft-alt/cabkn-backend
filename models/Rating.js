@@ -9,28 +9,12 @@ const ratingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user'
   },
-  event: {
+  order: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event'
+    ref: 'Order'
   },
   review:String,
-  speed: {
-    type: Number,
-    default: 0,
-  },
-  passing: {
-    type: Number,
-    default: 0,
-  },
-  shooting: {
-    type: Number,
-    default: 0,
-  },
-  dribling: {
-    type: Number,
-    default: 0,
-  },
-  avgRating:{
+  rating:{
     type: Number,
     default: 0,
   },

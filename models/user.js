@@ -38,6 +38,14 @@ const userSchema = new mongoose.Schema({
       type: [Number],
     },
   },
+  totalReviews:{
+    type: Number,
+    default: 0,
+  },
+  rating:{
+    type: Number,
+    default: 0,
+  },
   address:String,
   image:String,
   fcmtoken: String,

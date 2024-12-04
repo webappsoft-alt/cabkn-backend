@@ -154,8 +154,6 @@ module.exports = function (server,app) {
     socket.on('location-sent', async (data,callback) => {
       const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
 
-      console.log("data====>",data,socket.id,connectedUsers)
-
       if (!senderId) {
         return callback({
           success: false,
@@ -167,7 +165,6 @@ module.exports = function (server,app) {
       // await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
   
       io.to(to_id).emit('location-recieved', { lat,lng,to_id,order });
-      console.log("data====>",data)
       callback(data)
     });
 
