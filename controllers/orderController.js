@@ -82,7 +82,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ _id: -1 }).populate("user").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
@@ -121,7 +121,7 @@ exports.getAllSellerApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ _id: -1 }).populate("to_id").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("to_id").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
