@@ -151,13 +151,15 @@ module.exports = function (server,app) {
       io.to(recipientId).emit('seen-msg', { seen: true, recipientId });
     });
 
-    // socket.on('location-update', async ({ longitude, latitude, address,fcmToken }) => {
-    //   const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
+    socket.on('location-sent', async (data,callback) => {
+      const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
+      const {lat,lng,to_id,order} = data
 
-    //   await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
+      // await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
   
-    //   io.to(senderId).emit('location-update', { message : "Location Update successfully!" });
-    // });
+      io.to(to_id).emit('location-recieved', { lat,lng,to_id,order });
+      callback(data)
+    });
 
     // Handle private messages
     socket.on('send-request-customer', async (data, callback) => {
