@@ -153,11 +153,18 @@ module.exports = function (server,app) {
 
     socket.on('location-sent', async (data,callback) => {
       const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
+      if (!senderId) {
+        return callback({
+          success: false,
+          title: 'Authentication Error',
+          message: 'Sender ID not found.',
+        });
+      }
       const {lat,lng,to_id,order} = data
-
       // await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
   
       io.to(to_id).emit('location-recieved', { lat,lng,to_id,order });
+      console.log("data====>",data)
       callback(data)
     });
 
