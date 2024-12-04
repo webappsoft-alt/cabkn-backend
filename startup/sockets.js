@@ -41,7 +41,7 @@ module.exports = function (server,app) {
     });
 
     // Handle private messages
-    socket.on('send-message', async ({ recipientId, messageText,name}) => {
+    socket.on('send-message', async ({ recipientId, messageText,name},callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
@@ -72,10 +72,8 @@ module.exports = function (server,app) {
         });
 
         const savedMessage = await newMessage.save();
-        
-        // Emit the new message to the sender and recipient
-        io.to(senderId).emit('send-message', savedMessage);
-        io.to(recipientId).emit('send-message', savedMessage);
+
+        io.to(recipientId).emit('recieved-message', savedMessage);
         
         const otherUser = await User.findById(recipientId).select("fcmtoken")
         
@@ -87,7 +85,7 @@ module.exports = function (server,app) {
           title :"New Message",
           fcmtoken :otherUser?.fcmtoken,
       })
-
+      return callback(savedMessage);
       } catch (error) {
         console.error('Error sending private message:', error.message);
         // Handle error
