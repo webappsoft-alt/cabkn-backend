@@ -29,6 +29,7 @@ module.exports = function (server,app) {
 
         // Notify the client about successful authentication
         socket.emit('authenticated', userId);
+        console.log("authenticated======>>>>>",connectedUsers)
 
         // Join user to their unique room (socket.io room)
         socket.join(userId);
@@ -172,6 +173,7 @@ module.exports = function (server,app) {
         price,
         type,
       } = data;
+      console.log("send-request-customer======>>>>>",socket.id,connectedUsers)
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
        );
@@ -661,6 +663,7 @@ module.exports = function (server,app) {
       if (userId) {
         delete connectedUsers[userId];
         console.log(`User ${userId} disconnected`);
+        console.log("disconnect======>>>>>",connectedUsers)
       }
     });
 
