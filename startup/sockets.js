@@ -153,6 +153,9 @@ module.exports = function (server,app) {
 
     socket.on('location-sent', async (data,callback) => {
       const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
+
+      console.log("data====>",data,socket.id,connectedUsers)
+
       if (!senderId) {
         return callback({
           success: false,
