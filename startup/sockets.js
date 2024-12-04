@@ -432,6 +432,77 @@ module.exports = function (server,app) {
       }
     });
 
+    socket.on('send-alert-rider', async ({ orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findById(orderId).populate("user");
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'Invalid order ID.',
+          });
+        }
+    
+        if (order.status == 'pending') {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'This Order is not booked yet.',
+          });
+        }
+
+          // Notify the customer
+          const user = await User.findById(senderId).select("name").lean();
+    
+          await sendNotification({
+            user: senderId,
+            to_id: order.user._id.toString(),
+            description: `${user?.name} has arrived your destination.`,
+            type: "order",
+            title: "Order update",
+            fcmtoken: order.user.fcmtoken,
+            order: orderId,
+          });
+
+          io.to(order.user._id.toString()).emit('receive-alert-customer', {
+            success: true,
+            order,
+            title: "Order update",
+            message: `${user?.name} has arrived your destination.`,
+          });
+    
+          return callback({
+            success: true,
+            order,
+            title: "Order update",
+            message: 'Alert has been sent to the customer.',
+          });
+      } catch (error) {
+        console.error('Error updating request:', error.message);
+    
+        // Emit error to client and invoke callback with error
+        socket.emit('receive_request_error', error.message);
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
+
     socket.on('update-request-customer', async ({ requestId, status, orderId, paymentId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
