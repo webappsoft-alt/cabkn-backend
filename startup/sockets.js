@@ -160,20 +160,32 @@ module.exports = function (server,app) {
     // });
 
     // Handle private messages
-    socket.on('send-request-customer', async ({ start_lat,start_lng, start_address,end_lat,end_lng,end_address,price,type }) => {
+    socket.on('send-request-customer', async (data, callback) => {
      try {
+      const {
+        start_lat,
+        start_lng,
+        start_address,
+        end_lat,
+        end_lng,
+        end_address,
+        price,
+        type,
+      } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
        );
-
-       console.log("send-request-customer========>>>")
  
        let userIds=await User.find({type:"rider",status:"online"}).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
  
        if (userIds.length == 0 ) {
-          return io.to(senderId).emit('send-request-customer', { success:false , title: 'Request Error',message:"No users found in that area."});
+          return callback({
+            success: false,
+            title: 'Request Error',
+            message: "No users found in that area.",
+          });
        }
        const fcmTokens = [...new Set(userIds.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
        userIds = [...new Set(userIds.map(item => item._id).filter(item=>item!==undefined||item!==""))];
@@ -197,7 +209,7 @@ module.exports = function (server,app) {
  
        await newRequest.save()
        const request=await Order.findById(newRequest._id).populate("user")
-       io.to(senderId).emit('send-request-customer', {request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
+       callback({request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
        for (let user of userIds) {
          io.to(user.toString()).emit('recieve-request-rider', {request,success:true, title: 'New Request',message:"You have received a new request."});
@@ -237,202 +249,400 @@ module.exports = function (server,app) {
  
  
      } catch (error) {
-       console.error('Error sending private message:', error.message);
-       // Handle error
-       socket.emit('receive_request_error', error.message);
+       callback({
+        success: false,
+        title: 'Request Error',
+        message: error.message,
+      });
      }
     });
 
-     // Handle private messages
-     socket.on('delete-request-customer', async ({ requestId }) => {
+    socket.on('delete-request-customer', async ({ requestId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
         );
-        const order=await Order.findOne({_id:requestId,user:senderId})
-
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        // Fetch the order
+        const order = await Order.findOne({ _id: requestId, user: senderId });
+    
         if (!order) {
-          io.to(senderId).emit('delete-request-customer', {success:false,request:order,title: 'Order Delete',message:"Request Id is invalid"});
-         return;
-       }
-
-        if (order.status !== 'pending') {
-           io.to(senderId).emit('delete-request-customer', {success:false,request:order,title: 'Order Delete',message:"You can't delete that request as this has already been assign as an order to someone else."});
-          return;
+          return callback({
+            success: false,
+            title: 'Order Delete',
+            message: 'Request ID is invalid.',
+          });
         }
-        await Order.findByIdAndDelete(requestId)
-        const userIds=await User.find({type:"rider",status:"online"}).select("fcmtoken").lean()
- 
-        io.to(senderId).emit('delete-request-customer', {success:true,request:order,title: 'Order Delete',message:"Request deleted successfully!"});
-
+    
+        if (order.status !== 'pending') {
+          return callback({
+            success: false,
+            title: 'Order Delete',
+            message: "You can't delete this request as it has already been assigned as an order to someone else.",
+          });
+        }
+    
+        // Delete the order
+        await Order.findByIdAndDelete(requestId);
+        
+        // Notify riders to filter the request
+        const userIds = await User.find({ type: "rider", status: "online" })
+          .select("fcmtoken")
+          .lean();
+    
         for (let user of userIds) {
-         io.to(user._id.toString()).emit('filter-request-rider', {request:requestId,success:true});
+          io.to(user._id.toString()).emit('filter-request-rider', {
+            request: requestId,
+            success: true,
+          });
         }
+    
+        // Callback success
+        callback({
+          success: true,
+          request: order,
+          title: 'Order Deleted',
+          message: 'The request was successfully deleted and riders notified.',
+        });
       } catch (error) {
+        console.error('Error deleting request:', error.message);
+    
+        // Emit error to client and return error in callback
         socket.emit('receive_request_error', error.message);
+        callback({
+          success: false,
+          title: 'Error',
+          message: error?.message,
+        });
       }
-     });
+    });    
 
-    // Handle private messages
-    socket.on('update-request-rider', async ({ requestId,price,status }) => {
+    socket.on('update-request-rider', async ({ requestId, price, status }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
         );
-
-        const order=await Order.findById(requestId).populate("user")
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findById(requestId).populate("user");
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Request Update',
+            message: 'Invalid request ID.',
+          });
+        }
+    
         if (order.status !== 'pending') {
-           io.to(senderId).emit('update-request-ride', {success:false,request:order,title: 'Request Update',message:"This request has already been booked."});
-          return;
+          return callback({
+            success: false,
+            title: 'Request Update',
+            message: 'This request has already been booked.',
+          });
         }
-
-        if (status=='rejected') {
-          await Order.findByIdAndUpdate(requestId,{$addToSet:{rejected_by:senderId}})
-          io.to(senderId).emit('update-request-ride', {success:true,request:order,title: 'Request Update',message:"Request rejected successfully!"});
-        }else{
-
-           const newRequest = new Request({
-             user: senderId,
-             order:requestId, 
-             to_id:order.user._id,
-             price:price,
-            });
-
-            await Order.findByIdAndUpdate(requestId,{$addToSet:{accepted_by:senderId}})
-
-            await newRequest.save()
-
-            io.to(senderId).emit('update-request-ride', {success:true,request:newRequest,title: 'Request Update',message:"Request sent successfully!"});
-            
-            const user=await User.findById(senderId).select("name").lean()
-
-            await sendNotification({
-              user: senderId,
-              to_id: order.user._id.toString(),
-              description:`You have a received a new offer by `+user?.name,
-              type: "offer",
-              title: "New Offer",
-              fcmtoken:  order.user.fcmtoken,
-              order: requestId,
-              request:newRequest._id
-            });
-            const request = await Request.findById(newRequest._id).populate("user").lean();
-
-            io.to(order.user._id.toString()).emit('receive-request-customer', {success:true,request:request,title: 'New Offer',message:`You have a received a new offer by `+user?.name,});
+    
+        if (status === 'rejected') {
+          // Update order as rejected by this rider
+          await Order.findByIdAndUpdate(requestId, { $addToSet: { rejected_by: senderId } });
+    
+          return callback({
+            success: true,
+            request: order,
+            title: 'Request Rejected',
+            message: 'The request was successfully rejected.',
+          });
+        } else {
+          // Create a new offer/request
+          const newRequest = new Request({
+            user: senderId,
+            order: requestId,
+            to_id: order.user._id,
+            price,
+          });
+    
+          // Update order as accepted by this rider
+          await Order.findByIdAndUpdate(requestId, { $addToSet: { accepted_by: senderId } });
+    
+          await newRequest.save();
+    
+          // Notify the customer
+          const user = await User.findById(senderId).select("name").lean();
+    
+          await sendNotification({
+            user: senderId,
+            to_id: order.user._id.toString(),
+            description: `You have received a new offer from ${user?.name}`,
+            type: "offer",
+            title: "New Offer",
+            fcmtoken: order.user.fcmtoken,
+            order: requestId,
+            request: newRequest._id,
+          });
+    
+          const request = await Request.findById(newRequest._id).populate("user").lean();
+    
+          io.to(order.user._id.toString()).emit('receive-request-customer', {
+            success: true,
+            request: request,
+            title: 'New Offer',
+            message: `You have received a new offer from ${user?.name}.`,
+          });
+    
+          return callback({
+            success: true,
+            request: newRequest,
+            title: 'Offer Sent',
+            message: 'The offer was successfully sent to the customer.',
+          });
         }
       } catch (error) {
+        console.error('Error updating request:', error.message);
+    
+        // Emit error to client and invoke callback with error
         socket.emit('receive_request_error', error.message);
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
       }
     });
 
-     // Handle private messages
-    socket.on('update-request-customer', async ({ requestId,status,orderId,paymentId }) => {
-     try {
-       const senderId = Object.keys(connectedUsers).find(
-         (key) => connectedUsers[key] === socket.id
-       );
-       const order=await Order.findById(orderId).populate("user")
-       if (order.status !== 'pending') {
-          io.to(senderId).emit('update-request-customer', {success:false,request:order,title: 'Order Update',message:"You have already assign that order to someone else."});
-         return;
-       }
-       if (status=='rejected') {
-         await Request.findByIdAndUpdate(requestId,{status:"rejected"}).populate("user")
-        io.to(senderId).emit('update-request-customer', {success:true,title: 'Request Update',message:"Request rejected successfully!"});
-       }else{
-         const request= await Request.findByIdAndUpdate(requestId,{status:"accepted"},{new:true}).populate("user")
-         order.status='accepted'
-         order.to_id=request.user._id
-         order.paymentId=paymentId
-         await order.save()
-
-         await sendNotification({
-           user: senderId,
-           to_id: request.user?._id.toString(),
-           description:`Your offer have been accepted by `+order?.user?.name+" and your order has been started.",
-           type: "order",
-           title: "Offer accepted",
-           fcmtoken: request?.user?.fcmtoken,
-           order: orderId,
-           request:requestId
-         });
-         await sendNotification({
-           user: request.user?._id.toString(),
-           to_id: senderId,
-           description:`You have accepted an offer from `+request.user?.name+" and your order has been started.",
-           type: "order",
-           title: "Offer accepted",
-           fcmtoken: order?.user?.fcmtoken,
-           order: orderId,
-           request:requestId
-         });
-         io.to(senderId).emit('update-request-customer', {success:true,title: 'Offer accepted',message:`Your order has been started.`});
-         io.to(request.user._id.toString()).emit('update-request-rider', {success:true,title: 'Offer accepted',message:`Your offer have been accepted by `+order?.user?.name+" and your order has been started."});
-         const userIds=await User.find({type:"rider",status:"online",_id:{$ne:request.user._id.toString()}}).select("fcmtoken").lean()
-
-         for (let user of userIds) {
-          io.to(user._id.toString()).emit('filter-request-rider', {request:orderId,success:true});
-         }
-       }
-     } catch (error) {
-       socket.emit('receive_request_error', error.message);
-     }
-    });
-
-     // Handle private messages
-     socket.on('update-order-rider', async ({ orderId,status }) => {
+    socket.on('update-request-customer', async ({ requestId, status, orderId, paymentId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
         );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findById(orderId).populate("user");
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'Invalid order ID.',
+          });
+        }
+    
+        if (order.status !== 'pending') {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'You have already assigned that order to someone else.',
+          });
+        }
+    
+        if (status === 'rejected') {
+          // Reject the request
+          await Request.findByIdAndUpdate(requestId, { status: "rejected" }).populate("user");
+    
+          return callback({
+            success: true,
+            title: 'Request Rejected',
+            message: 'The request was successfully rejected.',
+          });
+        } else {
+          // Accept the request
+          const request = await Request.findByIdAndUpdate(
+            requestId,
+            { status: "accepted" },
+            { new: true }
+          ).populate("user");
+    
+          if (!request) {
+            return callback({
+              success: false,
+              title: 'Request Update',
+              message: 'Invalid request ID.',
+            });
+          }
+    
+          // Update the order status
+          order.status = 'accepted';
+          order.to_id = request.user._id;
+          order.paymentId = paymentId;
+          await order.save();
+    
+          // Send notifications
+          await sendNotification({
+            user: senderId,
+            to_id: request.user?._id.toString(),
+            description: `Your offer has been accepted by ${order?.user?.name} and your order has been started.`,
+            type: "order",
+            title: "Offer Accepted",
+            fcmtoken: request?.user?.fcmtoken,
+            order: orderId,
+            request: requestId,
+          });
+    
+          await sendNotification({
+            user: request.user?._id.toString(),
+            to_id: senderId,
+            description: `You have accepted an offer from ${request.user?.name} and your order has been started.`,
+            type: "order",
+            title: "Offer Accepted",
+            fcmtoken: order?.user?.fcmtoken,
+            order: orderId,
+            request: requestId,
+          });
+    
+          io.to(request.user._id.toString()).emit('update-request-rider', {
+            success: true,
+            title: 'Offer Accepted',
+            message: `Your offer has been accepted by ${order?.user?.name} and your order has been started.`,
+          });
+    
+          // Notify other riders to filter out the request
+          const userIds = await User.find({
+            type: "rider",
+            status: "online",
+            _id: { $ne: request.user._id.toString() },
+          })
+            .select("fcmtoken")
+            .lean();
+    
+          for (let user of userIds) {
+            io.to(user._id.toString()).emit('filter-request-rider', {
+              request: orderId,
+              success: true,
+            });
+          }
+    
+          return callback({
+            success: true,
+            title: 'Offer Accepted',
+            message: 'The order has been started and notifications sent.',
+          });
+        }
+      } catch (error) {
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
+    
 
-        const validStatuses = ["completed",'cancelled']
-  
+    socket.on('update-order-rider', async ({ orderId, status }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const validStatuses = ["completed", "cancelled"];
         if (!validStatuses.includes(status)) {
-          return io.to(senderId).emit('update-order-rider', {success:false,title: 'Order Update',message:"Status is invalid"});
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'Status is invalid.',
+          });
         }
-
-        const updatedSession = await Order.findOneAndUpdate(
-          { _id: orderId,status:"accepted",to_id:senderId },
-          {
-            status: status,
-          },
+    
+        // Find and update the order
+        const updatedOrder = await Order.findOneAndUpdate(
+          { _id: orderId, status: "accepted", to_id: senderId },
+          { status: status },
           { new: true }
-        ).populate("to_id").populate("user").lean()
-        if (updatedSession == null) {
-          return io.to(senderId).emit('update-order-rider', {success:false,title: 'Order Update',message:"Order not found."});
+        ).populate("to_id").populate("user").lean();
+    
+        if (!updatedOrder) {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'Order not found or cannot be updated.',
+          });
         }
-  
-        if (status=='cancelled') {
-          // const fiftyPer=Number(updatedSession.price) * 0.50
-          // const refund= await refundPayment(updatedSession.paymentId,fiftyPer)
-          // if (!['pending','failed','canceled'].includes(refund.status)) {
-          //  await Order.findOneAndUpdate({ _id: orderId,to_id:senderId },{ refunded: true})
-          // }
+    
+        if (status === 'cancelled') {
+          // Uncomment and implement payment refund logic if required
+          /*
+          const fiftyPer = Number(updatedOrder.price) * 0.50;
+          const refund = await refundPayment(updatedOrder.paymentId, fiftyPer);
+          if (!['pending', 'failed', 'canceled'].includes(refund.status)) {
+            await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
+          }
+          */
         }
-
-  
+    
+        // Notify the customer about the update
         await sendNotification({
           user: senderId,
-          to_id: updatedSession.user._id.toString(),
-          description:`Your Order has been ${status} by `+ updatedSession?.to_id?.name,
+          to_id: updatedOrder.user._id.toString(),
+          description: `Your Order has been ${status} by ${updatedOrder?.to_id?.name}.`,
           type: "order",
-          title: "Order update",
-          fcmtoken:  updatedSession.user.fcmtoken,
+          title: "Order Update",
+          fcmtoken: updatedOrder.user.fcmtoken,
           order: orderId,
-          noti:false
+          noti: false,
         });
-        if (status == 'cancelled') {
-          io.to(senderId).emit('cancel-order-customer', {success:true,order:updatedSession,title: 'Order Update',message:`Your order has been ${status} by `+updatedSession?.to_id?.name,});
-          io.to(updatedSession.user._id.toString()).emit('cancel-order-rider', {success:true,order:updatedSession,title: 'Order Update',message:`Your order has been cancelled`});
-        }else{
-          io.to(senderId).emit('update-order-customer', {success:true,order:updatedSession,title: 'Order Update',message:`Your order has been ${status} by `+updatedSession?.to_id?.name,});
-          io.to(updatedSession.user._id.toString()).emit('update-order-rider', {success:true,order:updatedSession,title: 'Order Update',message:`You have successfully ${status} an order!`});
+    
+        // Emit relevant messages based on the order status
+        if (status === 'cancelled') {
+          io.to(updatedOrder.user._id.toString()).emit('cancel-order-rider', {
+            success: true,
+            order: updatedOrder,
+            title: 'Order Update',
+            message: 'Your order has been cancelled.',
+          });
+        } else {
+    
+          io.to(updatedOrder.user._id.toString()).emit('update-order-rider', {
+            success: true,
+            order: updatedOrder,
+            title: 'Order Update',
+            message: `You have successfully ${status} an order!`,
+          });
         }
+    
+        // Callback success response
+        return callback({
+          success: true,
+          order: updatedOrder,
+          title: 'Order Updated',
+          message: `The order has been ${status} successfully.`,
+        });
       } catch (error) {
-        socket.emit('receive_request_error', error.message);
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
       }
     });
+    
 
     socket.on('seen-group-msg', async ({ conversationId }) => {
       const senderId = Object.keys(connectedUsers).find(
