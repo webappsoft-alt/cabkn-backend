@@ -172,8 +172,10 @@ module.exports = function (server,app) {
         end_address,
         price,
         type,
+        bookingtype,
+        schedule_date,
+        schedule_time
       } = data;
-      console.log("send-request-customer======>>>>>",socket.id,connectedUsers)
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
        );
@@ -206,8 +208,13 @@ module.exports = function (server,app) {
          start_address,
          end_address,
          type,
-         userIds:userIds
+         userIds:userIds,
+         bookingtype
        });
+       if (bookingtype=='schedule') {
+        newRequest.schedule_date=schedule_date
+        newRequest.schedule_time=schedule_time
+       }
  
        await newRequest.save()
        const request=await Order.findById(newRequest._id).populate("user")

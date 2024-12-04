@@ -37,6 +37,16 @@ const orderSchema = new mongoose.Schema({
   },
   start_address: String,
   end_address: String,
+  schedule_date: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
+  schedule_time: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
   end_location: {
     type: {
       type: String,
@@ -56,6 +66,11 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: 'parcel',
     enum: ['parcel', 'driver']
+  },
+  bookingtype: {
+    type: String,
+    default: 'live',
+    enum: ['live', 'schedule']
   },
   createdAt: {
     type: Date,
