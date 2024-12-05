@@ -61,6 +61,10 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',
   },
+  vehicle:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Vehicle',
+  },
   driver_rating:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',

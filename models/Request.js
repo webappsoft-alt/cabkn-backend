@@ -14,6 +14,10 @@ const requestSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order',
   },
+  vehicle:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Vehicle',
+  },
   price:{
     type: Number,
     default: 0,

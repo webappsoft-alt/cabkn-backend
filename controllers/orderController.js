@@ -16,7 +16,7 @@ exports.fetchrequestOrder = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ _id: -1 }).populate("user").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ _id: -1 }).populate("user").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, requests: applications });
@@ -44,7 +44,7 @@ exports.fetchrequestOrderOffers = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Request.find(query).sort({ _id: -1 }).populate("user").populate("order").limit(pageSize).lean();
+    const applications = await Request.find(query).sort({ _id: -1 }).populate("user").populate("order").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, offers: applications });
@@ -86,7 +86,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
@@ -129,7 +129,7 @@ exports.getAllSellerApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("to_id").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("to_id").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });

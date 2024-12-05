@@ -342,7 +342,7 @@ module.exports = function (server,app) {
       }
     });    
 
-    socket.on('update-request-rider', async ({ requestId, price, status }, callback) => {
+    socket.on('update-request-rider', async ({ requestId, price, status,vehicle }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
@@ -391,6 +391,7 @@ module.exports = function (server,app) {
             order: requestId,
             to_id: order.user._id,
             price,
+            vehicle
           });
     
           // Update order as accepted by this rider
@@ -412,7 +413,7 @@ module.exports = function (server,app) {
             request: newRequest._id,
           });
     
-          const request = await Request.findById(newRequest._id).populate("user").lean();
+          const request = await Request.findById(newRequest._id).populate("user").populate("vehicle").lean();
     
           io.to(order.user._id.toString()).emit('receive-request-customer', {
             success: true,
@@ -423,7 +424,7 @@ module.exports = function (server,app) {
     
           return callback({
             success: true,
-            request: newRequest,
+            request: request,
             title: 'Offer Sent',
             message: 'The offer was successfully sent to the customer.',
           });
@@ -571,6 +572,7 @@ module.exports = function (server,app) {
     
           // Update the order status
           order.status = 'accepted';
+          order.vehicle = request.vehicle;
           order.to_id = request.user._id;
           order.paymentId = paymentId;
           await order.save();
