@@ -950,7 +950,7 @@ router.get('/rider/earnings',auth, async (req, res) => {
   res.send({ success: true, graph:newGraph, totalEarnings });
 });
 
-router.post('/rider/dashboard',auth, async (req, res) => {
+router.post('/rider/dashboard/:id?',auth, async (req, res) => {
   const userId=req.user._id
   
   let query={}
@@ -958,12 +958,12 @@ router.post('/rider/dashboard',auth, async (req, res) => {
     query._id = { $lt: req.params.id };
   }
 
-  const {startDate,todayEnd}=req.body;
+  const {startDate,endDate}=req.body;
 
  const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price").lean()
  const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
  
- const orders = await Order.find({...query,to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ const orders = await Order.find({...query,to_id:userId,schedule_date: { $gte: startDate, $lte: endDate },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
  
  const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
 
@@ -1013,12 +1013,12 @@ router.post('/customer/dashboard/:id?',auth, async (req, res) => {
   if (req.params.id) {
     query._id = { $lt: req.params.id };
   }
-  const {startDate,todayEnd}=req.body;
+  const {startDate,endDate}=req.body;
 
  const earnings = await Order.find({user:userId,status:"completed"}).select("status schedule_date price").lean()
  const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
  
- const orders = await Order.find({...query,user:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ const orders = await Order.find({...query,user:userId,schedule_date: { $gte: startDate, $lte: endDate },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
  
  const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
 
