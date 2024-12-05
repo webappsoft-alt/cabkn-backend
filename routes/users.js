@@ -407,6 +407,8 @@ router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
 
   if (req.params.type!=='all') {
     query.type=req.params.type;
+  }else{
+    query.type={$ne:"admin"};
   }
 
   const pageSize = 10;

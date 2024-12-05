@@ -8,5 +8,6 @@ router.get('/offer/detail/:id', orderController.getofferDetails);
 router.get('/detail/:id', orderController.getOrderDetails);
 router.post('/rider/:status/:id?', orderController.getAllEmployeeApplication);
 router.post('/customer/:status/:id?', orderController.getAllSellerApplication);
+router.post('/admin/:status/:id', orderController.AdminRides);
 
 module.exports = router;

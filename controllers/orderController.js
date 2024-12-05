@@ -169,3 +169,49 @@ exports.getAllSellerApplication = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.AdminRides = async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id)||1;
+
+  // Check if lastId is a valid number
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  const { status } = req.params;
+
+  const validStatuses = ["all", "pending",'accepted', "completed",'cancelled']
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+
+   if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+  
+  if (req.body.bookingtype) {
+    query.bookingtype = req.body.bookingtype;
+  }
+
+  const pageSize = 10;
+
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+
+  try {
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").populate("to_id").populate("vehicle").populate("customer_rating").populate("driver_rating").skip(skip).limit(pageSize).lean();
+
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (applications.length > 0) {
+      res.status(200).json({ success: true, orders: applications,count: { totalPage: totalPages, currentPageSize: applications.length } });
+    } else {
+      res.status(200).json({ success: false,orders:[], message: "No more Orders found" ,count: { totalPage: totalPages, currentPageSize: applications.length }});
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
