@@ -187,10 +187,6 @@ exports.AdminRides = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
-   if (req.params.id) {
-    query._id = { $lt: req.params.id };
-  }
-  
   if (req.body.bookingtype) {
     query.bookingtype = req.body.bookingtype;
   }
