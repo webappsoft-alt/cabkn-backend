@@ -20,6 +20,7 @@ const firebaseadmin = require("firebase-admin");
 const like = require("../models/like");
 const Address = require("../models/Address");
 const Faqs = require("../models/Faqs");
+const Vehicle = require("../models/Vehicle");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -588,6 +589,101 @@ router.get('/favorite/:id', auth, async (req, res) => {
     } else {
       res.status(200).json({ success: false, message: 'No more favorite users found',users:[] ,count: { totalPage: totalPages, currentPageSize: jobs.length } });
     }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/vehicle', auth,  async (req, res) => {
+  try {
+    const userId=req.user._id
+    const { images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype, } = req.body;
+    const addresses = new Vehicle({
+      user:userId,
+      images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'Vehicle created successfully', vehicle:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.put('/vehicle/:id', auth,  async (req, res) => {
+  try {
+    const userId=req.user._id
+    const { 
+      images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
+     } = req.body;
+     // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  const user = await Vehicle.findOneAndUpdate({_id:req.params.id,user:userId}, updateFields, {
+    new: true,
+  });
+
+  if (!user)
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "The Vehicle with the given ID was not found.",
+      });
+
+  res.send({ success: true, message: "Vehicle updated successfully", vehicle:user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/vehicle/:id?', auth,  async (req, res) => {
+  let query = {};
+
+  const userId=req.user._id
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  query.user = userId
+  try {
+    const categories = await Vehicle.find(query).sort({ _id: -1 }).lean();
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, vehicles: categories });
+    } else {
+      res.status(200).json({ success: false,vehicles:[], message: 'No more vehicles found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/vehicle/:id', auth,  async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+    const userId=req.user._id
+    const service = await Vehicle.findOneAndDelete({_id:serviceId,user:userId});
+
+    if (service == null) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    res.status(200).json({ message: `Vehicle deleted successfully`, vehicle: service });
+
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }
