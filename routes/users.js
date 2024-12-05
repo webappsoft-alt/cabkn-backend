@@ -552,7 +552,6 @@ const dislike = async (otherUser, res, userId) => {
   }
 };
 
-
 router.get('/favorite/:id', auth, async (req, res) => {
   const userId = req.user._id
   const lastId = parseInt(req.params.id)||1;
