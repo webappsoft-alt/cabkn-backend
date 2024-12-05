@@ -57,8 +57,14 @@ const orderSchema = new mongoose.Schema({
     },
   },
   paymentId:String,
-  customer_rating:String,
-  driver_rating:String,
+  customer_rating:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Rating',
+  },
+  driver_rating:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Rating',
+  },
   status: {
     type: String,
     default: 'pending',

@@ -18,6 +18,8 @@ const admin = require("../middleware/admin");
 const moment = require('moment');
 const firebaseadmin = require("firebase-admin");
 const like = require("../models/like");
+const Address = require("../models/Address");
+const Faqs = require("../models/Faqs");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -490,7 +492,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
   res.send({ success: true, message: 'notification sent successfully', });
 });
 
-router.post('/like/:userId', auth,  async (req, res) => {
+router.put('/like/:userId', auth,  async (req, res) => {
   try {
     const otherUser = req.params.userId;
     const userId = req.user._id;
@@ -550,7 +552,7 @@ const dislike = async (otherUser, res, userId) => {
 };
 
 
-router.post('/favorite/:id', [auth, admin], async (req, res) => {
+router.get('/favorite/:id', auth, async (req, res) => {
   const userId = req.user._id
   const lastId = parseInt(req.params.id)||1;
 
@@ -591,6 +593,216 @@ router.post('/favorite/:id', [auth, admin], async (req, res) => {
   }
 });
 
+router.post('/address', auth,  async (req, res) => {
+  try {
+    const userId=req.user._id
+    const { 
+      address,
+      lat,
+      lng,
+      city, } = req.body;
+    const addresses = new Address({
+      user:userId,
+      address,
+      lat,
+      lng,
+      city,
+    });
+    await addresses.save();
 
+    res.status(201).json({ success: true, message: 'Address created successfully', address:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.put('/address/:id', auth,  async (req, res) => {
+  try {
+    const userId=req.user._id
+    const { 
+      address,
+      lat,
+      lng,
+      city, } = req.body;
+     // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      address,
+      lat,
+      lng,
+      city,
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  const user = await Address.findOneAndUpdate({_id:req.params.id,user:userId}, updateFields, {
+    new: true,
+  });
+
+  if (!user)
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "The Address with the given ID was not found.",
+      });
+
+  res.send({ success: true, message: "Address updated successfully", address:user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/address/:id?', auth,  async (req, res) => {
+  let query = {};
+
+  const userId=req.user._id
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  query.user = userId
+  try {
+    const categories = await Address.find(query).sort({ _id: -1 }).lean();
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, address: categories });
+    } else {
+      res.status(200).json({ success: false,address:[], message: 'No more address found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/address/:id', auth,  async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+    const userId=req.user._id
+    const service = await Address.findOneAndDelete({_id:serviceId,user:userId});
+
+    if (service == null) {
+      return res.status(404).json({ message: 'Address not found' });
+    }
+
+    res.status(200).json({ message: `Address deleted successfully`, address: service });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/faqs', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      subtile,
+      title,
+    } = req.body;
+    const addresses = new Faqs({
+      subtile,
+      title,
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'Faqs created successfully', faqs:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.put('/faqs/:id', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      subtile,
+      title,
+    } = req.body;
+     // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      subtile,
+      title,
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  const user = await Faqs.findOneAndUpdate({_id:req.params.id}, updateFields, {
+    new: true,
+  });
+
+  if (!user)
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "The Faqs with the given ID was not found.",
+      });
+
+  res.send({ success: true, message: "Faqs updated successfully", faqs:user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/faqs/:id',  async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id)||1;
+
+   // Check if lastId is a valid number
+   if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  const pageSize = 10;
+  
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+  try {
+    const categories = await Faqs.find(query).sort({ _id: -1 }).skip(skip)
+    .limit(pageSize).lean();
+
+    const totalCount = await Faqs.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, faqs: categories,count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    } else {
+      res.status(200).json({ success: false,faqs:[], message: 'No more faqs found',count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/faqs/:id', [auth,admin],  async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+    const service = await Faqs.findOneAndDelete({_id:serviceId});
+
+    if (service == null) {
+      return res.status(404).json({ message: 'Faqs not found' });
+    }
+
+    res.status(200).json({ message: `Faqs deleted successfully`, faqs: service });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 module.exports = router;

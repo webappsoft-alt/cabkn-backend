@@ -14,7 +14,7 @@ function calculateAverage(initialValue, numberToAdd) {
 
 exports.createRating = async (req, res) => {
   try {
-    const { to_id, order, rating,review } = req.body;
+    const { to_id, order, rating,review,type } = req.body;
     const userId = req.user._id;
 
     const ratings = new Rating({
@@ -33,8 +33,12 @@ exports.createRating = async (req, res) => {
     
     user.rating = calculateAverage(user.rating || 0, rating )
     user.totalReviews = user.totalReviews + 1
-    
-    await user.save()
+
+    if (type=='rider') {
+      events.driver_rating=ratings._id
+    }else{
+      events.customer_rating=ratings._id
+    }
     
     await sendNotification({
       user: userId,
@@ -47,6 +51,8 @@ exports.createRating = async (req, res) => {
     });
     
     await ratings.save();
+    await user.save()
+    await events.save()
 
     res.status(201).json({ success: true, message: 'Rating created successfully', ratings });
   } catch (error) {
@@ -57,7 +63,8 @@ exports.createRating = async (req, res) => {
 
 exports.getUserRatings = async (req, res) => {
   let query = {};
-  query.to_id = req.params.userId
+  const userId=req.params.userId
+  query.to_id = userId
 
   if (req.params.id) {
     query._id = { $lt: req.params.id };
@@ -66,51 +73,52 @@ exports.getUserRatings = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const user = await User.findById(req.params.userId)
-    if (!user) return res.status(400).json({ message: 'User does not exist for that ID.' });
-
-    const userRating = user.rating
+    const user = await User.findById(userId)
+    if (!user) return res.status(500).json({ message:"No user found!"});
 
     const rating = await Rating.find(query).sort({ _id: -1 }).populate("user")
       .limit(pageSize)
       .lean();
 
+    const totalLength = await Rating.countDocuments({ to_id: userId, });
+    const rating1 = await Rating.countDocuments({ to_id: userId, rating: 1 });
+    const rating2 = await Rating.countDocuments({ to_id: userId, rating: 2 });
+    const rating3 = await Rating.countDocuments({ to_id: userId, rating: 3 });
+    const rating4 = await Rating.countDocuments({ to_id: userId, rating: 4 });
+    const rating5 = await Rating.countDocuments({ to_id: userId, rating: 5 });
+
+    const numbers = [(rating1*1), (rating2*2), (rating3*3),(rating4*4),(rating5*5)];
+    const average = numbers.reduce((a, b) => a + b, 0) / totalLength;
     if (rating.length > 0) {
       res.status(200).json({
         success: true,
         ratings: rating,
-        userRating
+        totalLength: totalLength,
+        totalsRating: {
+          1: rating1,
+          2: rating2,
+          3: rating3,
+          4: rating4,
+          5: rating5,
+        },
+        avg_rating:average||0
       });
     } else {
       res.status(200).json({
-        success: false, message: 'No more ratings found',
+        success: false, message:"No more rating found!",
         ratings: [],
-        userRating
+        totalLength: totalLength,
+        totalsRating: {
+          1: rating1,
+          2: rating2,
+          3: rating3,
+          4: rating4,
+          5: rating5,
+        },
+        avg_rating:average||0
       });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-exports.getServiceRatings = async (req, res) => {
-  const userId = req.user._id;
-
-  try {
-    const event = await Event.findById(req.params.eventId).populate("joined").lean()
-
-    if (!event) return res.status(400).json({ message: 'Event does not exist for that ID.' });
-
-    let users=[...event.joined]
-
-    for (let user of users) {
-      user.givingRating = await Rating.findOne({event:req.params.eventId,to_id:user,user:userId }).lean()
-    }
-
-    res.status(200).json({success: true,users: users});
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal Server Error"});
   }
 };
