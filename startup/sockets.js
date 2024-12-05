@@ -182,7 +182,8 @@ module.exports = function (server,app) {
         type,
         bookingtype,
         schedule_date,
-        schedule_time
+        schedule_time,
+        distance
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -222,6 +223,9 @@ module.exports = function (server,app) {
        if (bookingtype=='schedule') {
         newRequest.schedule_date=schedule_date
         newRequest.schedule_time=schedule_time
+       }
+       if (distance) {
+        newRequest.distance=distance
        }
  
        await newRequest.save()
