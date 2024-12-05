@@ -22,6 +22,8 @@ const Address = require("../models/Address");
 const Faqs = require("../models/Faqs");
 const Vehicle = require("../models/Vehicle");
 const Order = require("../models/Order");
+const Liabilties = require("../models/Liabilties");
+const PriceKm = require("../models/PriceKm");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -1132,5 +1134,239 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
    });
 });
 
+router.post('/rideType', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      title,
+      image
+    } = req.body;
+    const addresses = new RideType({
+      title,
+      image
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'RideType created successfully', ridetype:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.put('/ridetype/:id', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      title,
+      image
+    } = req.body;
+     // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      title,
+      image
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  const user = await RideType.findOneAndUpdate({_id:req.params.id}, updateFields, {
+    new: true,
+  });
+
+  if (!user)
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "The ridetype with the given ID was not found.",
+      });
+
+  res.send({ success: true, message: "Ridetype updated successfully", ridetype:user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/ridetype/:id',  async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id)||1;
+
+   // Check if lastId is a valid number
+   if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  const pageSize = 10;
+  
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+  try {
+    const categories = await RideType.find(query).sort({ _id: -1 }).skip(skip)
+    .limit(pageSize).lean();
+
+    const totalCount = await RideType.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, ridetypes: categories,count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    } else {
+      res.status(200).json({ success: false,ridetypes:[], message: 'No more ridetypes found',count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/ridetype/:id', [auth,admin],  async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+    const service = await RideType.findOneAndDelete({_id:serviceId});
+
+    if (service == null) {
+      return res.status(404).json({ message: 'RideType not found' });
+    }
+
+    res.status(200).json({ message: `RideType deleted successfully`, ridetype: service });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/liabilty', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      title,
+    } = req.body;
+    const addresses = new Liabilties({
+      title,
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'Liabilty created successfully', Liabilty:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.put('/liabilty/:id', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      title,
+    } = req.body;
+     // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      title,
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  const user = await Liabilties.findOneAndUpdate({_id:req.params.id}, updateFields, {
+    new: true,
+  });
+
+  if (!user)
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "The liabilty with the given ID was not found.",
+      });
+
+  res.send({ success: true, message: "Liabilty updated successfully", liabilty:user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/liabilty/:id',  async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id)||1;
+
+   // Check if lastId is a valid number
+   if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  const pageSize = 10;
+  
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+  try {
+    const categories = await Liabilties.find(query).sort({ _id: -1 }).skip(skip)
+    .limit(pageSize).lean();
+
+    const totalCount = await Liabilties.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, liabilties: categories,count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    } else {
+      res.status(200).json({ success: false,liabilties:[], message: 'No more liabilties found',count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.delete('/liabilty/:id', [auth,admin],  async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+    const service = await Liabilties.findOneAndDelete({_id:serviceId});
+
+    if (service == null) {
+      return res.status(404).json({ message: 'Liabilty not found' });
+    }
+
+    res.status(200).json({ message: `Liabilty deleted successfully`, liabilty: service });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.post('/set-price', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      price,
+      km
+    } = req.body;
+    await PriceKm.findOneAndDelete({}).lean()
+
+    const addresses = new PriceKm({
+      price,
+      km
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'PriceKm created successfully', priceKm:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+router.get('/price', async (req, res) => {
+  try {
+    const prickm = await PriceKm.findOne({}).lean()
+
+    res.status(201).json({ success: true,priceKm:prickm });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 module.exports = router;
