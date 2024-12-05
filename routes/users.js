@@ -21,6 +21,7 @@ const like = require("../models/like");
 const Address = require("../models/Address");
 const Faqs = require("../models/Faqs");
 const Vehicle = require("../models/Vehicle");
+const Order = require("../models/Order");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -899,5 +900,130 @@ router.delete('/faqs/:id', [auth,admin],  async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+function findDateIndex(createdAt,dates) {
+  for (let i = 0; i < dates.length - 1; i++) {
+    if (moment(createdAt).isBetween(dates[i], dates[i + 1], null, '[)')) {
+      return i + 1; // Increment y value of the next date
+    }
+  }
+  // If the date is after the last date in the array
+  if (moment(createdAt).isSameOrAfter(dates[dates.length - 1])) {
+    return dates.length - 1;
+  }
+  return -1;
+}
+
+router.get('/rider/earnings',auth, async (req, res) => {
+  const userId=req.user._id
+  const now = new Date();
+  let dates = [];
+  for (let i = 0; i < 7; i++) {
+    let date = new Date(now);
+    date.setDate(now.getDate() - (i));
+    dates.unshift(date.toISOString());
+  }
+ const startDate=moment().startOf('week');
+ const todayEnd = moment().endOf('day');
+
+ const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price").lean()
+ const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+
+ const orders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).select("status schedule_date price").lean()
+
+  // Initialize the graph array
+  let graph = dates.map(date => ({ x: date, price:0 }));
+ 
+  // Increment the y value for the correct date ranges
+  orders.forEach(order => {
+    const index = findDateIndex(order.createdAt,dates);
+    if (index !== -1 && index < graph.length) {
+      graph[index].price += 1;
+    }
+  });
+
+  let newGraph = graph.map(obj => {
+    return { ["x"]: moment(obj.x).format('MMM'), ["price"]: obj.price};
+  });
+
+
+  res.send({ success: true, graph:newGraph, totalEarnings });
+});
+
+router.post('/rider/dashboard',auth, async (req, res) => {
+  const userId=req.user._id
+  
+  let query={}
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  const {startDate,todayEnd}=req.body;
+
+ const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price").lean()
+ const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+ 
+ const orders = await Order.find({...query,to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ 
+ const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
+
+  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders });
+});
+
+router.get('/customer/earnings',auth, async (req, res) => {
+  const userId=req.user._id
+  const now = new Date();
+  let dates = [];
+  for (let i = 0; i < 7; i++) {
+    let date = new Date(now);
+    date.setDate(now.getDate() - (i));
+    dates.unshift(date.toISOString());
+  }
+ const startDate=moment().startOf('week');
+ const todayEnd = moment().endOf('day');
+
+ const earnings = await Order.find({user:userId,status:"completed"}).select("status schedule_date price").lean()
+ const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+
+ const orders = await Order.find({user:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).select("status schedule_date price").lean()
+
+  // Initialize the graph array
+  let graph = dates.map(date => ({ x: date, price:0 }));
+ 
+  // Increment the y value for the correct date ranges
+  orders.forEach(order => {
+    const index = findDateIndex(order.createdAt,dates);
+    if (index !== -1 && index < graph.length) {
+      graph[index].price += 1;
+    }
+  });
+
+  let newGraph = graph.map(obj => {
+    return { ["x"]: moment(obj.x).format('MMM'), ["price"]: obj.price};
+  });
+
+
+  res.send({ success: true, graph:newGraph, totalEarnings });
+});
+
+router.post('/customer/dashboard/:id?',auth, async (req, res) => {
+  const userId=req.user._id
+
+  let query={}
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+  const {startDate,todayEnd}=req.body;
+
+ const earnings = await Order.find({user:userId,status:"completed"}).select("status schedule_date price").lean()
+ const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+ 
+ const orders = await Order.find({...query,user:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ 
+ const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
+
+  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders });
+});
+
 
 module.exports = router;

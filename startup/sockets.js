@@ -391,8 +391,10 @@ module.exports = function (server,app) {
             order: requestId,
             to_id: order.user._id,
             price,
-            vehicle
           });
+          if (vehicle) {
+            newRequest.vehicle=vehicle
+          }
     
           // Update order as accepted by this rider
           await Order.findByIdAndUpdate(requestId, { $addToSet: { accepted_by: senderId } });
@@ -572,7 +574,9 @@ module.exports = function (server,app) {
     
           // Update the order status
           order.status = 'accepted';
-          order.vehicle = request.vehicle;
+          if (request.vehicle) {
+            order.vehicle = request.vehicle;
+          }
           order.to_id = request.user._id;
           order.paymentId = paymentId;
           await order.save();
@@ -636,7 +640,7 @@ module.exports = function (server,app) {
         });
       }
     });
-    
+
 
     socket.on('update-order-rider', async ({ orderId, status }, callback) => {
       try {
