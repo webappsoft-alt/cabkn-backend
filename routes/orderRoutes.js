@@ -4,6 +4,8 @@ const orderController = require('../controllers/orderController');
 
 router.get('/rider/request/:id?', orderController.fetchrequestOrder);
 router.get('/customer/offer/:orderId/:id?', orderController.fetchrequestOrderOffers);
+router.get('/offer/detail/:id', orderController.getofferDetails);
+router.get('/detail/:id', orderController.getOrderDetails);
 router.post('/rider/:status/:id?', orderController.getAllEmployeeApplication);
 router.post('/customer/:status/:id?', orderController.getAllSellerApplication);
 

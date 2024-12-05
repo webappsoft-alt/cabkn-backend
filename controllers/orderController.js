@@ -99,6 +99,34 @@ exports.getAllEmployeeApplication = async (req, res) => {
   }
 };
 
+exports.getOrderDetails = async (req, res) => {
+  
+  try {
+    const applications = await Order.findById(req.params.id).populate("user").populate("vehicle").populate("to_id").lean();
+
+    if (!applications) return res.status(200).json({ success: false,message: "No more Orders found"  });
+    
+    res.status(200).json({ success: true, order:applications });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+exports.getofferDetails = async (req, res) => {
+  
+  try {
+    const applications = await Request.findById(req.params.id).populate("user").populate("order").populate("vehicle").populate("to_id").lean();
+
+    if (!applications) return res.status(200).json({ success: false,message: "No more offers found"  });
+    
+    res.status(200).json({ success: true, offers:applications });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
 exports.getAllSellerApplication = async (req, res) => {
   let query = {};
   const userId = req.user._id;
