@@ -1033,5 +1033,104 @@ router.post('/customer/dashboard/:id?',auth, async (req, res) => {
   res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance });
 });
 
+router.get('/dashboard',[auth, admin],async (req, res) => {
+  const totalUsers = await User.countDocuments({type:"customer",status:{$in:['online',"offline"]}});
+
+   // Get users registered yesterday
+   const today = new Date();
+   const yesterday = new Date(today);
+   yesterday.setDate(today.getDate() - 1);
+   const yesterdayUsers = await User.countDocuments({
+      createdAt: { $gte: yesterday, $lt: today },
+      type:"customer",
+      status:{$in:['online',"offline"]}
+   });
+   // Get the number of users until yesterday
+   const totalUsersYesterday = totalUsers - yesterdayUsers;
+   // Calculate growth percentage
+   let growth = 0;
+   if (totalUsersYesterday > 0) {
+       growth = ((totalUsers - totalUsersYesterday) / totalUsersYesterday) * 100;
+   }
+
+  const totalownerUsers = await User.countDocuments({type:"rider",status:{$in:['online',"offline"]}});
+
+  const yesterdayownerUsers = await User.countDocuments({
+      createdAt: { $gte: yesterday, $lt: today },
+      type:"rider",
+      status:{$in:['online',"offline"]}
+   });
+   // Get the number of users until yesterday
+   const totalownerUsersYesterday = totalownerUsers - yesterdayownerUsers;
+   // Calculate growth percentage
+   let growthowner = 0;
+   if (totalownerUsersYesterday > 0) {
+      growthowner = ((totalownerUsers - totalownerUsersYesterday) / totalownerUsersYesterday) * 100;
+   }
+
+
+   const totalOrder = await Order.countDocuments({status:"completed",});
+
+   const yesterdayOrder = await Order.countDocuments({
+    createdAt: { $gte: yesterday, $lt: today },
+    status:"completed"
+   });
+   // Get the number of users until yesterday
+   const totalOrderYesterday = totalOrder - yesterdayOrder;
+   // Calculate growth percentage
+   let growthOrder = 0;
+   if (totalOrderYesterday > 0) {
+      growthOrder = ((totalOrder - totalOrderYesterday) / totalOrderYesterday) * 100;
+   }
+ 
+  
+   const now = new Date();
+   let dates = [];
+   for (let i = 0; i < 12; i++) {
+    let date = new Date(now);
+    date.setMonth(now.getMonth() - i);
+    dates.unshift(date.toISOString());
+  }
+  const startDate = moment().startOf('year');
+  const todayEnd = moment().endOf('day');
+ 
+  const orders = await Order.find({createdAt: { $gte: startDate, $lte: todayEnd },status:"completed",}).select("price createdAt").lean()
+ 
+   // Initialize the graph array
+   let graph = dates.map(date => ({ x: date, price:0 }));
+  
+   // Increment the y value for the correct date ranges
+   orders.forEach(order => {
+     const index = findDateIndex(order.createdAt,dates);
+     if (index !== -1 && index < graph.length) {
+      graph[index].price = Number(graph[index].price) + Number(order.price);
+     }
+   });
+ 
+   let newGraph = graph.map(obj => {
+     return { ["x"]: moment(obj.x).format('MMM'), ["y"]: obj.price};
+   });
+ 
+  
+  res.send({ success: true, 
+    graph:newGraph,
+    customer:{
+      totalUsers,
+      growth: growth.toFixed(2),
+      status: growth >= 0 ? 'positive' : 'negative'
+    },
+    rider:{
+      totalUsers:totalownerUsers,
+      growth: growthowner.toFixed(2),
+      status: growthowner >= 0 ? 'positive' : 'negative'
+    },
+    order:{
+      totalEvents:totalOrder,
+      growth: growthOrder.toFixed(2),
+      status: growthOrder >= 0 ? 'positive' : 'negative'
+    },
+   });
+});
+
 
 module.exports = router;
