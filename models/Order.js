@@ -81,6 +81,14 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',
   },
+  paymentDone:{
+    type:Boolean,
+    default:false
+  },
+  payment:[{
+    amount:Number,
+    date:Date
+  }],
   status: {
     type: String,
     default: 'pending',

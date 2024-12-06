@@ -10,5 +10,7 @@ router.get('/detail/:id', orderController.getOrderDetails);
 router.post('/rider/:status/:id?', orderController.getAllEmployeeApplication);
 router.post('/customer/:status/:id?', orderController.getAllSellerApplication);
 router.post('/admin/:status/:id',admin, orderController.AdminRides);
+router.put('/admin/update-purchases/:id',admin, orderController.updatePurchasePaymentByAdmin);
+
 
 module.exports = router;

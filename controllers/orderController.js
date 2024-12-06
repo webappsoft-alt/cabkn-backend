@@ -283,3 +283,22 @@ exports.AdminRides = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
+exports.updatePurchasePaymentByAdmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const {paymentDone,payment}=req.body;
+    const payemntObject={amount:payment,date:Date.now()}
+
+    const post = await Order.findOneAndUpdate({_id:postId}, {paymentDone:paymentDone,$push:{payment:payemntObject}}, {new: true});
+
+    if (!post) return res.status(404).send({ success: false, message: 'The Purchase with the given ID was not found.' });
+
+    res.send({ success: true, message: 'Purchase payed successfully', purchase:post });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
