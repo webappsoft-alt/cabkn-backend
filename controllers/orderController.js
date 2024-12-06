@@ -16,7 +16,7 @@ exports.fetchrequestOrder = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ _id: -1 }).populate("user").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ _id: -1 }).populate("ridertype").populate("liability").populate("user").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, requests: applications });
@@ -86,7 +86,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").populate("vehicle").populate("ridertype").populate("liability").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
@@ -102,7 +102,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
 exports.getOrderDetails = async (req, res) => {
   
   try {
-    const applications = await Order.findById(req.params.id).populate("user").populate("vehicle").populate("to_id").lean();
+    const applications = await Order.findById(req.params.id).populate("user").populate("vehicle").populate("ridertype").populate("liability").populate("to_id").lean();
 
     if (!applications) return res.status(200).json({ success: false,message: "No more Orders found"  });
     
@@ -157,7 +157,7 @@ exports.getAllSellerApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("to_id").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("to_id").populate("ridertype").populate("liability").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });

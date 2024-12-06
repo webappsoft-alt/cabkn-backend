@@ -65,6 +65,14 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',
   },
+  liability:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Liabilties',
+  },
+  ridertype:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RideType',
+  },
   vehicle:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Vehicle',

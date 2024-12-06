@@ -183,7 +183,9 @@ module.exports = function (server,app) {
         bookingtype,
         schedule_date,
         schedule_time,
-        distance
+        distance,
+        liability,
+        ridertype
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -218,7 +220,9 @@ module.exports = function (server,app) {
          end_address,
          type,
          userIds:userIds,
-         bookingtype
+         bookingtype,
+         liability,
+         ridertype
        });
        if (bookingtype=='schedule') {
         newRequest.schedule_date=schedule_date
@@ -229,7 +233,7 @@ module.exports = function (server,app) {
        }
  
        await newRequest.save()
-       const request=await Order.findById(newRequest._id).populate("user")
+       const request=await Order.findById(newRequest._id).populate("user").populate("ridertype").populate("liability")
        callback({request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
        for (let user of userIds) {
@@ -360,7 +364,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findById(requestId).populate("user");
+        const order = await Order.findById(requestId).populate("user").populate("ridertype").populate("liability");
     
         if (!order) {
           return callback({
@@ -533,7 +537,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findById(orderId).populate("user");
+        const order = await Order.findById(orderId).populate("user").populate("ridertype").populate("liability");
     
         if (!order) {
           return callback({
@@ -674,7 +678,7 @@ module.exports = function (server,app) {
           { _id: orderId, status: "accepted", to_id: senderId },
           { status: status },
           { new: true }
-        ).populate("to_id").populate("user").lean();
+        ).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
     
         if (!updatedOrder) {
           return callback({
