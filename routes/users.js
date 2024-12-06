@@ -1244,11 +1244,13 @@ router.post('/liabilty', [auth,admin],  async (req, res) => {
   try {
     const { 
       title,
-      price
+      price,
+      distance
     } = req.body;
     const addresses = new Liabilties({
       title,
-      price
+      price,
+      distance
     });
     await addresses.save();
 
@@ -1262,13 +1264,15 @@ router.put('/liabilty/:id', [auth,admin],  async (req, res) => {
   try {
     const { 
       title,
-      price
+      price,
+      distance
     } = req.body;
      // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
       title,
-      price
+      price,
+      distance
     }).filter(([key, value]) => value !== undefined)
   );
 

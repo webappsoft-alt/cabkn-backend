@@ -6,6 +6,10 @@ const ratingSchema = new mongoose.Schema({
     type: Number,
     default:0
   },
+  distance:{
+    type: Number,
+    default:0
+  },
   createdAt: {
     type: Date,
     default: Date.now,
