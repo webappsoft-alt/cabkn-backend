@@ -122,7 +122,7 @@ function validateUser(user) {
     image: Joi.string().min(0).max(1024).optional(),
     insurancetype: Joi.string().min(0).max(1024).optional(),
     ride_type: Joi.string().min(0).max(1024).optional(),
-    adddress: Joi.string().min(0).max(1024).optional(),
+    address: Joi.string().min(0).max(1024).optional(),
     docs: Joi.array().min(0).max(1024).optional(),
   };
 
