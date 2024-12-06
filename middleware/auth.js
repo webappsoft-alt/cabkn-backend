@@ -10,7 +10,7 @@ module.exports =async function (req, res, next) {
     const decoded = jwt.verify(token, config.get('jwtPrivateKey'));//JWT need to be defined somewherelese
     const user = await User.findById(decoded._id).select('status');
 
-    if (user.status=='online') {
+    if (["online",'offline'].includes(user.status)) {
       req.user = decoded;
       next();
     }else{
