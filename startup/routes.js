@@ -18,7 +18,7 @@ module.exports = function (app) {
   app.use('/api/users', users);
   app.use('/api/image', uploadImages);
   app.use('/api/category', categoryRoute);
-  app.use('/api/order', orderRoutes);
+  app.use('/api/order',authMiddleware, orderRoutes);
   app.use('/api/coupon', couponRoute);
   app.use('/api/rating',authMiddleware, ratingRoutes);
   app.use('/api/msg',authMiddleware, messageRoutes);
