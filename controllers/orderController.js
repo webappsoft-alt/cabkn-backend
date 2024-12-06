@@ -172,19 +172,22 @@ exports.getAllSellerApplication = async (req, res) => {
 
 exports.AdminRides = async (req, res) => {
   let query = {};
-  const lastId = parseInt(req.params.id)||1;
+  const lastId = parseInt(req.params.id) || 1;
 
-  // Check if lastId is a valid number
+  // Validate lastId
   if (isNaN(lastId) || lastId < 0) {
-    return res.status(400).json({ error: 'Invalid last_id' });
+    return res.status(400).json({ error: "Invalid last_id" });
   }
 
   const { status } = req.params;
-
-  const validStatuses = ["all", "pending",'accepted', "completed",'cancelled']
+  const validStatuses = ["all", "pending", "accepted", "completed", "cancelled"];
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+
+  if (status !== "all") {
+    query.status = status;
   }
 
   if (req.body.bookingtype) {
@@ -192,22 +195,91 @@ exports.AdminRides = async (req, res) => {
   }
 
   const pageSize = 10;
-
   const skip = Math.max(0, (lastId - 1)) * pageSize;
 
-
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("user").populate("to_id").populate("vehicle").populate("customer_rating").populate("driver_rating").skip(skip).limit(pageSize).lean();
+    const matchStage = { $match: query };
+
+    const searchStage =  {
+          $lookup: {
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
+          },
+        }
+
+    const filterStage = req.body.search
+      ? {
+          $match: {
+            $or: [
+              { "user.name": { $regex: req.body.search, $options: "i" } },
+              { "user.email": { $regex: req.body.search, $options: "i" } },
+            ],
+          },
+        }
+      : null;
+
+    const applications = await Order.aggregate([
+      matchStage,
+      ...(searchStage ? [searchStage] : []),
+      ...(filterStage ? [filterStage] : []),
+      { $skip: skip },
+      { $limit: pageSize },
+      { $sort: { schedule_date: 1 } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "to_id",
+          foreignField: "_id",
+          as: "to_id",
+        },
+      },
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "customer_rating",
+          foreignField: "_id",
+          as: "customer_rating",
+        },
+      },
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "driver_rating",
+          foreignField: "_id",
+          as: "driver_rating",
+        },
+      },
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicle",
+          foreignField: "_id",
+          as: "vehicle",
+        },
+      },
+    ]);
 
     const totalCount = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalCount / pageSize);
 
     if (applications.length > 0) {
-      res.status(200).json({ success: true, orders: applications,count: { totalPage: totalPages, currentPageSize: applications.length } });
+      res.status(200).json({
+        success: true,
+        orders: applications,
+        count: { totalPage: totalPages, currentPageSize: applications.length },
+      });
     } else {
-      res.status(200).json({ success: false,orders:[], message: "No more Orders found" ,count: { totalPage: totalPages, currentPageSize: applications.length }});
+      res.status(200).json({
+        success: false,
+        orders: [],
+        message: "No more Orders found",
+        count: { totalPage: totalPages, currentPageSize: applications.length },
+      });
     }
   } catch (error) {
+    console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
