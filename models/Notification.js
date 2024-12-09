@@ -18,6 +18,7 @@ const notificationSchema = new mongoose.Schema({
   },
   order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' }, 
   request: { type: mongoose.Schema.Types.ObjectId, ref: 'Request' }, 
+  support: { type: mongoose.Schema.Types.ObjectId, ref: 'Support' }, 
   description: {
     type: String,
     required: true,

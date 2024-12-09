@@ -190,6 +190,14 @@ module.exports = function (server,app) {
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
        );
+
+       if (!senderId) {
+        return callback({
+          success: false,
+          title: 'Authentication Error',
+          message: 'Sender ID not found.',
+        });
+      }
  
        let userIds=await User.find({type:"rider",status:"online"}).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
@@ -593,7 +601,7 @@ module.exports = function (server,app) {
           await sendNotification({
             user: senderId,
             to_id: request.user?._id.toString(),
-            description: `Your offer has been accepted by ${order?.user?.name} and your order has been started.`,
+            description: `Your offer has been accepted by ${order?.user?.name} and your ride has been started.`,
             type: "order",
             title: "Offer Accepted",
             fcmtoken: request?.user?.fcmtoken,
@@ -604,7 +612,7 @@ module.exports = function (server,app) {
           await sendNotification({
             user: request.user?._id.toString(),
             to_id: senderId,
-            description: `You have accepted an offer from ${request.user?.name} and your order has been started.`,
+            description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
             type: "order",
             title: "Offer Accepted",
             fcmtoken: order?.user?.fcmtoken,

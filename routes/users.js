@@ -24,6 +24,8 @@ const Vehicle = require("../models/Vehicle");
 const Order = require("../models/Order");
 const Liabilties = require("../models/Liabilties");
 const PriceKm = require("../models/PriceKm");
+const Privacy = require("../models/Privacy");
+const Terms = require("../models/Terms");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -1368,11 +1370,74 @@ router.post('/set-price', [auth,admin],  async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
 router.get('/price', async (req, res) => {
   try {
     const prickm = await PriceKm.findOne({}).lean()
 
     res.status(201).json({ success: true,priceKm:prickm });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+router.post('/privacy', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      title,
+      image,
+      description
+    } = req.body;
+    await Privacy.findOneAndDelete({}).lean()
+
+    const addresses = new Privacy({
+      title,
+      image,
+      description
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'Privacy created successfully', privacy:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/privacy', async (req, res) => {
+  try {
+    const prickm = await Privacy.findOne({}).lean()
+
+    res.status(201).json({ success: true,privacy:prickm });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+router.post('/terms', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      title,
+      image,
+      description
+    } = req.body;
+    await Terms.findOneAndDelete({}).lean()
+
+    const addresses = new Terms({
+      title,
+      image,
+      description
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'Terms created successfully', terms:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/terms', async (req, res) => {
+  try {
+    const prickm = await Terms.findOne({}).lean()
+
+    res.status(201).json({ success: true,terms:prickm });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }

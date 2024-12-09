@@ -61,6 +61,10 @@ const orderSchema = new mongoose.Schema({
     },
   },
   paymentId:String,
+  tip:{
+    type: Number,
+    default: 0,
+  },
   customer_rating:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',

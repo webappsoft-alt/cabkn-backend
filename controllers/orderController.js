@@ -302,3 +302,20 @@ exports.updatePurchasePaymentByAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+exports.updatePurchasePaymentByCustomer = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user._id;
+    const { paymentId,tip }=req.body;
+
+    const post = await Order.findOneAndUpdate({ _id:postId, user: userId }, { paymentId:paymentId,tip:tip||0 }, {new: true});
+
+    if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
+
+    res.send({ success: true, message: 'Payment payed successfully', order:post });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
