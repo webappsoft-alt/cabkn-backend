@@ -521,7 +521,7 @@ router.put('/like/:userId', auth,  async (req, res) => {
       userId,
       { $push: { likes: likePost._id } },
       { new: true }
-    ).select("-likes")
+    ).select("-password")
 
     if (!updatedPost) {
       return res.status(404).json({ message: 'User not found' });
@@ -548,7 +548,7 @@ const dislike = async (otherUser, res, userId) => {
       userId,
       { $pull: { likes: deletedLike._id } },
       { new: true }
-    ).select("-likes")
+    ).select("-password")
 
     if (!updatedPost) {
       return res.status(404).json({ message: 'User not found' });
