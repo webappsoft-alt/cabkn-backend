@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Request = require("../models/Request");
+const { User } = require("../models/user");
 
 exports.fetchrequestOrder = async (req, res) => {
   let query = {};
@@ -102,11 +103,15 @@ exports.getAllEmployeeApplication = async (req, res) => {
 exports.getOrderDetails = async (req, res) => {
   
   try {
+    const user = await User.findById(req.user._id).lean();
+
     const applications = await Order.findById(req.params.id).populate("user").populate("vehicle").populate("ridertype").populate("liability").populate("to_id").lean();
 
     if (!applications) return res.status(200).json({ success: false,message: "No more Orders found"  });
+
+    const likes= Array.isArray(user.likes) && user.likes.some((like) => like.toString() === applications.to_id._id.toString());
     
-    res.status(200).json({ success: true, order:applications });
+    res.status(200).json({ success: true, order:{...applications,likes:likes} });
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: "Internal server error" });
