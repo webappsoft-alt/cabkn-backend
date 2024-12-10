@@ -103,13 +103,13 @@ exports.getAllEmployeeApplication = async (req, res) => {
 exports.getOrderDetails = async (req, res) => {
   
   try {
-    const user = await User.findById(req.user._id).lean();
+    const user = await User.findById(req.user._id).populate("likes").lean();
 
     const applications = await Order.findById(req.params.id).populate("user").populate("vehicle").populate("ridertype").populate("liability").populate("to_id").lean();
 
     if (!applications) return res.status(200).json({ success: false,message: "No more Orders found"  });
 
-    const likes= Array.isArray(user.likes) && user.likes.some((like) => like.toString() === applications.to_id._id.toString());
+    const likes= Array.isArray(user.likes) && user.likes.some((like) => like.otherUser.toString() === applications.to_id._id.toString());
     
     res.status(200).json({ success: true, order:{...applications,likes:likes} });
   } catch (error) {
