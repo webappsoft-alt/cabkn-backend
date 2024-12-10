@@ -77,6 +77,10 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'RideType',
   },
+  coupon:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Coupon',
+  },
   vehicle:{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Vehicle',

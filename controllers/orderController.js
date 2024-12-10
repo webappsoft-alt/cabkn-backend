@@ -1,3 +1,4 @@
+const Coupon = require("../models/Coupon");
 const Order = require("../models/Order");
 const Request = require("../models/Request");
 const { User } = require("../models/user");
@@ -313,9 +314,20 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
   try {
     const postId = req.params.id;
     const userId = req.user._id;
-    const { paymentId,tip }=req.body;
+    const { paymentId,tip,couponId }=req.body;
 
-    const post = await Order.findOneAndUpdate({ _id:postId, user: userId }, { paymentId:paymentId,tip:tip||0 }, {new: true});
+    let query={
+      paymentId:paymentId,tip:tip||0 
+    }
+    if (couponId) {
+      await Coupon.findByIdAndUpdate(couponId,{$addToSet:{used_by:userId}}).lean();
+      query={
+        ...query,
+        coupon:couponId
+      }
+    }
+
+    const post = await Order.findOneAndUpdate({ _id:postId, user: userId }, { }, {new: true});
 
     if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
 

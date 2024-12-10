@@ -10,6 +10,7 @@ const { sendNotification } = require('../controllers/notificationCreateService')
 const { updateUserLocation, getUsersInRadius } = require('../controllers/UserLocation');
 const Order = require('../models/Order');
 const Request = require('../models/Request');
+const Coupon = require('../models/Coupon');
 
 const connectedUsers = {};
 
@@ -531,7 +532,7 @@ module.exports = function (server,app) {
       }
     });
 
-    socket.on('update-request-customer', async ({ requestId, status, orderId, paymentId }, callback) => {
+    socket.on('update-request-customer', async ({ requestId, status, orderId, paymentId,couponId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
@@ -593,6 +594,12 @@ module.exports = function (server,app) {
           if (request.vehicle) {
             order.vehicle = request.vehicle;
           }
+
+          if (couponId) {
+            await Coupon.findByIdAndUpdate(couponId,{$addToSet:{used_by:senderId}}).lean();
+            order.coupon = couponId;
+          }
+
           order.to_id = request.user._id;
           order.paymentId = paymentId;
           await order.save();
