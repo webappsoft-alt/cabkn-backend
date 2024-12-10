@@ -364,6 +364,82 @@ router.put("/update-user", auth, async (req, res) => {
   res.send({ success: true, message: "User updated successfully", user });
 });
 
+router.put("/update-location", auth, async (req, res) => {
+  const { location } = req.body;
+
+  
+  // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      location
+    }).filter(([key, value]) => value !== undefined)
+  );
+  
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+    .status(400)
+    .send({
+      success: false,
+      message: "No valid fields provided for update.",
+    });
+  }
+  const { to_id, order } = req.body;
+
+  const user = await User.findByIdAndUpdate(req.user._id, updateFields, {
+    new: true,
+  });
+
+  if (!user) return res.status(400).send({ success: false, message: "The User with the given ID was not found.",});
+
+  const io = req.app.get('socketio');
+  io.to(to_id.toString()).emit('location-update', {order,location});
+
+  res.send({ success: true, message: "User updated successfully", user });
+});
+
+router.get('/nearby/:id',[auth,admin], async (req, res) => {
+  const lastId = parseInt(req.params.id)||1;
+  const { lat, lng } = req.body;
+
+  // Check if lastId is a valid number
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  let query={}
+
+  if (lat && lng) {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const radiusInMeters = 16093.4; // 10 miles in meters (1 mile = 1609.34 meters)
+
+    query={
+      ...query,
+      location: {
+        $geoWithin: {
+          $centerSphere: [[longitude, latitude], radiusInMeters / 6371000],
+        },
+      },
+    }
+  }
+
+  query.type="rider"
+  query.status="online"
+
+  const pageSize = 10;
+
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+  const users = await User.find(query).sort({ _id: -1 }).skip(skip).limit(pageSize).lean();
+
+  const totalCount = await User.countDocuments(query);
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  res.send({ success: true, users: users,count: { totalPage: totalPages, currentPageSize: users.length } });
+});
+
+
 router.delete("/", auth, async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.user._id,
