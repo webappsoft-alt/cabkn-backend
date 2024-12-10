@@ -3,9 +3,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const cron = require("node-cron");
 const logger = require('./startup/logger'); // Adjust the path as needed
 
 const admin = require("firebase-admin");
+const { CheckCoupons } = require('./controllers/CheckCoupons');
 
 const config = {
   "type": process.env.TYPE,
@@ -24,7 +26,7 @@ const config = {
 
 admin.initializeApp({
   credential: admin.credential.cert(config),
-  storageBucket: "gs://eventshub-330f9.appspot.com"
+  storageBucket: "gs://cabkn-63397.firebasestorage.app"
 });
 
 app.use(cors());
@@ -41,12 +43,12 @@ const server = app.listen(port, () => logger.info(`Listening on port  ${port}...
 
 require('./startup/sockets')(server, app);
 
-// // Schedule a cron job to run daily at midnight
-// cron.schedule('0 0 * * *', async () => {
-//     await CheckCoupons()
-//   }, {
-//     scheduled: true,
-//     timezone: "America/New_York" // Set your preferred timezone, e.g., "America/New_York"
-// });
+// Schedule a cron job to run daily at midnight
+cron.schedule('0 0 * * *', async () => {
+    await CheckCoupons()
+  }, {
+    scheduled: true,
+    timezone: "America/New_York" // Set your preferred timezone, e.g., "America/New_York"
+});
 
 module.exports = server;
