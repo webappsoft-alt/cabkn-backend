@@ -527,8 +527,6 @@ router.put('/like/:userId', auth,  async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    console.log("updatedPost====>",updatedPost)
-
     await likePost.save()
 
     res.status(200).json({ message: 'Like added successfully', user: updatedPost });
