@@ -398,7 +398,7 @@ router.put("/update-location", auth, async (req, res) => {
   res.send({ success: true, message: "User updated successfully", user });
 });
 
-router.get('/nearby/:id',[auth,admin], async (req, res) => {
+router.get('/nearby/:id',auth, async (req, res) => {
   const lastId = parseInt(req.params.id)||1;
   const { lat, lng } = req.body;
 
