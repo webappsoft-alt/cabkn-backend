@@ -391,8 +391,10 @@ router.put("/update-location", auth, async (req, res) => {
 
   if (!user) return res.status(400).send({ success: false, message: "The User with the given ID was not found.",});
 
-  const io = req.app.get('socketio');
-  io.to(to_id.toString()).emit('location-update', {order,location});
+  if (to_id && order) {
+    const io = req.app.get('socketio');
+    io.to(to_id.toString()).emit('location-update', {order,location});
+  }
 
   res.send({ success: true, message: "User updated successfully", user });
 });
