@@ -366,7 +366,6 @@ router.put("/update-user", auth, async (req, res) => {
 
 router.put("/update-location", auth, async (req, res) => {
   const { location } = req.body;
-
   
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
