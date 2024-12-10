@@ -327,7 +327,7 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
       }
     }
 
-    const post = await Order.findOneAndUpdate({ _id:postId, user: userId }, { }, {new: true});
+    const post = await Order.findOneAndUpdate({ _id:postId, user: userId },query, {new: true});
 
     if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
 
