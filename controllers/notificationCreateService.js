@@ -34,6 +34,8 @@ exports.sendNotification = async ({
 
           await notification.save();
 
+          const recipient = await User.findOne({ _id: user }).select('-password -fcmtoken -code -likes').lean()
+
           const newUpdateFields = Object.fromEntries(
             Object.entries({
               request, order, support
@@ -42,6 +44,7 @@ exports.sendNotification = async ({
       
           // Ensure all values in data are strings
           const messageData = {
+            recipient: JSON.stringify(recipient), // Convert recipient to a string
             messageType: type,
             ...Object.fromEntries(
               Object.entries(newUpdateFields).map(([key, value]) => [key, String(value)])
