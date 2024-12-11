@@ -1030,6 +1030,8 @@ router.get('/rider/earnings',auth, async (req, res) => {
   return total + orderTotal;
 }, 0);
 
+const remainigEarning=Number(totalEarnings)-Number(totalAmountReceived)
+
  const orders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).select("status schedule_date price").lean()
 
   // Initialize the graph array
@@ -1048,7 +1050,7 @@ router.get('/rider/earnings',auth, async (req, res) => {
   });
 
 
-  res.send({ success: true, graph:newGraph, totalEarnings,totalDistance,totalAmountReceived });
+  res.send({ success: true, graph:newGraph, totalEarnings,totalDistance,totalAmountReceived,remainigEarning });
 });
 
 router.post('/rider/dashboard/:id?',auth, async (req, res) => {
@@ -1069,6 +1071,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
     const orderTotal = order.payment.reduce((sum, payment) => sum + payment.amount, 0);
     return total + orderTotal;
   }, 0);
+  const remainigEarning=Number(totalEarnings)-Number(totalAmountReceived)
 
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
  
@@ -1077,7 +1080,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
  const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
  const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
 
-  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived });
+  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning });
 });
 
 router.get('/customer/earnings',auth, async (req, res) => {
