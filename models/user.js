@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  amount:{
+    type: Number,
+    default: 0,
+  },
   address:String,
   image:String,
   fcmtoken: String,
