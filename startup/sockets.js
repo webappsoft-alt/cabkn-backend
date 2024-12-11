@@ -7,7 +7,6 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { User } = require('../models/user');
 const { sendNotification } = require('../controllers/notificationCreateService');
-const { updateUserLocation, getUsersInRadius } = require('../controllers/UserLocation');
 const Order = require('../models/Order');
 const Request = require('../models/Request');
 const Coupon = require('../models/Coupon');
@@ -399,7 +398,17 @@ module.exports = function (server,app) {
           });
         }
     
-        if (status === 'rejected') {
+        if (status === 'rejected') { 
+          const findorder = await Order.findOne({_id:requestId,rejected_by:{$in:senderId}}).lean();
+
+          if (findorder) {
+            return callback({
+              success: false,
+              request: order,
+              title: 'Request Update',
+              message: 'The request has already been rejected.',
+            });
+          }
           // Update order as rejected by this rider
           await Order.findByIdAndUpdate(requestId, { $addToSet: { rejected_by: senderId } });
     
@@ -410,6 +419,17 @@ module.exports = function (server,app) {
             message: 'The request was successfully rejected.',
           });
         } else {
+
+          const findorder = await Order.findOne({_id:requestId,accepted_by:{$in:senderId}}).lean();
+
+          if (findorder) {
+            return callback({
+              success: false,
+              request: order,
+              title: 'Request Update',
+              message: 'The request has already been accepted.',
+            });
+          }
           // Create a new offer/request
           const newRequest = new Request({
             user: senderId,

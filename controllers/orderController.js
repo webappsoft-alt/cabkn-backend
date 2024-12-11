@@ -200,6 +200,11 @@ exports.AdminRides = async (req, res) => {
   if (req.body.bookingtype) {
     query.bookingtype = req.body.bookingtype;
   }
+  
+
+  if (req.body.paymentDone) {
+    query.paymentDone = req.body.paymentDone;
+  }
 
   const pageSize = 10;
   const skip = Math.max(0, (lastId - 1)) * pageSize;
