@@ -305,6 +305,11 @@ exports.AdminRides = async (req, res) => {
       },
     ]);
 
+    for (let post of applications) {
+      post.paidAmount = post.payment.reduce((a,b)=>a+Number(b.amount),0);
+      post.totalPayment = Number(post.price) - Number(post?.adminprice||0)
+    }
+
     const totalCount = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalCount / pageSize);
 
