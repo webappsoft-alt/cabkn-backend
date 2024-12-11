@@ -1054,9 +1054,15 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
 
   const {startDate,endDate}=req.body;
 
- const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance").lean()
- const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
- const totalAmountRecived=earnings.reduce((a,b)=>a + b.payment.map(item=>item.price),0)
+  const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment").lean()
+  const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+  // Calculate the total amount received
+  const totalAmountReceived = earnings.reduce((total, order) => {
+    // Sum up the payment amounts for each order
+    const orderTotal = order.payment.reduce((sum, payment) => sum + payment.amount, 0);
+    return total + orderTotal;
+  }, 0);
+
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
  
  const orders = await Order.find({...query,to_id:userId,schedule_date: { $gte: startDate, $lte: endDate },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
@@ -1064,7 +1070,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
  const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
  const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
 
-  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountRecived });
+  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived });
 });
 
 router.get('/customer/earnings',auth, async (req, res) => {
