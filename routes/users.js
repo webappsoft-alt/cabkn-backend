@@ -1019,9 +1019,16 @@ router.get('/rider/earnings',auth, async (req, res) => {
  const startDate=moment().startOf('week');
  const todayEnd = moment().endOf('day');
 
- const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance").lean()
+ const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment").lean()
  const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
  const totalDistance=earnings.reduce((a,b)=>a+b.distance,0)
+
+ // Calculate the total amount received
+ const totalAmountReceived = earnings.reduce((total, order) => {
+  // Sum up the payment amounts for each order
+  const orderTotal = order.payment.reduce((sum, payment) => sum + payment.amount, 0);
+  return total + orderTotal;
+}, 0);
 
  const orders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).select("status schedule_date price").lean()
 
@@ -1041,7 +1048,7 @@ router.get('/rider/earnings',auth, async (req, res) => {
   });
 
 
-  res.send({ success: true, graph:newGraph, totalEarnings,totalDistance });
+  res.send({ success: true, graph:newGraph, totalEarnings,totalDistance,totalAmountReceived });
 });
 
 router.post('/rider/dashboard/:id?',auth, async (req, res) => {

@@ -208,7 +208,7 @@ module.exports = function (server,app) {
         query = { ride_type: { $in: ["ride", "both"] } };
       }
        
-       let userIds=await User.find({type:"rider",status:"online",...query}).select("name fcmtoken").lean()
+       let userIds=await User.find({type:"rider",status:"online",...query,isVehicle:true}).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
  
