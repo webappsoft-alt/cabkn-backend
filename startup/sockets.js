@@ -315,6 +315,7 @@ module.exports = function (server,app) {
     
         // Fetch the order
         const order = await Order.findOne({ _id: requestId, user: senderId });
+        console.log("del==>")
     
         if (!order) {
           return callback({
@@ -323,7 +324,8 @@ module.exports = function (server,app) {
             message: 'Request ID is invalid.',
           });
         }
-    
+        console.log("del2==>")
+
         if (order.status !== 'pending') {
           return callback({
             success: false,
@@ -331,6 +333,7 @@ module.exports = function (server,app) {
             message: "You can't delete this request as it has already been assigned as an order to someone else.",
           });
         }
+        console.log("del3==>")
     
         // Delete the order
         await Order.findByIdAndDelete(requestId);
@@ -341,6 +344,7 @@ module.exports = function (server,app) {
           .lean();
     
         for (let user of userIds) {
+          console.log("del4==>",user._id)
           io.to(user._id.toString()).emit('filter-request-rider', {
             request: requestId,
             success: true,
