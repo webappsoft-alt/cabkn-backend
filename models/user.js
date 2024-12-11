@@ -41,6 +41,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  isVehicle:{
+    type: Boolean,
+    default: false,
+  },
   rating:{
     type: Number,
     default: 0,

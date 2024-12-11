@@ -690,13 +690,18 @@ router.post('/vehicle', auth,  async (req, res) => {
   try {
     const userId=req.user._id
     const { images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype, } = req.body;
+
+    await Vehicle.findOneAndDelete({ user : userId });
+
     const addresses = new Vehicle({
       user:userId,
       images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
     });
     await addresses.save();
 
-    res.status(201).json({ success: true, message: 'Vehicle created successfully', vehicle:addresses });
+    const user = await User.findByIdAndUpdate(req.user._id,{ isVehicle : true },{new:true})
+
+    res.status(201).json({ success: true, message: 'Vehicle created successfully', vehicle:addresses,user });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
@@ -742,23 +747,17 @@ router.put('/vehicle/:id', auth,  async (req, res) => {
   }
 });
 
-router.get('/vehicle/:id?', auth,  async (req, res) => {
+router.get('/vehicle', auth,  async (req, res) => {
   let query = {};
 
   const userId=req.user._id
-  if (req.params.id) {
-    query._id = { $lt: req.params.id };
-  }
 
   query.user = userId
+  
   try {
-    const categories = await Vehicle.find(query).sort({ _id: -1 }).lean();
+    const categories = await Vehicle.findOne(query).lean();
 
-    if (categories.length > 0) {
-      res.status(200).json({ success: true, vehicles: categories });
-    } else {
-      res.status(200).json({ success: false,vehicles:[], message: 'No more vehicles found' });
-    }
+    res.status(200).json({ success: true, vehicles: categories });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }
@@ -774,7 +773,9 @@ router.delete('/vehicle/:id', auth,  async (req, res) => {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
 
-    res.status(200).json({ message: `Vehicle deleted successfully`, vehicle: service });
+   const user = await User.findByIdAndUpdate(req.user._id,{ isVehicle : false },{new:true})
+
+    res.status(200).json({ message: `Vehicle deleted successfully`, vehicle: service,user });
 
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
