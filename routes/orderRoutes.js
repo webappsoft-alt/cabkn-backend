@@ -12,6 +12,7 @@ router.post('/customer/:status/:id?', orderController.getAllSellerApplication);
 router.post('/admin/:status/:id',admin, orderController.AdminRides);
 router.put('/admin/update-purchases/:id',admin, orderController.updatePurchasePaymentByAdmin);
 router.put('/customer/pay/:id', orderController.updatePurchasePaymentByCustomer);
+router.put('/rider/approve/:id', orderController.updateApproveByRider);
 
 
 module.exports = router;
