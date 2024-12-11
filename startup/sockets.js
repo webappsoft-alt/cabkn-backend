@@ -768,7 +768,7 @@ module.exports = function (server,app) {
             success: true,
             order: updatedOrder,
             title: 'Order Update',
-            message: `You have successfully ${status} an order!`,
+            message: `Your order have been successfully ${status}.`,
           });
         }
     

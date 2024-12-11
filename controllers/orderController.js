@@ -2,6 +2,7 @@ const Coupon = require("../models/Coupon");
 const Order = require("../models/Order");
 const Request = require("../models/Request");
 const { User } = require("../models/user");
+const { sendNotification } = require("./notificationCreateService");
 
 exports.fetchrequestOrder = async (req, res) => {
   let query = {};
@@ -340,11 +341,50 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
       }
     }
 
-    const post = await Order.findOneAndUpdate({ _id:postId, user: userId },query, {new: true});
+    const post = await Order.findOneAndUpdate({ _id:postId, user: userId },query, {new: true}).populate("to_id").lean();
 
     if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
 
+     // Notify the customer about the update
+     await sendNotification({
+      user: userId,
+      to_id: post.to_id._id.toString(),
+      description: `Customer have paid your order amount.`,
+      type: "order",
+      title: "Order Update",
+      fcmtoken: post.to_id.fcmtoken,
+      order: postId,
+    });
+
     res.send({ success: true, message: 'Payment payed successfully', order:post });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.updateApproveByRider = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user._id;
+
+    const post = await Order.findOneAndUpdate({ _id:postId,to_id:userId},{status:"payment-approve"}, {new: true}).populate("user").lean();
+
+    if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
+
+      // Notify the customer about the update
+      await sendNotification({
+        user: userId,
+        to_id: post.user._id.toString(),
+        description: `Rider have approved the amount of your order.`,
+        type: "order",
+        title: "Order Update",
+        fcmtoken: post.user.fcmtoken,
+        order: postId,
+      });
+  
+
+    res.send({ success: true, message: 'Payment approved successfully', order:post });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Internal server error' });
