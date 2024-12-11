@@ -18,6 +18,10 @@ exports.fetchrequestOrder = async (req, res) => {
     return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
   }
 
+  if (user.isVehicle!==true) {
+    return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
+  }
+
   if (user.isRiding==true) {
     return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
   }
@@ -26,6 +30,12 @@ exports.fetchrequestOrder = async (req, res) => {
   query.rejected_by = {$nin:userId};
   query.accepted_by = {$nin:userId};
   const pageSize = 10;
+
+  if (["parcel", "both"].includes(user.ride_type)) {
+    query.type ="parcel"
+  } else {
+    query.type ="driver"
+  }
 
   try {
     const applications = await Order.find(query).sort({ _id: -1 }).populate("ridertype").populate("coupon").populate("liability").populate("user").populate("vehicle").limit(pageSize).lean();
