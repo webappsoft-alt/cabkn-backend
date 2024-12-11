@@ -756,7 +756,7 @@ module.exports = function (server,app) {
     
         // Emit relevant messages based on the order status
         if (status === 'cancelled') {
-          io.to(updatedOrder.user._id.toString()).emit('cancel-order-rider', {
+          io.to(updatedOrder.user._id.toString()).emit('cancel-order-customer', {
             success: true,
             order: updatedOrder,
             title: 'Order Update',
@@ -764,7 +764,7 @@ module.exports = function (server,app) {
           });
         } else {
     
-          io.to(updatedOrder.user._id.toString()).emit('update-order-rider', {
+          io.to(updatedOrder.user._id.toString()).emit('update-order-customer', {
             success: true,
             order: updatedOrder,
             title: 'Order Update',
