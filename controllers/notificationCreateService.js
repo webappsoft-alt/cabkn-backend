@@ -1,6 +1,7 @@
 const Notification = require("../models/Notification");
 
 const admin = require("firebase-admin");
+const { User } = require("../models/user");
 
 exports.sendNotification = async ({
      user = '',
@@ -32,8 +33,23 @@ exports.sendNotification = async ({
           const notification = new Notification(updateFields);
 
           await notification.save();
+
+          const newUpdateFields = Object.fromEntries(
+            Object.entries({
+              request, order, support
+            }).filter(([key, value]) => value !== "")
+          );
+      
+          // Ensure all values in data are strings
+          const messageData = {
+            messageType: type,
+            ...Object.fromEntries(
+              Object.entries(newUpdateFields).map(([key, value]) => [key, String(value)])
+            ) // Ensure all fields in newUpdateFields are strings
+          };
           if (fcmtoken) {
                const message = {
+                data: messageData || {}, 
                  token: fcmtoken, // replace with the user's device token
                  notification: {
                    title: title,
