@@ -636,7 +636,10 @@ module.exports = function (server,app) {
           }
           await order.save();
 
-          await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
+          if (order.bookingtype=='live') {
+            await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
+          }
+
     
           // Send notifications
           await sendNotification({
@@ -817,7 +820,9 @@ module.exports = function (server,app) {
           }
           */
         }
-        await User.findByIdAndUpdate(senderId,{ isRiding : false },{new:true})
+        if (updatedOrder.bookingtype=='live') {
+          await User.findByIdAndUpdate(senderId,{ isRiding : false },{new:true})
+        }
     
         // Notify the customer about the update
         await sendNotification({
