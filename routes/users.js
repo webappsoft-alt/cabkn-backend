@@ -26,6 +26,7 @@ const Liabilties = require("../models/Liabilties");
 const PriceKm = require("../models/PriceKm");
 const Privacy = require("../models/Privacy");
 const Terms = require("../models/Terms");
+const Invites = require("../models/Invites");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -210,7 +211,7 @@ router.post("/signup/:type", async (req, res) => {
 
     if (!validTypes.includes(type)) return res.status(400).send({ success: false, message: "Invalid type" });
 
-    const { name, password, email, fcmtoken,code,dob,phone,gender,referral,image,docs,insurancetype,ride_type,address } = req.body;
+    const { name, password, email, fcmtoken,code,dob,phone,gender,referral,image,docs,insurancetype,ride_type,address,lat,lng } = req.body;
 
     const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
@@ -251,6 +252,13 @@ router.post("/signup/:type", async (req, res) => {
       ride_type:ride_type||"ride",
       address:address||""
     });
+
+    if (lat&&lng) {
+     newUser.location={
+      type:'Point',
+      coordinates:[Number(lng),Number(lat)]
+     } 
+    }
 
     await newUser.save();
     await TempUser.deleteOne({ phone: phone });
@@ -1517,6 +1525,49 @@ router.get('/terms', async (req, res) => {
     res.status(201).json({ success: true,terms:prickm });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.post('/invites', auth,  async (req, res) => {
+  try {
+    const { 
+      phone,
+      code,
+    } = req.body;
+
+    const addresses = new Invites({
+      user:req.user._id,
+      phone,
+      code,
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'Invites send successfully', invites:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/invites/:id?', auth,  async (req, res) => {
+  let query = {};
+
+  const userId=req.user._id
+
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  query.user = userId
+  try {
+    const categories = await Invites.find(query).sort({ _id: -1 }).lean();
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, invites: categories });
+    } else {
+      res.status(200).json({ success: false,invites:[], message: 'No more invites found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
