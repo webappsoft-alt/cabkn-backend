@@ -122,8 +122,8 @@ function validateUser(user) {
     insurancetype: Joi.string().min(0).max(1024).optional(),
     ride_type: Joi.string().min(0).max(1024).optional(),
     address: Joi.string().min(0).max(1024).optional(),
-    lat: Joi.number().min(0).max(1024).optional(),
-    lng: Joi.number().min(0).max(1024).optional(),
+    lat: Joi.number().optional(),
+    lng: Joi.number().optional(),
     docs: Joi.array().min(0).max(1024).optional(),
   };
 
