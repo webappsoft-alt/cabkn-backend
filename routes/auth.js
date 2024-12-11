@@ -102,7 +102,7 @@ function validate(req) {
     email: Joi.string().min(5).max(255).email(),
     password: Joi.string().min(5).max(255).required(),
     fcmtoken: Joi.string().min(0).max(1024).allow(null).optional(),
-    type: Joi.string().min(0).max(1024).optional(),
+    type: Joi.string().min(2).max(1024).optional(),
   };
 
   const schema = Joi.object(emailSchema)
