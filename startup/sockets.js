@@ -199,8 +199,16 @@ module.exports = function (server,app) {
           message: 'Sender ID not found.',
         });
       }
- 
-       let userIds=await User.find({type:"rider",status:"online"}).select("name fcmtoken").lean()
+
+
+      let query = {};
+      if (type === 'parcel') {
+        query = { ride_type: { $in: ["parcel", "both"] } };
+      } else {
+        query = { ride_type: { $in: ["ride", "both"] } };
+      }
+       
+       let userIds=await User.find({type:"rider",status:"online",...query}).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
  
