@@ -1019,8 +1019,8 @@ router.get('/rider/earnings',auth, async (req, res) => {
  const startDate=moment().startOf('week');
  const todayEnd = moment().endOf('day');
 
- const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment").lean()
- const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+ const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment adminprice").lean()
+ const totalEarnings=earnings.reduce((a,b)=>a + Number(Number(b.price)-Number(b.adminprice)),0)
  const totalDistance=earnings.reduce((a,b)=>a+b.distance,0)
 
  // Calculate the total amount received
@@ -1063,8 +1063,8 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
 
   const {startDate,endDate}=req.body;
 
-  const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment").lean()
-  const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+  const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment adminprice").lean()
+  const totalEarnings=earnings.reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
   // Calculate the total amount received
   const totalAmountReceived = earnings.reduce((total, order) => {
     // Sum up the payment amounts for each order
@@ -1077,7 +1077,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
  
  const orders = await Order.find({...query,to_id:userId,schedule_date: { $gte: startDate, $lte: endDate },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
  
- const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
+ const totalFilterEarnings=orders.reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
  const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
 
   res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning });
