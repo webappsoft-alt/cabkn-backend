@@ -207,7 +207,7 @@ module.exports = function (server,app) {
         query = { ride_type: { $in: ["ride", "both"] } };
       }
        
-       let userIds=await User.find({type:"rider",status:"online",...query,isVehicle:true}).select("name fcmtoken").lean()
+       let userIds=await User.find({type:"rider",status:"online",...query,isVehicle:true,isRiding:false}).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
  
@@ -634,6 +634,8 @@ module.exports = function (server,app) {
             order.payment_status = "completed" 
           }
           await order.save();
+
+          await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
     
           // Send notifications
           await sendNotification({
@@ -814,6 +816,7 @@ module.exports = function (server,app) {
           }
           */
         }
+        await User.findByIdAndUpdate(senderId,{ isRiding : false },{new:true})
     
         // Notify the customer about the update
         await sendNotification({
