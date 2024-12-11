@@ -793,7 +793,7 @@ module.exports = function (server,app) {
     
         // Find and update the order
         const updatedOrder = await Order.findOneAndUpdate(
-          { _id: orderId, status: "accepted", to_id: senderId },
+          { _id: orderId, status: {$in:["accepted","order-start"]}, to_id: senderId },
           { status: status },
           { new: true }
         ).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
