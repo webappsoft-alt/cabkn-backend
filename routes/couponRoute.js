@@ -6,7 +6,7 @@ const admin = require('../middleware/admin');
 
 router.post('/create', [auth,admin],categoriesController.create);
 router.put('/edit/:id',[auth,admin],  categoriesController.editCategories);
-router.get('/me/:id?',auth, categoriesController.getMyCoupons);
+router.get('/me/:id',auth, categoriesController.getMyCoupons);
 router.post('/check-validity',auth, categoriesController.checkValidatityCoupon);
 router.delete('/:id',[auth,admin], categoriesController.deleteCoupons);
 

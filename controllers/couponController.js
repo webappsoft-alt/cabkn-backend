@@ -60,18 +60,28 @@ exports.editCategories = async (req, res) => {
 
 exports.getMyCoupons = async (req, res) => {
   let query = {};
+  const lastId = parseInt(req.params.id)||1;
 
-  if (req.params.id) {
-    query._id = { $lt: req.params.id };
+   // Check if lastId is a valid number
+   if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
   }
 
+  const pageSize = 10;
+  
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+
   try {
-    const categories = await Coupon.find(query).sort({ _id: -1 }).lean();
+    const categories = await Coupon.find(query).sort({ _id: -1 }).skip(skip)
+    .limit(pageSize).lean();
+
+    const totalCount = await Coupon.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     if (categories.length > 0) {
-      res.status(200).json({ success: true, coupons: categories });
+      res.status(200).json({ success: true, coupons: categories,count: { totalPage: totalPages, currentPageSize: categories.length }  });
     } else {
-      res.status(200).json({ success: false,coupons:[], message: 'No more coupones found' });
+      res.status(200).json({ success: false,coupons:[], message: 'No more coupones found',count: { totalPage: totalPages, currentPageSize: categories.length }  });
     }
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
