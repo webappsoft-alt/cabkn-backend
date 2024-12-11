@@ -87,6 +87,8 @@ exports.getAllEmployeeApplication = async (req, res) => {
 
   if (status == "all") {
     query.status = {$in:["accepted",'completed']};
+  }else if (status == "accepted"){
+    query.status = {$in:["accepted",'order-start']};
   }else{
     query.status = status;
   }
@@ -163,6 +165,8 @@ exports.getAllSellerApplication = async (req, res) => {
 
   if (status == "all") {
     query.status = {$in:["accepted",'completed']};
+  }else if (status == "accepted"){
+    query.status = {$in:["accepted",'order-start']};
   }else{
     query.status = status;
   }
