@@ -12,10 +12,15 @@ exports.fetchrequestOrder = async (req, res) => {
     query._id = { $lt: req.params.id };
   }
 
+  const user = await User.findById(req.user._id).lean();
+
+  if (user.status !== 'online') {
+    res.status(200).json({ success: false,requests:[], message: "No more requests found" });
+  }
+
   query.status = "pending";
   query.rejected_by = {$nin:userId};
   query.accepted_by = {$nin:userId};
-  query.userIds = {$in:userId};
   const pageSize = 10;
 
   try {

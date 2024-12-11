@@ -211,13 +211,13 @@ module.exports = function (server,app) {
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
  
-       if (userIds.length == 0 ) {
-          return callback({
-            success: false,
-            title: 'Request Error',
-            message: "No users found in that area.",
-          });
-       }
+      //  if (userIds.length == 0 ) {
+      //     return callback({
+      //       success: false,
+      //       title: 'Request Error',
+      //       message: "No users found in that area.",
+      //     });
+      //  }
        const fcmTokens = [...new Set(userIds.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
        userIds = [...new Set(userIds.map(item => item._id).filter(item=>item!==undefined||item!==""))];
  
@@ -695,6 +695,76 @@ module.exports = function (server,app) {
       }
     });
 
+    socket.on('pick-rider', async ({ orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findByIdAndUpdate(orderId,{status:"order-start"} ,{new:true}).populate("user");
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'Invalid order ID.',
+          });
+        }
+    
+        if (order.status == 'pending') {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'This Order is not booked yet.',
+          });
+        }
+
+          // Notify the customer
+          const user = await User.findById(senderId).select("name").lean();
+    
+          await sendNotification({
+            user: senderId,
+            to_id: order.user._id.toString(),
+            description: `${user?.name} has started your order.`,
+            type: "order",
+            title: "Order update",
+            fcmtoken: order.user.fcmtoken,
+            order: orderId,
+          });
+
+          io.to(order.user._id.toString()).emit('pick-customer', {
+            success: true,
+            order,
+            title: "Order update",
+            message: `${user?.name} has started your order.`,
+          });
+    
+          return callback({
+            success: true,
+            order,
+            title: "Order update",
+            message: 'Alert has been sent to the customer.',
+          });
+      } catch (error) {
+        console.error('Error updating request:', error.message);
+    
+        // Emit error to client and invoke callback with error
+        socket.emit('receive_request_error', error.message);
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
 
     socket.on('update-order-rider', async ({ orderId, status }, callback) => {
       try {
