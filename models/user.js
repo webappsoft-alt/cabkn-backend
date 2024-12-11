@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 5,
     maxlength: 255,
-    unique: true,
   },
   phone: {
     type: String,
@@ -145,6 +144,7 @@ function passwordApiBodyValidate(body) {
 function emailApiBodyValidate(body) {
   const schema = Joi.object({
     email: Joi.string().min(4).max(50).required(),
+    type: Joi.string().min(2).max(50).required(),
   })
 
   return schema.validate(body);

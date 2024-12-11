@@ -224,7 +224,7 @@ router.post("/signup/:type", async (req, res) => {
         .json({ success: false, message: "Incorrect verification code" });
     }
 
-    const user = await User.findOne({ email: lowerCaseEmail });
+    const user = await User.findOne({ email: lowerCaseEmail,type:type });
 
     if (user) return res.status(400).send({ success: false, message: "Email already registered" });
 
@@ -304,10 +304,10 @@ router.post("/check-email", async (req, res) => {
       .status(400)
       .send({ success: false, message: error.details[0].message });
 
-  const { email } = req.body;
+  const { email,type } = req.body;
   const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
-  const user = await User.findOne({ email: lowerCaseEmail });
+  const user = await User.findOne({ email: lowerCaseEmail,type:type });
   if (user)
     return res
       .status(400)
