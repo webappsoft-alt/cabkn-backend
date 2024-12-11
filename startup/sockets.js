@@ -75,7 +75,7 @@ module.exports = function (server,app) {
 
         io.to(recipientId).emit('recieved-message', savedMessage);
         
-        const otherUser = await User.findById(recipientId).select("fcmtoken")
+        const otherUser = await User.findById(recipientId).select("fcmtoken").lean()
         
         await sendNotification({
           user : senderId,
@@ -83,9 +83,9 @@ module.exports = function (server,app) {
           description :  `@${name} sent you a message: ${messageText}`,
           type :'message',
           title :"New Message",
-          fcmtoken :otherUser?.fcmtoken,
+          fcmtoken :otherUser.fcmtoken||"",
       })
-      console.log("asdasdas",savedMessage)
+
       return callback(savedMessage);
       } catch (error) {
         console.error('Error sending private message:', error.message);

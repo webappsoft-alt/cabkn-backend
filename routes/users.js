@@ -1179,6 +1179,8 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
 
    const totalOrder = await Order.countDocuments({status:"completed",});
 
+   const totalRiderOrders = await Order.find({status:"completed",payment_status:"completed"}).select("adminprice paymentDone").lean();
+
    const yesterdayOrder = await Order.countDocuments({
     createdAt: { $gte: yesterday, $lt: today },
     status:"completed"
@@ -1202,26 +1204,30 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
   const startDate = moment().startOf('year');
   const todayEnd = moment().endOf('day');
  
-  const orders = await Order.find({createdAt: { $gte: startDate, $lte: todayEnd },status:"completed",}).select("price createdAt").lean()
+  const orders = await Order.find({createdAt: { $gte: startDate, $lte: todayEnd },status:"completed",}).select("price createdAt adminprice").lean()
  
    // Initialize the graph array
-   let graph = dates.map(date => ({ x: date, price:0 }));
+   let graph = dates.map(date => ({ x: date, price:0,adminprice:0 }));
   
    // Increment the y value for the correct date ranges
    orders.forEach(order => {
      const index = findDateIndex(order.createdAt,dates);
      if (index !== -1 && index < graph.length) {
       graph[index].price = Number(graph[index].price) + Number(order.price);
+      graph[index].adminprice = Number(graph[index].adminprice) + Number(order.adminprice);
      }
    });
  
    let newGraph = graph.map(obj => {
-     return { ["x"]: moment(obj.x).format('MMM'), ["y"]: obj.price};
+     return { ["x"]: moment(obj.x).format('MMM'), ["y"]: obj.price,"z":obj.adminprice};
    });
+
+   const totalEarnings=totalRiderOrders.reduce((a,b)=>a+b.adminprice,0)
  
   
   res.send({ success: true, 
     graph:newGraph,
+    totalEarnings,
     customer:{
       totalUsers,
       growth: growth.toFixed(2),
