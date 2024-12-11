@@ -31,9 +31,9 @@ exports.fetchrequestOrder = async (req, res) => {
   query.accepted_by = {$nin:userId};
   const pageSize = 10;
 
-  if (["parcel", "both"].includes(user.ride_type)) {
+  if (["parcel"].includes(user.ride_type)) {
     query.type ="parcel"
-  } else {
+  } else if (["ride"].includes(user.ride_type)) {
     query.type ="driver"
   }
 
