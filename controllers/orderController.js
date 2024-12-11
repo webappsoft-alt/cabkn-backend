@@ -65,7 +65,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   const userId = req.user._id;
   const { status } = req.params;
 
-  const validStatuses = ["all", 'accepted', "completed","payment-approve",'cancelled']
+  const validStatuses = ["all", 'accepted', "completed",'cancelled']
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
@@ -140,7 +140,7 @@ exports.getAllSellerApplication = async (req, res) => {
   const userId = req.user._id;
   const { status } = req.params;
 
-  const validStatuses = ["all", "pending",'accepted', "completed","payment-approve",'cancelled']
+  const validStatuses = ["all", "pending",'accepted', "completed",'cancelled']
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
@@ -188,7 +188,7 @@ exports.AdminRides = async (req, res) => {
   }
 
   const { status } = req.params;
-  const validStatuses = ["all", "pending", "accepted", "completed","payment-approve", "cancelled"];
+  const validStatuses = ["all", "pending", "accepted", "completed", "cancelled"];
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
@@ -331,7 +331,8 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
     const { paymentId,tip,couponId }=req.body;
 
     let query={
-      paymentId:paymentId,tip:tip||0 
+      paymentId:paymentId,tip:tip||0 ,
+      payment_status:"completed"
     }
     if (couponId) {
       await Coupon.findByIdAndUpdate(couponId,{$addToSet:{used_by:userId}}).lean();
@@ -368,7 +369,7 @@ exports.updateApproveByRider = async (req, res) => {
     const postId = req.params.id;
     const userId = req.user._id;
 
-    const post = await Order.findOneAndUpdate({ _id:postId,to_id:userId},{status:"payment-approve"}, {new: true}).populate("user").lean();
+    const post = await Order.findOneAndUpdate({ _id:postId,to_id:userId},{payment_status:"recieved"}, {new: true}).populate("user").lean();
 
     if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
 

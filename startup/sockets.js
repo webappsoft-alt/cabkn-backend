@@ -630,6 +630,9 @@ module.exports = function (server,app) {
 
           order.to_id = request.user._id;
           order.paymentId = paymentId;
+          if (paymentId) {
+            order.payment_status = "completed" 
+          }
           await order.save();
     
           // Send notifications
