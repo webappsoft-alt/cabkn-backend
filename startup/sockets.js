@@ -238,7 +238,8 @@ module.exports = function (server,app) {
          userIds:userIds,
          bookingtype,
          liability,
-         ridertype
+         ridertype,
+         adminprice:Number(price) * 0.15
        });
        if (bookingtype=='schedule') {
         newRequest.schedule_date=schedule_date

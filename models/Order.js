@@ -26,6 +26,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  adminprice:{
+    type: Number,
+    default: 0,
+  },
   distance:{
     type: Number,
     default: 0,
