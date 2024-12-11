@@ -336,7 +336,7 @@ module.exports = function (server,app) {
         await Order.findByIdAndDelete(requestId);
         
         // Notify riders to filter the request
-        const userIds = await User.find({ type: "rider", status: "online" })
+        const userIds = await User.find({ type: "rider", status: {$in:["online","offline"]} })
           .select("fcmtoken")
           .lean();
     
@@ -670,7 +670,7 @@ module.exports = function (server,app) {
           // Notify other riders to filter out the request
           const userIds = await User.find({
             type: "rider",
-            status: "online",
+            status: {$in:["online","offline"]},
             _id: { $ne: request.user._id.toString() },
           })
             .select("fcmtoken")
