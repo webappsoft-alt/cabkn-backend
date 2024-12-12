@@ -1179,6 +1179,10 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
 
   const {startDate,endDate}=req.body;
 
+  if (startDate&&endDate) {
+    query.schedule_date = { $gte: startDate, $lte: endDate }
+  }
+
   const earnings = await Order.find({to_id:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance payment adminprice createdAt").lean()
   const totalEarnings=earnings.reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
   // Calculate the total amount received
@@ -1191,7 +1195,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
 
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
  
- const orders = await Order.find({...query,to_id:userId,schedule_date: { $gte: startDate, $lte: endDate },status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ const orders = await Order.find({...query,to_id:userId,status:"completed",payment_status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
  
  const totalFilterEarnings=orders.reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
  const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
@@ -1215,7 +1219,7 @@ const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphs
 
  // Increment the y value for the correct date ranges
  graphorders.forEach(order => {
-   const index = findDateIndex(order.createdAt,dates);
+   const index = findDateIndex(order.schedule_date,dates);
    if (index !== -1 && index < graph.length) {
      graph[index].price += 1;
    }
