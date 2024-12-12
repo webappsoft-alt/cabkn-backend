@@ -485,6 +485,42 @@ router.delete("/:id",[auth,admin], async (req, res) => {
   res.send({ success: true, message: "User deleted successfully", user });
 });
 
+router.put("/update-user/:id", [auth,admin], async (req, res) => {
+  const {
+    status,
+  } = req.body;
+
+  // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      status
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  const user = await User.findByIdAndUpdate(req.params.id, updateFields, {
+    new: true,
+  });
+
+  if (!user)
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "The User with the given ID was not found.",
+      });
+
+  res.send({ success: true, message: "User updated successfully", user });
+});
+
 router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
   const lastId = parseInt(req.params.id)||1;
 

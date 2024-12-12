@@ -608,7 +608,7 @@ module.exports = function (server,app) {
             requestId,
             { status: "accepted" },
             { new: true }
-          ).populate("user");
+          ).populate("user").lean();
     
           if (!request) {
             return callback({
