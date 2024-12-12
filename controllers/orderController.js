@@ -110,7 +110,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("coupon").populate("user").populate("vehicle").populate("ridertype").populate("liability").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon").populate("user").populate("vehicle").populate("ridertype").populate("liability").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
@@ -188,7 +188,7 @@ exports.getAllSellerApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: 1 }).populate("coupon").populate("to_id").populate("ridertype").populate("liability").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon").populate("to_id").populate("ridertype").populate("liability").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
