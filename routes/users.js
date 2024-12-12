@@ -1181,7 +1181,7 @@ router.get('/rider/earnings',auth, async (req, res) => {
  const startDate=moment().startOf('week');
  const todayEnd = moment().endOf('day');
 
- const earnings = await Order.find({to_id:userId,status:"completed"}).select("status schedule_date price distance payment adminprice").lean()
+ const earnings = await Order.find({to_id:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance payment adminprice").lean()
  const totalEarnings=earnings.reduce((a,b)=>a + Number(Number(b.price)-Number(b.adminprice)),0)
  const totalDistance=earnings.reduce((a,b)=>a+b.distance,0)
 
@@ -1194,7 +1194,7 @@ router.get('/rider/earnings',auth, async (req, res) => {
 
 const remainigEarning=Number(totalEarnings)-Number(totalAmountReceived)
 
- const orders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed"}).select("status schedule_date price").lean()
+ const orders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price").lean()
 
   // Initialize the graph array
   let graph = dates.map(date => ({ x: date, price:0 }));
