@@ -27,6 +27,8 @@ const PriceKm = require("../models/PriceKm");
 const Privacy = require("../models/Privacy");
 const Terms = require("../models/Terms");
 const Invites = require("../models/Invites");
+const { generateRandomString } = require("../controllers/generateCode");
+const { sendNotification } = require("../controllers/notificationCreateService");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -245,12 +247,12 @@ router.post("/signup/:type", async (req, res) => {
       dob:dob||"",
       phone,
       gender:gender||"",
-      referral:referral||"",
       image:image||"",
       docs:docs||[],
       insurancetype:insurancetype||"",
       ride_type:ride_type||"ride",
-      address:address||""
+      address:address||"",
+      referral_code:generateRandomString(10)
     });
 
     if (lat&&lng) {
@@ -263,13 +265,33 @@ router.post("/signup/:type", async (req, res) => {
     await newUser.save();
     await TempUser.deleteOne({ phone: phone });
 
+    let updateUser=newUser;
+    if (referral) {
+      const findRefferal=await User.findOne({referral_code:referral})
+      if (findRefferal) {
+        // updateUser= await User.findByIdAndUpdate(newUser._id,{amount:10},{new:true}).lean()
+
+        await sendNotification({
+          user: newUser._id,
+          to_id: findRefferal._id.toString(),
+          description: `You've earned $20 for a successful referral! Thank you!`,
+          type: "referral",
+          title: "Congratulations! You've Earned $20",
+          fcmtoken: findRefferal.fcmtoken,
+        });
+
+        findRefferal.amount=findRefferal.amount+20
+        await findRefferal.save();
+      }
+    }
+
     const token = generateAuthToken(newUser._id, newUser.type);
 
     res.send({
       success: true,
       message: "Account created successfully",
       token: token,
-      user: newUser,
+      user: updateUser,
     });
   } catch (error) {
     console.log(error)
@@ -1588,47 +1610,45 @@ router.get('/terms', async (req, res) => {
   }
 });
 
-router.post('/invites', auth,  async (req, res) => {
-  try {
-    const { 
-      phone,
-      code,
-    } = req.body;
+// router.post('/invites', auth,  async (req, res) => {
+//   try {
+//     const { 
+//       phone,
+//     } = req.body;
 
-    const addresses = new Invites({
-      user:req.user._id,
-      phone,
-      code,
-    });
-    await addresses.save();
+//     const addresses = new Invites({
+//       user:req.user._id,
+//       phone,
+//     });
+//     await addresses.save();
 
-    res.status(201).json({ success: true, message: 'Invites send successfully', invites:addresses });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
+//     res.status(201).json({ success: true, message: 'Invites send successfully', invites:addresses });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: 'Internal server error' });
+//   }
+// });
 
-router.get('/invites/:id?', auth,  async (req, res) => {
-  let query = {};
+// router.get('/invites/:id?', auth,  async (req, res) => {
+//   let query = {};
 
-  const userId=req.user._id
+//   const userId=req.user._id
 
-  if (req.params.id) {
-    query._id = { $lt: req.params.id };
-  }
+//   if (req.params.id) {
+//     query._id = { $lt: req.params.id };
+//   }
 
-  query.user = userId
-  try {
-    const categories = await Invites.find(query).sort({ _id: -1 }).lean();
+//   query.user = userId
+//   try {
+//     const categories = await Invites.find(query).sort({ _id: -1 }).lean();
 
-    if (categories.length > 0) {
-      res.status(200).json({ success: true, invites: categories });
-    } else {
-      res.status(200).json({ success: false,invites:[], message: 'No more invites found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+//     if (categories.length > 0) {
+//       res.status(200).json({ success: true, invites: categories });
+//     } else {
+//       res.status(200).json({ success: false,invites:[], message: 'No more invites found' });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
 
 module.exports = router;

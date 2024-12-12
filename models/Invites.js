@@ -7,7 +7,6 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   phone: String,
-  code: String,
   createdAt: { type: Date, default: Date.now, index: true }, // Timestamp for post creation
 });
 
