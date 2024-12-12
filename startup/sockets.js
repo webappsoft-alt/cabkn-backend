@@ -382,6 +382,7 @@ module.exports = function (server,app) {
         }
     
         const order = await Order.findById(requestId).populate("user").populate("ridertype").populate("liability");
+        console.log("order=======>>",order)
     
         if (!order) {
           return callback({
