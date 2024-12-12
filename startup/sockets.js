@@ -698,7 +698,7 @@ module.exports = function (server,app) {
             return callback({
               success: false,
               title: 'Request Update',
-              message: 'User is not vehicle is not available yet.',
+              message: 'User is not available yet.',
             });
           }
     
