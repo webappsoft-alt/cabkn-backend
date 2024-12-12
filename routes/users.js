@@ -29,6 +29,7 @@ const Terms = require("../models/Terms");
 const Invites = require("../models/Invites");
 const { generateRandomString } = require("../controllers/generateCode");
 const { sendNotification } = require("../controllers/notificationCreateService");
+const Transaction = require("../models/Transaction");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -280,6 +281,14 @@ router.post("/signup/:type", async (req, res) => {
           fcmtoken: findRefferal.fcmtoken,
         });
 
+        const transaction=new Transaction({
+          user:findRefferal._id,
+          amount:20,
+          type:'deposit'
+        })
+      
+        await transaction.save()
+
         findRefferal.amount=findRefferal.amount+20
         await findRefferal.save();
       }
@@ -360,13 +369,13 @@ router.post("/check-phone", async (req, res) => {
 
 router.put("/update-user", auth, async (req, res) => {
   const {
-    name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,amount
+    name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs
   } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,amount
+      name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs
     }).filter(([key, value]) => value !== undefined)
   );
 
@@ -392,6 +401,101 @@ router.put("/update-user", auth, async (req, res) => {
       });
 
   res.send({ success: true, message: "User updated successfully", user });
+});
+
+router.put("/add-amount", auth, async (req, res) => {
+  const { amount, refId } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
+  user.amount=Number(user.amount) + Number(amount);
+  await user.save()
+
+  const transaction=new Transaction({
+    user:req.user._id,
+    amount,
+    refId,
+    type:'deposit'
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "User payment added successfully", user, transaction });
+});
+
+router.put("/order-wallet-payment", auth, async (req, res) => {
+  const { amount, order } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
+  user.amount=Number(user.amount) - Number(amount);
+  await user.save()
+
+  const transaction=new Transaction({
+    user:req.user._id,
+    amount,
+    order:order,
+    type:'purchase'
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "User payed successfully", user, transaction });
+});
+
+router.put("/order-card-payment", auth, async (req, res) => {
+  const { amount, order,refId } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
+  const transaction=new Transaction({
+    user:req.user._id,
+    amount,
+    order:order,
+    type:'purchase',
+    refId
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "User payed successfully", transaction });
+});
+
+router.get('/transactions/:id',auth,  async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id)||1;
+
+   // Check if lastId is a valid number
+   if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  const pageSize = 10;
+  
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+  query.user=req.user._id;
+  
+  try {
+    const categories = await Transaction.find(query).sort({ _id: -1 }).skip(skip)
+    .limit(pageSize).lean();
+
+    const totalCount = await Transaction.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, transactions: categories,count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    } else {
+      res.status(200).json({ success: false,transactions:[], message: 'No more transactions found',count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 router.put("/update-location", auth, async (req, res) => {
