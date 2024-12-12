@@ -653,16 +653,16 @@ module.exports = function (server,app) {
             request: requestId,
           });
     
-          await sendNotification({
-            user: request.user?._id.toString(),
-            to_id: senderId,
-            description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
-            type: "order",
-            title: "Offer Accepted",
-            fcmtoken: order?.user?.fcmtoken,
-            order: orderId,
-            request: requestId,
-          });
+          // await sendNotification({
+          //   user: request.user?._id.toString(),
+          //   to_id: senderId,
+          //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
+          //   type: "order",
+          //   title: "Offer Accepted",
+          //   fcmtoken: order?.user?.fcmtoken,
+          //   order: orderId,
+          //   request: requestId,
+          // });
     
           io.to(request.user._id.toString()).emit('update-request-rider', {
             success: true,
