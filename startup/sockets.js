@@ -452,7 +452,7 @@ module.exports = function (server,app) {
     
           await sendNotification({
             user: senderId,
-            to_id: order.user._id.toString(),
+            to_id: order?.user?._id.toString(),
             description: `You have received a new offer from ${user?.name}`,
             type: "offer",
             title: "New Offer",
@@ -463,7 +463,7 @@ module.exports = function (server,app) {
     
           const request = await Request.findById(newRequest._id).populate("user").populate("vehicle").lean();
     
-          io.to(order.user._id.toString()).emit('receive-request-customer', {
+          io.to(order?.user?._id.toString()).emit('receive-request-customer', {
             success: true,
             request: request,
             title: 'New Offer',
