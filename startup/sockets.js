@@ -705,11 +705,13 @@ module.exports = function (server,app) {
           }
 
     
+          const date=new Date(order.schedule_date)
+
           // Send notifications
           await sendNotification({
             user: senderId,
             to_id: request.user?._id.toString(),
-            description: `Your offer has been accepted by ${order?.user?.name} and your ride has been started.`,
+            description:order.bookingtype=='live'? `Your offer has been accepted by ${order?.user?.name} and your ride has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
             type: "order",
             title: "Offer Accepted",
             fcmtoken: request?.user?.fcmtoken,
@@ -727,12 +729,20 @@ module.exports = function (server,app) {
           //   order: orderId,
           //   request: requestId,
           // });
-    
+
+          if (order.bookingtype=='live') {
           io.to(request.user._id.toString()).emit('update-request-rider', {
             success: true,
             title: 'Offer Accepted',
             message: `Your offer has been accepted by ${order?.user?.name} and your order has been started.`,
           });
+        }else{
+          io.to(request.user._id.toString()).emit('update-schedule-rider', {
+            success: true,
+            title: 'Offer Accepted',
+            message: `Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+          });
+        }
     
           // Notify other riders to filter out the request
           const userIds = await User.find({
