@@ -575,7 +575,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findById(orderId).populate("user to_id").lean();
+        const order = await Order.findById(orderId).populate("user").populate("to_id").lean();
     
         if (!order) {
           return callback({
@@ -595,11 +595,11 @@ module.exports = function (server,app) {
     
           await sendNotification({
             user: senderId,
-            to_id: order.user._id.toString(),
+            to_id: order?.user?._id.toString(),
             description: `${order.to_id?.name} has requested you to pay his order payment.`,
             type: "order-payment",
             title: "Order update",
-            fcmtoken: order.user.fcmtoken,
+            fcmtoken: order?.user?.fcmtoken,
             order: orderId,
           });
 
@@ -607,7 +607,7 @@ module.exports = function (server,app) {
             success: true,
             order,
             title: "Order update",
-            message: `${user?.name} has requested you to pay his order payment.`,
+            message: `${order.to_id?.name} has requested you to pay his order payment.`,
           });
     
           return callback({
