@@ -668,11 +668,7 @@ module.exports = function (server,app) {
           });
         } else {
           // Accept the request
-          const request = await Request.findByIdAndUpdate(
-            requestId,
-            { status: "accepted" },
-            { new: true }
-          ).populate("user").lean();
+          const request = await Request.findById(requestId).populate("user");
     
           if (!request) {
             return callback({
@@ -681,7 +677,34 @@ module.exports = function (server,app) {
               message: 'Invalid request ID.',
             });
           }
+
+          if (request.user.status !== 'online') {
+            return callback({
+              success: false,
+              title: 'Request Update',
+              message: 'User is not online yet.',
+            });
+          }
+        
+          if (request.user.isVehicle!==true) {
+            return callback({
+              success: false,
+              title: 'Request Update',
+              message: 'User is not vehicle is not available yet.',
+            });
+          }
+        
+          if (request.user.isRiding==true) {
+            return callback({
+              success: false,
+              title: 'Request Update',
+              message: 'User is not vehicle is not available yet.',
+            });
+          }
     
+          request.status= "accepted";
+
+          await request.save()
           // Update the order status
           order.status = 'accepted';
           if (request.vehicle) {
