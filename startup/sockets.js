@@ -561,6 +561,70 @@ module.exports = function (server,app) {
       }
     });
 
+    socket.on('send-payment-alert-rider', async ({ orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findById(orderId).populate("user to_id").lean();
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'Invalid order ID.',
+          });
+        }
+    
+        if (order.status !== 'completed') {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'This Order is not completed yet.',
+          });
+        }
+    
+          await sendNotification({
+            user: senderId,
+            to_id: order.user._id.toString(),
+            description: `${order.to_id?.name} has requested you to pay his order payment.`,
+            type: "order-payment",
+            title: "Order update",
+            fcmtoken: order.user.fcmtoken,
+            order: orderId,
+          });
+
+          io.to(order.user._id.toString()).emit('receive-payment-alert-customer', {
+            success: true,
+            order,
+            title: "Order update",
+            message: `${user?.name} has requested you to pay his order payment.`,
+          });
+    
+          return callback({
+            success: true,
+            order,
+            title: "Order update",
+            message: 'Alert has been sent to the customer.',
+          });
+      } catch (error) {
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
+
     socket.on('update-request-customer', async ({ requestId, status, orderId, paymentId,couponId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
