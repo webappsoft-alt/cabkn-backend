@@ -730,20 +730,13 @@ module.exports = function (server,app) {
           //   request: requestId,
           // });
 
-          if (order.bookingtype=='live') {
           io.to(request.user._id.toString()).emit('update-request-rider', {
             success: true,
             title: 'Offer Accepted',
-            message: `Your offer has been accepted by ${order?.user?.name} and your order has been started.`,
+            type:order.bookingtype,
+            message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
           });
-        }else{
-          io.to(request.user._id.toString()).emit('update-schedule-rider', {
-            success: true,
-            title: 'Offer Accepted',
-            message: `Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
-          });
-        }
-    
+        
           // Notify other riders to filter out the request
           const userIds = await User.find({
             type: "rider",
