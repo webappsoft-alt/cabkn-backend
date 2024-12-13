@@ -265,12 +265,13 @@ module.exports = function (server,app) {
        callback({request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
        for (let user of userIds) {
-         io.to(user.toString()).emit('recieve-request-rider', {request,success:true, title: 'New Request',message:"You have received a new request."});
+         io.to(user.toString()).emit('recieve-request-rider', {request,userType:request.user.type,success:true, title: 'New Request',message:"You have received a new request."});
        }
  
        // Ensure all values in data are strings
      const messageData = {
        messageType: "request",
+       userType:request.user.type,
        ...Object.fromEntries(
          Object.entries(request).map(([key, value]) => [key, String(value)])
        ) // Ensure all fields in newUpdateFields are strings
