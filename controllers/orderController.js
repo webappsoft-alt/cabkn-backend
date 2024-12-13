@@ -229,6 +229,9 @@ exports.AdminRides = async (req, res) => {
   if (req.body.paymentDone) {
     query.paymentDone = req.body.paymentDone;
   }
+  if (req.body.refunded) {
+    query.refunded = req.body.refunded;
+  }
 
   const pageSize = 10;
   const skip = Math.max(0, (lastId - 1)) * pageSize;

@@ -26,6 +26,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  refunded:{
+    type: Boolean,
+    default: false,
+  },
   adminprice:{
     type: Number,
     default: 0,

@@ -892,7 +892,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const validStatuses = ["completed" ];
+        const validStatuses = ["completed",'cancelled' ];
         if (!validStatuses.includes(status)) {
           return callback({
             success: false,
@@ -917,12 +917,12 @@ module.exports = function (server,app) {
         }
     
         if (status === 'cancelled') {
+          await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
           // Uncomment and implement payment refund logic if required
           /*
           const fiftyPer = Number(updatedOrder.price) * 0.50;
           const refund = await refundPayment(updatedOrder.paymentId, fiftyPer);
           if (!['pending', 'failed', 'canceled'].includes(refund.status)) {
-            await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
           }
           */
         }
@@ -1003,7 +1003,15 @@ module.exports = function (server,app) {
           return callback({
             success: false,
             title: 'Order Update',
-            message: 'Order not found or cannot be updated.',
+            message: 'Order not found or cannot be cancelled.',
+          });
+        }
+
+        if (updatedOrder.status=='pending') {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'Order not found or cannot be cancelled.',
           });
         }
     
