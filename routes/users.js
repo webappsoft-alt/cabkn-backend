@@ -369,13 +369,13 @@ router.post("/check-phone", async (req, res) => {
 
 router.put("/update-user", auth, async (req, res) => {
   const {
-    name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs
+    name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,phone
   } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs
+      name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,phone
     }).filter(([key, value]) => value !== undefined)
   );
 
@@ -387,6 +387,12 @@ router.put("/update-user", auth, async (req, res) => {
         success: false,
         message: "No valid fields provided for update.",
       });
+  }
+
+  if (phone) {
+    const phoneuser = await User.findOne({ phone: phone });
+
+    if (phoneuser) return res.status(400).send({ success: false, message: "Phone already existed" });
   }
   const user = await User.findByIdAndUpdate(req.user._id, updateFields, {
     new: true,
