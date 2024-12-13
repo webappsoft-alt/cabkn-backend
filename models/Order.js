@@ -64,6 +64,7 @@ const orderSchema = new mongoose.Schema({
       type: [Number],
     },
   },
+  stops:[{latitude :String , longitude :String , address:String}],
   paymentId:String,
   tip:{
     type: Number,

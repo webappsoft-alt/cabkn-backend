@@ -185,7 +185,8 @@ module.exports = function (server,app) {
         schedule_time,
         distance,
         liability,
-        ridertype
+        ridertype,
+        stops
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -258,6 +259,9 @@ module.exports = function (server,app) {
        }
        if (distance) {
         newRequest.distance=distance
+       }
+       if (stops) {
+        newRequest.stops=stops
        }
  
        await newRequest.save()
