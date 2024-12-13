@@ -18,7 +18,7 @@ const transactionSchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'deposit',
-    enum: ["deposit","purchase"]
+    enum: ["deposit","purchase",'refferal']
   },
   createdAt: {
     type: Date,

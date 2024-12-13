@@ -286,7 +286,7 @@ router.post("/signup/:type", async (req, res) => {
         const logintransaction=new Transaction({
           user:newUser._id,
           amount:20,
-          type:'deposit'
+          type:'refferal'
         })
       
         await logintransaction.save()
@@ -303,7 +303,7 @@ router.post("/signup/:type", async (req, res) => {
         const transaction=new Transaction({
           user:findRefferal._id,
           amount:20,
-          type:'deposit'
+          type:'refferal'
         })
       
         await transaction.save()
