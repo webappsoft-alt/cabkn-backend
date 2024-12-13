@@ -876,13 +876,13 @@ router.get('/favorite/:id', auth, async (req, res) => {
 router.post('/vehicle', auth,  async (req, res) => {
   try {
     const userId=req.user._id
-    const { images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype, } = req.body;
+    const { name, model, brand, colour, license, num_passengers, images } = req.body;
 
     await Vehicle.findOneAndDelete({ user : userId });
 
     const addresses = new Vehicle({
       user:userId,
-      images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
+      name, model, brand, colour, license, num_passengers, images
     });
     await addresses.save();
 
@@ -898,12 +898,12 @@ router.put('/vehicle/:id', auth,  async (req, res) => {
   try {
     const userId=req.user._id
     const { 
-      images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
+      name, model, brand, colour, license, num_passengers, images
      } = req.body;
      // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      images,name,max_power,max_fuel,max_speed,mph,modal,capacity,color,fueltype,geartype,
+      name, model, brand, colour, license, num_passengers, images
     }).filter(([key, value]) => value !== undefined)
   );
 
