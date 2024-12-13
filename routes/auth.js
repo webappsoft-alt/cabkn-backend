@@ -44,29 +44,32 @@ router.post('/:type?', async (req, res) => {
     const { email, fcmtoken,name,type } = req.body;
     const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
+    if (!['customer',"rider"].includes(type)) return res.status(400).send({ success: false, message: 'Invalid user type.' });
+
     const user = await User.findOne({ email:lowerCaseEmail,type });
 
-    // if (!user) {
-    //   const salt = await bcrypt.genSalt(10);
-    //   const hashedPassword = await bcrypt.hash(uid(), salt);
+    if (!user) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(uid(), salt);
 
-    //   const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:"customer",phone:ticketCode() });
+      const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:type,phone:ticketCode() });
 
-    //   await newUser.save();
+      await newUser.save();
 
-    //   const token = generateAuthToken(newUser._id, newUser.type);
+      const token = generateAuthToken(newUser._id, newUser.type);
 
-    //   return res.send({ success: true, message: 'Account created successfully', token: token, user: newUser });
-    // }
+      return res.send({ success: true, message: 'Account created successfully', token: token, user: newUser,newUser:true });
+    }
 
     if (user.status == 'deleted') return res.status(400).send({ success: false, message: 'User has been deleted. Contact admin for further support.' });
 
-    await User.findByIdAndUpdate(user._id, { fcmtoken })
+    const newUser= await User.findByIdAndUpdate(user._id, { fcmtoken, status:'online' },{new:true})
     const token = generateAuthToken(user._id,user.type);
 
     res.send({
       token: token,
-      user: user
+      user: newUser,
+      newUser:false
     });
     return;
   }
