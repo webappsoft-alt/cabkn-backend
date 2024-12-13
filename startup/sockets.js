@@ -892,7 +892,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const validStatuses = ["completed", "cancelled"];
+        const validStatuses = ["completed" ];
         if (!validStatuses.includes(status)) {
           return callback({
             success: false,
@@ -976,6 +976,77 @@ module.exports = function (server,app) {
       }
     });
     
+    socket.on('cancel-order-customer', async ({ orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+
+        const status='cancelled'
+    
+        // Find and update the order
+        const updatedOrder = await Order.findOneAndUpdate(
+          { _id: orderId, user: senderId },
+          { status: status },
+          { new: true }
+        ).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
+    
+        if (!updatedOrder) {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'Order not found or cannot be updated.',
+          });
+        }
+    
+        if (updatedOrder.bookingtype=='live') {
+          if (updatedOrder.to_id._id) {
+            await User.findByIdAndUpdate(updatedOrder.to_id._id,{ isRiding : false },{new:true})
+          }
+        }
+    
+        // Notify the customer about the update
+        await sendNotification({
+          user: senderId,
+          to_id: updatedOrder.to_id._id.toString(),
+          description: `Your Order has been ${status} by ${updatedOrder?.user?.name}.`,
+          type: "order",
+          title: "Order cancelled",
+          fcmtoken: updatedOrder.to_id.fcmtoken,
+          order: orderId,
+          noti: false,
+        });
+        
+        io.to(updatedOrder.user._id.toString()).emit('cancel-order-rider', {
+            success: true,
+            order: updatedOrder,
+            title: 'Order Update',
+            message: 'Your order has been cancelled.',
+          });
+    
+        // Callback success response
+        return callback({
+          success: true,
+          order: updatedOrder,
+          title: 'Order Updated',
+          message: `The order has been ${status} successfully.`,
+        });
+      } catch (error) {
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
 
     socket.on('seen-group-msg', async ({ conversationId }) => {
       const senderId = Object.keys(connectedUsers).find(
