@@ -272,7 +272,24 @@ router.post("/signup/:type", async (req, res) => {
     if (referral) {
       const findRefferal=await User.findOne({referral_code:referral})
       if (findRefferal) {
-        // updateUser= await User.findByIdAndUpdate(newUser._id,{amount:10},{new:true}).lean()
+        updateUser= await User.findByIdAndUpdate(newUser._id,{amount:10},{new:true}).lean()
+
+        await sendNotification({
+          user: findRefferal._id.toString(),
+          to_id: newUser._id.toString(),
+          description: `You've earned $20 for a successfully using a referral code! Thank you!`,
+          type: "referral",
+          title: "Congratulations! You've Earned $20",
+          fcmtoken: fcmtoken||"",
+        });
+
+        const logintransaction=new Transaction({
+          user:newUser._id,
+          amount:20,
+          type:'deposit'
+        })
+      
+        await logintransaction.save()
 
         await sendNotification({
           user: newUser._id,
