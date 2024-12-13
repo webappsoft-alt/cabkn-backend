@@ -71,6 +71,8 @@ const userSchema = new mongoose.Schema({
   gender: String,
   cus_id:String,
   insurancetype:String,
+  insurance:String,
+  police_record:String,
   docs:[String],
   ride_type: {
     type: String,
@@ -140,6 +142,8 @@ function validateUser(user) {
     insurancetype: Joi.string().min(0).max(1024).optional(),
     ride_type: Joi.string().min(0).max(1024).optional(),
     address: Joi.string().min(0).max(1024).optional(),
+    insurance: Joi.string().min(0).max(1024).optional(),
+    police_record: Joi.string().min(0).max(1024).optional(),
     lat: Joi.number().optional(),
     lng: Joi.number().optional(),
     docs: Joi.array().min(0).max(1024).optional(),
