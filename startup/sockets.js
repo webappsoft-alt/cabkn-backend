@@ -711,6 +711,17 @@ module.exports = function (server,app) {
             message: 'The request was successfully rejected.',
           });
         } else {
+
+          const findOrder=await Order.findOne({user:senderId,status:"pending",bookingtype:"live"}).lean()
+
+          if (findOrder) {
+            return callback({
+              success: false,
+              title: 'Request Error',
+              message: 'You are already in a ride. Please complete this before starting another one.',
+              order:findOrder
+            });
+          }
           // Accept the request
           const request = await Request.findById(requestId).populate("user");
     
