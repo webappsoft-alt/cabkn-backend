@@ -698,7 +698,7 @@ module.exports = function (server,app) {
             return callback({
               success: false,
               title: 'Request Update',
-              message: 'User is not online yet.',
+              message: "Rider is not online yet.",
             });
           }
         
@@ -706,7 +706,7 @@ module.exports = function (server,app) {
             return callback({
               success: false,
               title: 'Request Update',
-              message: 'User is not vehicle is not available yet.',
+              message: "Rider's vehicle is not available yet.",
             });
           }
         
@@ -714,7 +714,7 @@ module.exports = function (server,app) {
             return callback({
               success: false,
               title: 'Request Update',
-              message: 'User is not available yet.',
+              message: "Rider is not available yet.",
             });
           }
     
