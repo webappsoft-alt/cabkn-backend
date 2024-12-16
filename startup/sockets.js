@@ -200,16 +200,16 @@ module.exports = function (server,app) {
         });
       }
 
-      const findOrder=await Order.findOne({user:senderId,status:"pending"}).lean()
+      // const findOrder=await Order.findOne({user:senderId,status:"pending"}).lean()
 
-      if (findOrder) {
-        return callback({
-          success: false,
-          title: 'Request Error',
-          message: 'You have already created an request.',
-          request:findOrder
-        });
-      }
+      // if (findOrder) {
+      //   return callback({
+      //     success: false,
+      //     title: 'Request Error',
+      //     message: 'You have already created an request.',
+      //     request:findOrder
+      //   });
+      // }
 
 
       let query = {};
