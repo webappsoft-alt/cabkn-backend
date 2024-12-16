@@ -396,6 +396,35 @@ module.exports = function (server,app) {
             message: 'Sender ID not found.',
           });
         }
+
+        const user = await User.findById(senderId).lean();
+
+        if (user.status !== 'online') {
+          return callback({
+            success: false,
+            user,
+            title: 'Request Update',
+            message: "You are not online yet.",
+          });
+        }
+      
+        if (user.isVehicle!==true) {
+          return callback({
+            success: false,
+            user,
+            title: 'Request Update',
+            message: "Your's vehicle is not added yet.",
+          });
+        }
+      
+        if (user.isRiding==true) {
+          return callback({
+            success: false,
+            user,
+            title: 'Request Update',
+            message: "You are already in ride.",
+          });
+        }
     
         const order = await Order.findById(requestId).populate("user").populate("ridertype").populate("liability");
     
@@ -464,7 +493,6 @@ module.exports = function (server,app) {
           await newRequest.save();
     
           // Notify the customer
-          const user = await User.findById(senderId).select("name").lean();
     
           await sendNotification({
             user: senderId,
