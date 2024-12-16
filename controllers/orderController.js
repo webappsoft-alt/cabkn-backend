@@ -22,9 +22,9 @@ exports.fetchrequestOrder = async (req, res) => {
     return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
   }
 
-  if (user.isRiding==true) {
-    return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
-  }
+  // if (user.isRiding==true) {
+  //   return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
+  // }
 
   query.status = "pending";
   query.rejected_by = {$nin:userId};
