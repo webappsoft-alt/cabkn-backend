@@ -712,7 +712,7 @@ module.exports = function (server,app) {
           });
         } else {
 
-          const findOrder=await Order.findOne({user:senderId,status:"pending",bookingtype:"live"}).lean()
+          const findOrder=await Order.findOne({user:senderId,status:{$in:['accepted',"order-start"]},bookingtype:"live"}).lean()
 
           if (findOrder) {
             return callback({
