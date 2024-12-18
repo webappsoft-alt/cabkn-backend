@@ -102,6 +102,7 @@ const orderSchema = new mongoose.Schema({
     type:Boolean,
     default:false
   },
+  note:String,
   payment:[{
     amount:Number,
     date:Date

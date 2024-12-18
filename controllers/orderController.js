@@ -359,11 +359,18 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
   try {
     const postId = req.params.id;
     const userId = req.user._id;
-    const { paymentId,tip,couponId }=req.body;
+    const { paymentId,tip,couponId,note }=req.body;
 
     let query={
-      paymentId:paymentId,tip:tip||0 ,
+      paymentId:paymentId,
+      tip:tip||0 ,
       payment_status:"completed"
+    }
+    if (note) {
+      query={
+        ...query,
+        note:note
+      }
     }
     if (couponId) {
       await Coupon.findByIdAndUpdate(couponId,{$addToSet:{used_by:userId}}).lean();
