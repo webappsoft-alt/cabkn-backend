@@ -1076,6 +1076,30 @@ module.exports = function (server,app) {
             message: 'Order not found or cannot be cancelled.',
           });
         }
+
+        if (updatedOrder.status=='accepted') {
+          const user = await User.findById(senderId);
+  
+          if (!user) {
+            return callback({
+              success: false,
+              title: 'Order Delete',
+              message: "The User with the given ID was not found.",
+            });
+          }
+        
+          user.amount=Number(user.amount) + Number(updatedOrder.price);
+          await user.save()
+        
+          const transaction=new Transaction({
+            user:senderId,
+            amount:Number(updatedOrder.price),
+            type:'refunded'
+          })
+        
+          await transaction.save()
+        }
+
     
         if (updatedOrder.bookingtype=='live') {
           if (updatedOrder.to_id._id) {
