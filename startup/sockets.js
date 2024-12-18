@@ -10,6 +10,7 @@ const { sendNotification } = require('../controllers/notificationCreateService')
 const Order = require('../models/Order');
 const Request = require('../models/Request');
 const Coupon = require('../models/Coupon');
+const Transaction = require('../models/Transaction');
 
 const connectedUsers = {};
 
@@ -350,6 +351,27 @@ module.exports = function (server,app) {
     
         // Delete the order
         await Order.findByIdAndDelete(requestId);
+
+        const user = await User.findById(senderId);
+
+        if (!user) {
+          return callback({
+            success: false,
+            title: 'Order Delete',
+            message: "The User with the given ID was not found.",
+          });
+        }
+      
+        user.amount=Number(user.amount) + Number(order.price);
+        await user.save()
+      
+        const transaction=new Transaction({
+          user:senderId,
+          amount:Number(order.price),
+          type:'refunded'
+        })
+      
+        await transaction.save()
         
         // Notify riders to filter the request
         const userIds = await User.find({ type: "rider", status: {$in:["online","offline"]} })
@@ -957,6 +979,28 @@ module.exports = function (server,app) {
     
         if (status === 'cancelled') {
           await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
+
+          const user = await User.findById(updatedOrder.user._id);
+
+          if (!user) {
+            return callback({
+              success: false,
+              title: 'Order Delete',
+              message: "The User with the given ID was not found.",
+            });
+          }
+        
+          user.amount=Number(user.amount) + Number(updatedOrder.price);
+          await user.save()
+        
+          const transaction=new Transaction({
+            user:senderId,
+            amount:Number(updatedOrder.price),
+            type:'refunded',
+            order:orderId
+          })
+        
+          await transaction.save()
           // Uncomment and implement payment refund logic if required
           /*
           const fiftyPer = Number(updatedOrder.price) * 0.50;
