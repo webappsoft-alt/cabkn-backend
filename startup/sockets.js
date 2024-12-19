@@ -187,7 +187,9 @@ module.exports = function (server,app) {
         distance,
         liability,
         ridertype,
-        stops
+        stops,
+        paymentId,
+        couponId
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -252,8 +254,16 @@ module.exports = function (server,app) {
          bookingtype,
          liability,
          ridertype,
-         adminprice:Number(price) * 0.15
+         adminprice:Number(price) * 0.15,
+         paymentId : paymentId,
+         payment_status : "completed" 
        });
+
+       if (couponId) {
+        await Coupon.findByIdAndUpdate(couponId,{$addToSet:{used_by:senderId}}).lean();
+        newRequest.coupon = couponId;
+      }
+
        if (bookingtype=='schedule') {
         newRequest.schedule_date=schedule_date
         newRequest.schedule_time=schedule_time
