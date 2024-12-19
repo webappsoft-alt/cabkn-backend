@@ -457,9 +457,9 @@ router.put("/order-wallet-payment",auth, async (req, res) => {
 
   if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
   
-  if (Number(user.balance) < Number(amount)) return res.status(400).send({success: false,message: "You don't have enough amount in wallet. Please add amount in your wallet to complete your booking.",user});
+  if (Number(user.amount) < Number(amount)) return res.status(400).send({success: false,message: "You don't have enough amount in wallet. Please add amount in your wallet to complete your booking.",user});
 
-  user.balance=Number(user.amount) - Number(amount);
+  user.amount=Number(user.amount) - Number(amount);
   await user.save()
 
   const transaction=new Transaction({
