@@ -798,16 +798,7 @@ module.exports = function (server,app) {
             order.vehicle = request.vehicle;
           }
 
-          if (couponId) {
-            await Coupon.findByIdAndUpdate(couponId,{$addToSet:{used_by:senderId}}).lean();
-            order.coupon = couponId;
-          }
-
           order.to_id = request.user._id;
-          order.paymentId = paymentId;
-          if (paymentId) {
-            order.payment_status = "completed" 
-          }
           await order.save();
 
           if (order.bookingtype=='live') {
