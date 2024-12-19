@@ -451,7 +451,7 @@ router.put("/add-amount", auth, async (req, res) => {
 });
 
 router.put("/order-wallet-payment", auth, async (req, res) => {
-  const { amount, order } = req.body;
+  const { amount } = req.body;
 
   const user = await User.findById(req.user._id);
 
@@ -465,7 +465,6 @@ router.put("/order-wallet-payment", auth, async (req, res) => {
   const transaction=new Transaction({
     user:req.user._id,
     amount,
-    order:order,
     type:'purchase'
   })
 
@@ -475,7 +474,7 @@ router.put("/order-wallet-payment", auth, async (req, res) => {
 });
 
 router.put("/order-card-payment", auth, async (req, res) => {
-  const { amount, order,refId } = req.body;
+  const { amount, refId } = req.body;
 
   const user = await User.findById(req.user._id);
 
@@ -484,7 +483,6 @@ router.put("/order-card-payment", auth, async (req, res) => {
   const transaction=new Transaction({
     user:req.user._id,
     amount,
-    order:order,
     type:'purchase',
     refId
   })
