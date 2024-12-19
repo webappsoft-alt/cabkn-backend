@@ -189,7 +189,8 @@ module.exports = function (server,app) {
         ridertype,
         stops,
         paymentId,
-        couponId
+        couponId,
+        note
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -270,6 +271,9 @@ module.exports = function (server,app) {
        }
        if (distance) {
         newRequest.distance=distance
+       }
+       if (note) {
+        newRequest.note=note
        }
        if (stops) {
         newRequest.stops=stops
@@ -701,7 +705,7 @@ module.exports = function (server,app) {
       }
     });
 
-    socket.on('update-request-customer', async ({ requestId, status, orderId, paymentId,couponId }, callback) => {
+    socket.on('update-request-customer', async ({ requestId, status, orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
