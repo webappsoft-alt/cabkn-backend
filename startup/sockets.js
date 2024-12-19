@@ -361,6 +361,27 @@ module.exports = function (server,app) {
     
         // Delete the order
         await Order.findByIdAndDelete(requestId);
+
+          const user = await User.findById(senderId);
+  
+          if (!user) {
+            return callback({
+              success: false,
+              title: 'Order Delete',
+              message: "The User with the given ID was not found.",
+            });
+          }
+        
+          user.amount=Number(user.amount) + Number(order.price);
+          await user.save()
+        
+          const transaction=new Transaction({
+            user:senderId,
+            amount:Number(order.price),
+            type:'refunded'
+          })
+        
+          await transaction.save()
         
         // Notify riders to filter the request
         const userIds = await User.find({ type: "rider", status: {$in:["online","offline"]} })
