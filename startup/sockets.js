@@ -255,7 +255,7 @@ module.exports = function (server,app) {
          liability,
          ridertype,
          adminprice:Number(price) * 0.15,
-         paymentId : paymentId,
+         paymentId : paymentId||"",
          payment_status : "completed" 
        });
 
