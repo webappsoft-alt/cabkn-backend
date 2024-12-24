@@ -48,7 +48,7 @@ router.post('/:type?', async (req, res) => {
 
     const user = await User.findOne({ email:lowerCaseEmail,type });
 
-    if (["rider"].includes(type)&& !user ) return res.status(400).send({ success: false, message: 'User doesnot exist with that email.' });
+    if (["rider"].includes(type)&& !user ) return res.status(200).send({ success: false, message: 'User doesnot exist with that email.' });
 
     if (!user) {
       const salt = await bcrypt.genSalt(10);
@@ -69,6 +69,7 @@ router.post('/:type?', async (req, res) => {
     const token = generateAuthToken(user._id,user.type);
 
     res.send({
+      success: true,
       token: token,
       user: newUser,
       newUser:false
