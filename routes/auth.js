@@ -54,7 +54,16 @@ router.post('/:type?', async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(uid(), salt);
 
-      const newUser = new User({ email:lowerCaseEmail, name: name||"", password: hashedPassword, login_type: "social-login", fcmtoken,type:type,phone:ticketCode() });
+      const newUser = new User({ 
+        email:lowerCaseEmail, 
+        name: name||"", 
+        password: hashedPassword,
+        login_type: "social-login", 
+        fcmtoken,
+        type:type,
+        phone:ticketCode(),
+        referral_code:generateRandomString(10),
+       });
 
       await newUser.save();
 
