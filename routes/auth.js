@@ -48,6 +48,8 @@ router.post('/:type?', async (req, res) => {
 
     const user = await User.findOne({ email:lowerCaseEmail,type });
 
+    if (["rider"].includes(type)&& !user ) return res.status(400).send({ success: false, message: 'User doesnot exist with that email.' });
+
     if (!user) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(uid(), salt);
