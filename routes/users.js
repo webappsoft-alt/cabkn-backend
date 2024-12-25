@@ -1209,7 +1209,8 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
   }
 
   const earnings = await Order.find({to_id:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance payment adminprice createdAt").lean()
-  const totalEarnings=earnings.reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
+  const cancelearnings = await Order.find({to_id:userId,status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price distance payment adminprice createdAt").lean()
+  const totalEarnings=[...earnings,...cancelearnings].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
   // Calculate the total amount received
   const totalAmountReceived = earnings.reduce((total, order) => {
     // Sum up the payment amounts for each order
@@ -1221,8 +1222,9 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
  
  const orders = await Order.find({...query,to_id:userId,status:"completed",payment_status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ const cancelorders = await Order.find({...query,to_id:userId,status:"cancelled",payment_status:"completed",refunded:false}).sort({ schedule_date: 1 }).limit(10).lean()
  
- const totalFilterEarnings=orders.reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
+ const totalFilterEarnings=[...orders,...cancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
  const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
 
 
@@ -1238,12 +1240,13 @@ const todayEnd = moment().endOf('day');
 
 
 const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price createdAt").lean()
+const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price createdAt").lean()
 
  // Initialize the graph array
  let graph = dates.map(date => ({ x: date, price:0 }));
 
  // Increment the y value for the correct date ranges
- graphorders.forEach(order => {
+ [...graphorders,...graphcancelorders].forEach(order => {
    const index = findDateIndex(order.schedule_date,dates);
    if (index !== -1 && index < graph.length) {
      graph[index].price += 1;
@@ -1272,16 +1275,18 @@ router.get('/customer/earnings',auth, async (req, res) => {
  const todayEnd = moment().endOf('day');
 
  const earnings = await Order.find({user:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance").lean()
- const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+ const cancelEarnings = await Order.find({user:userId,status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price distance").lean()
+ const totalEarnings=[...earnings,...cancelEarnings].reduce((a,b)=>a+b.price,0)
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
 
  const orders = await Order.find({user:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price createdAt").lean()
+ const cancelorders = await Order.find({user:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price createdAt").lean()
 
   // Initialize the graph array
   let graph = dates.map(date => ({ x: date, price:0 }));
  
   // Increment the y value for the correct date ranges
-  orders.forEach(order => {
+  [...orders,...cancelorders].forEach(order => {
     const index = findDateIndex(order.createdAt,dates);
     if (index !== -1 && index < graph.length) {
       graph[index].price += 1;
@@ -1306,15 +1311,19 @@ router.post('/customer/dashboard/:id?',auth, async (req, res) => {
   const {startDate,endDate}=req.body;
 
  const earnings = await Order.find({user:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance").lean()
+ const cancelEarnings = await Order.find({user:userId,status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price distance").lean()
  const totalEarnings=earnings.reduce((a,b)=>a+b.price,0)
+ const totalcancelEarnings=cancelEarnings.reduce((a,b)=>a+b.price,0)
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
  
  const orders = await Order.find({...query,user:userId,schedule_date: { $gte: startDate, $lte: endDate },status:"completed",payment_status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ const cancelorders = await Order.find({...query,user:userId,schedule_date: { $gte: startDate, $lte: endDate },tatus:"cancelled",payment_status:"completed",refunded:false}).sort({ schedule_date: 1 }).limit(10).lean()
  
  const totalFilterEarnings=orders.reduce((a,b)=>a+b.price,0)
+ const totalFiltercancelordersEarnings=cancelorders.reduce((a,b)=>a+b.price,0)
  const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
 
-  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance });
+  res.send({ success: true, totalEarnings:totalEarnings+totalcancelEarnings,totalFilterEarnings:totalFilterEarnings+totalFiltercancelordersEarnings,orders:orders,totaldistance,totalFilterdistance });
 });
 
 router.get('/dashboard',[auth, admin],async (req, res) => {

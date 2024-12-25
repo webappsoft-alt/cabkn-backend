@@ -1081,11 +1081,7 @@ module.exports = function (server,app) {
         const status='cancelled'
     
         // Find and update the order
-        const updatedOrder = await Order.findOneAndUpdate(
-          { _id: orderId, user: senderId },
-          { status: status },
-          { new: true }
-        ).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
+        const updatedOrder = await Order.findOne({ _id: orderId, user: senderId }).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
     
         if (!updatedOrder) {
           return callback({
@@ -1095,7 +1091,7 @@ module.exports = function (server,app) {
           });
         }
 
-        if (updatedOrder.status=='pending') {
+        if (["completed",'cancelled','pending'].includes(updatedOrder.status)) {
           return callback({
             success: false,
             title: 'Order Update',
@@ -1103,16 +1099,18 @@ module.exports = function (server,app) {
           });
         }
 
-        if (updatedOrder.status=='accepted') {
+        if (['accepted'].includes(updatedOrder.status)) {
           const user = await User.findById(senderId);
   
           if (!user) {
             return callback({
               success: false,
-              title: 'Order Delete',
+              title: 'Order Update',
               message: "The User with the given ID was not found.",
             });
           }
+
+          await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status,refunded:true},{new:true})
         
           user.amount=Number(user.amount) + Number(updatedOrder.price);
           await user.save()
@@ -1120,10 +1118,15 @@ module.exports = function (server,app) {
           const transaction=new Transaction({
             user:senderId,
             amount:Number(updatedOrder.price),
-            type:'refunded'
+            type:'refunded',
+            order:orderId
           })
         
           await transaction.save()
+        }
+
+        if (['order-start'].includes(updatedOrder.status)) {
+          await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status,refunded:false},{new:true})
         }
 
     
@@ -1144,10 +1147,11 @@ module.exports = function (server,app) {
           order: orderId,
           noti: false,
         });
+        const order=await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status},{new:true}).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
         
         io.to(updatedOrder.user._id.toString()).emit('cancel-order-rider', {
             success: true,
-            order: updatedOrder,
+            order: order,
             title: 'Order Update',
             message: 'Your order has been cancelled.',
           });
@@ -1155,7 +1159,7 @@ module.exports = function (server,app) {
         // Callback success response
         return callback({
           success: true,
-          order: updatedOrder,
+          order: order,
           title: 'Order Updated',
           message: `The order has been ${status} successfully.`,
         });
