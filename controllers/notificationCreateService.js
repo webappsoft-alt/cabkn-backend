@@ -72,10 +72,12 @@ exports.sendNotification = async ({
                  },
                };
          
-             await admin.messaging().send(message);
+             const res=await admin.messaging().send(message);
+             console.log("notii==",res)
 
              }
      } catch (error) {
+      console.log("errorrr====>",error?.message||"ad")
      }
 }
 

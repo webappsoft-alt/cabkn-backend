@@ -812,6 +812,7 @@ module.exports = function (server,app) {
     
           const date=new Date(order.schedule_date)
 
+          console.log("request?.user?.fcmtoken===",request?.user?.fcmtoken,request.user?._id.toString())
           // Send notifications
           await sendNotification({
             user: senderId,
