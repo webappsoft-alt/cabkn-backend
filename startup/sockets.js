@@ -419,7 +419,7 @@ module.exports = function (server,app) {
       }
     });    
 
-    socket.on('update-request-rider', async ({ requestId, price, status,vehicle }, callback) => {
+    socket.on('update-request-rider', async ({ requestId, status,vehicle }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
@@ -450,15 +450,6 @@ module.exports = function (server,app) {
             user,
             title: 'Request Update',
             message: "Your's vehicle is not added yet.",
-          });
-        }
-      
-        if (user.isRiding==true) {
-          return callback({
-            success: false,
-            user,
-            title: 'Request Update',
-            message: "You are already in ride.",
           });
         }
     
@@ -502,59 +493,66 @@ module.exports = function (server,app) {
           });
         } else {
 
-          const findorder = await Order.findOne({_id:requestId,accepted_by:{$in:senderId}}).lean();
-
-          if (findorder) {
-            return callback({
-              success: false,
-              request: order,
-              title: 'Request Update',
-              message: 'The request has already been accepted.',
-            });
-          }
-          // Create a new offer/request
-          const newRequest = new Request({
-            user: senderId,
-            order: requestId,
-            to_id: order.user._id,
-            price,
-          });
-          if (vehicle) {
-            newRequest.vehicle=vehicle
-          }
-    
-          // Update order as accepted by this rider
           await Order.findByIdAndUpdate(requestId, { $addToSet: { accepted_by: senderId } });
+
+          // Update the order status
+          order.status = 'accepted';
+          if (vehicle) {
+            order.vehicle = vehicle;
+          }
+
+          order.to_id = senderId;
+          await order.save();
     
-          await newRequest.save();
-    
-          // Notify the customer
-    
+          const date=new Date(order.schedule_date)
+
+          // Send notifications
           await sendNotification({
             user: senderId,
-            to_id: order?.user?._id.toString(),
-            description: `You have received a new offer from ${user?.name}`,
-            type: "offer",
-            title: "New Offer",
-            fcmtoken: order.user.fcmtoken,
+            to_id: order.user._id,
+            description:order.bookingtype=='live'? `Your request has been accepted by ${user?.name} and your ride has been started.`:`Your request has been accepted by ${user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+            type: "order",
+            title: "Order accepted",
+            fcmtoken: order?.user?.fcmtoken,
             order: requestId,
-            request: newRequest._id,
           });
     
-          const request = await Request.findById(newRequest._id).populate("user").populate("vehicle").lean();
-    
-          io.to(order?.user?._id.toString()).emit('receive-request-customer', {
+          // await sendNotification({
+          //   user: request.user?._id.toString(),
+          //   to_id: senderId,
+          //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
+          //   type: "order",
+          //   title: "Offer Accepted",
+          //   fcmtoken: order?.user?.fcmtoken,
+          //   order: orderId,
+          //   request: requestId,
+          // });
+
+          io.to(order.user._id.toString()).emit('update-request-customer', {
             success: true,
-            request: request,
-            title: 'New Offer',
-            message: `You have received a new offer from ${user?.name}.`,
+            title: 'Offer Accepted',
+            type:order.bookingtype,
+            message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
           });
+        
+          // Notify other riders to filter out the request
+          const userIds = await User.find({
+            type: "rider",
+            status: {$in:["online","offline"]},
+            _id: { $ne: senderId.toString() },
+          }).select("fcmtoken").lean();
+    
+          for (let user of userIds) {
+            io.to(user._id.toString()).emit('filter-request-rider', {
+              request: requestId,
+              success: true,
+            });
+          }
     
           return callback({
             success: true,
-            request: request,
-            title: 'Offer Sent',
-            message: 'The offer was successfully sent to the customer.',
+            title: 'Offer Accepted',
+            message: 'The order has been started and notifications sent.',
           });
         }
       } catch (error) {
