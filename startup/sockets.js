@@ -190,7 +190,8 @@ module.exports = function (server,app) {
         stops,
         paymentId,
         couponId,
-        note
+        note,
+        favUserId
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -222,8 +223,17 @@ module.exports = function (server,app) {
       } else {
         query = { ride_type: { $in: ["ride", "both"] } };
       }
+      query={
+        type:"rider",status:"online",...query,isVehicle:true,isRiding:false
+      }
+
+      if (favUserId) {
+        query={
+          _id:favUserId
+        }
+      }
        
-       let userIds=await User.find({type:"rider",status:"online",...query,isVehicle:true,isRiding:false}).select("name fcmtoken").lean()
+       let userIds=await User.find(query).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
  
