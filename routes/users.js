@@ -214,7 +214,7 @@ router.post("/signup/:type", async (req, res) => {
 
     if (!validTypes.includes(type)) return res.status(400).send({ success: false, message: "Invalid type" });
 
-    const { name, password, email, fcmtoken,code,dob,phone,gender,referral,image,docs,insurancetype,ride_type,address,lat,lng,police_record,insurance } = req.body;
+    const { name, password, email, fcmtoken,code,dob,phone,gender,referral,image,docs,insurancetype,ride_type,address,lat,lng,police_record,insurance,account_info } = req.body;
 
     const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
@@ -263,6 +263,10 @@ router.post("/signup/:type", async (req, res) => {
       type:'Point',
       coordinates:[Number(lng),Number(lat)]
      } 
+    }
+
+    if (account_info) {
+      newUser.account_info=account_info
     }
 
     await newUser.save();
@@ -388,13 +392,13 @@ router.post("/check-phone", async (req, res) => {
 
 router.put("/update-user", auth, async (req, res) => {
   const {
-    name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,phone,police_record,insurance
+    name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,phone,police_record,insurance,account_info
   } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,phone,police_record,insurance
+      name,image,interests,location,address,dob,gender,referral,fcmtoken,status,docs,phone,police_record,insurance,account_info
     }).filter(([key, value]) => value !== undefined)
   );
 

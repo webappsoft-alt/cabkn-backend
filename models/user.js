@@ -68,6 +68,11 @@ const userSchema = new mongoose.Schema({
     maxlength: 255,
     unique: true,
   },
+  account_info:{
+    account_name: String,
+    account_number:String,
+    bank_name:String,
+  },
   gender: String,
   cus_id:String,
   insurancetype:String,
@@ -147,6 +152,7 @@ function validateUser(user) {
     lat: Joi.number().optional(),
     lng: Joi.number().optional(),
     docs: Joi.array().min(0).max(1024).optional(),
+    account_info: Joi.object().optional(),
   };
 
   const schema = Joi.object({
