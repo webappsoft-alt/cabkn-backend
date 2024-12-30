@@ -312,16 +312,19 @@ module.exports = function (server,app) {
        notification: {
            title: 'New Request',
            body: 'You have received a new request.',
-           sound: "ride.mp3",
-           android_channel_id: "sound_ride"
        },
-       "aps": {
-        "alert": {
-          title: 'New Request',
-          body: 'You have received a new request.',
-        },
-        sound: "ride.mp3"
-    }
+       android: {
+           notification: {
+               sound: 'ride.mp3',
+           },
+       },
+       apns: {
+           payload: {
+               aps: {
+                   sound: 'ride.mp3',
+               },
+           },
+       },
      }));
      try { 
       await admin.messaging().sendEach(messages) 
