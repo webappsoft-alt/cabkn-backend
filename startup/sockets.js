@@ -312,11 +312,11 @@ module.exports = function (server,app) {
        notification: {
            title: 'New Request',
            body: 'You have received a new request.',
+           android_channel_id: "sound_ride"
        },
        android: {
            notification: {
               sound: 'ride',
-              android_channel_id: "sound_ride"
            },
        },
        apns: {
