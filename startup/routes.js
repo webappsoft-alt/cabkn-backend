@@ -11,6 +11,7 @@ const supportRoute = require('../routes/supportRoute');
 const orderRoutes = require('../routes/orderRoutes');
 const ratingRoutes = require('../routes/ratingRoutes');
 const couponRoute = require('../routes/couponRoute');
+const BannerRoute = require('../routes/BannerRoute');
 
 module.exports = function (app) {
   app.use(express.json());
@@ -24,5 +25,6 @@ module.exports = function (app) {
   app.use('/api/msg',authMiddleware, messageRoutes);
   app.use('/api/notification',authMiddleware, notificationRoute);
   app.use('/api/support', supportRoute);
+  app.use('/api/banner', BannerRoute);
   app.use(error);
 }
