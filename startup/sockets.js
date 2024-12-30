@@ -312,18 +312,8 @@ module.exports = function (server,app) {
        notification: {
            title: 'New Request',
            body: 'You have received a new request.',
-       },
-       android: {
-           notification: {
-               sound: 'default',
-           },
-       },
-       apns: {
-           payload: {
-               aps: {
-                   sound: 'default',
-               },
-           },
+           sound: "ride.wav",
+           android_channel_id: "sound_ride"
        },
      }));
      try { 
