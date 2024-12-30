@@ -315,7 +315,8 @@ module.exports = function (server,app) {
        },
        android: {
            notification: {
-               sound: 'ride.mp3',
+              sound: 'ride',
+              android_channel_id: "sound_ride"
            },
        },
        apns: {
