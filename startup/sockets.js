@@ -299,6 +299,7 @@ module.exports = function (server,app) {
  
        // Ensure all values in data are strings
      const messageData = {
+       notiId:"request",
        messageType: "request",
        userType:request.user.type,
        ...Object.fromEntries(
@@ -314,17 +315,20 @@ module.exports = function (server,app) {
            body: 'You have received a new request.',
        },
        android: {
-           notification: {
-              sound: 'ride',
-           },
-       },
-       apns: {
-           payload: {
-               aps: {
-                   sound: 'ride.mp3',
-               },
-           },
-       },
+        notification: {
+           sound: 'ride', // Exclude the file extension
+           defaultSound:false,
+           channelId:"sound_ride",
+           priority:"high"
+        },
+        },
+        apns: {
+            payload: {
+                aps: {
+                    sound: 'ride.mp3',
+                },
+            },
+        },
      }));
      try { 
       await admin.messaging().sendEach(messages) 

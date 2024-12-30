@@ -44,6 +44,7 @@ exports.sendNotification = async ({
       
           // Ensure all values in data are strings
           const messageData = {
+            notiId:"normal_noti",
             recipient: JSON.stringify(recipient), // Convert recipient to a string
             messageType: type,
             ...Object.fromEntries(
