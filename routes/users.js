@@ -30,6 +30,7 @@ const Invites = require("../models/Invites");
 const { generateRandomString } = require("../controllers/generateCode");
 const { sendNotification } = require("../controllers/notificationCreateService");
 const Transaction = require("../models/Transaction");
+const LoyalityPoint = require("../models/LoyalityPoint");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -1763,6 +1764,37 @@ router.get('/terms', async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
+
+router.post('/loyalitypoint', [auth,admin],  async (req, res) => {
+  try {
+    const { 
+      points_per_ride,
+      convert_rate_per_xcd
+    } = req.body;
+    await LoyalityPoint.findOneAndDelete({}).lean()
+
+    const addresses = new LoyalityPoint({
+      points_per_ride,
+      convert_rate_per_xcd
+    });
+    await addresses.save();
+
+    res.status(201).json({ success: true, message: 'LoyalityPoint created successfully', loyalitypoint:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+router.get('/loyalitypoint', [auth,admin],  async (req, res) => {
+  try {
+    const addresses = await LoyalityPoint.findOne({}).lean();
+  
+    res.status(201).json({ success: true, loyalitypoint:addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 
 // router.post('/invites', auth,  async (req, res) => {
 //   try {
