@@ -454,6 +454,28 @@ router.put("/add-amount", auth, async (req, res) => {
   res.send({ success: true, message: "User payment added successfully", user, transaction });
 });
 
+router.put("/convert-point", auth, async (req, res) => {
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
+  if (Number(user.points)<10) return res.status(400).send({success: false,message: "The User doesn't have any suitable points to convert this into amount."});
+
+  user.amount=Number(user.amount) + Number(Number(user.points)/10);
+  user.points=0;
+  await user.save()
+
+  const transaction=new Transaction({
+    amount:Number(user.amount) + Number(Number(user.points)/10),
+    type:'deposit-points'
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "User payment added successfully", user, transaction });
+});
+
 router.put("/order-wallet-payment",auth, async (req, res) => {
   const { amount } = req.body;
 

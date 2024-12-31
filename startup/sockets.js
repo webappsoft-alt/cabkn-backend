@@ -994,11 +994,10 @@ module.exports = function (server,app) {
             message: 'Order not found or cannot be updated.',
           });
         }
+        const user = await User.findById(updatedOrder.user._id);
     
         if (status === 'cancelled') {
           await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
-
-          const user = await User.findById(updatedOrder.user._id);
 
           if (!user) {
             return callback({
@@ -1012,20 +1011,25 @@ module.exports = function (server,app) {
           await user.save()
         
           const transaction=new Transaction({
-            user:senderId,
+            user:updatedOrder.user._id,
             amount:Number(updatedOrder.price),
             type:'refunded',
             order:orderId
+          });
+        
+          await transaction.save();
+        }else{
+          const transaction=new Transaction({
+            user:updatedOrder.user._id,
+            amount:10,
+            type:'points',
+            order:orderId
           })
         
-          await transaction.save()
-          // Uncomment and implement payment refund logic if required
-          /*
-          const fiftyPer = Number(updatedOrder.price) * 0.50;
-          const refund = await refundPayment(updatedOrder.paymentId, fiftyPer);
-          if (!['pending', 'failed', 'canceled'].includes(refund.status)) {
-          }
-          */
+          await transaction.save();
+
+          user.points=Number(user.points) + 10;
+          await user.save()
         }
         if (updatedOrder.bookingtype=='live') {
           await User.findByIdAndUpdate(senderId,{ isRiding : false },{new:true})
@@ -1035,7 +1039,7 @@ module.exports = function (server,app) {
         await sendNotification({
           user: senderId,
           to_id: updatedOrder.user._id.toString(),
-          description: `Your Order has been ${status} by ${updatedOrder?.to_id?.name}.`,
+          description: `Your Order has been ${status} by ${updatedOrder?.to_id?.name} and you have successfully earned 10 points for this ride.`,
           type: "order",
           title: "Order Update",
           fcmtoken: updatedOrder.user.fcmtoken,
