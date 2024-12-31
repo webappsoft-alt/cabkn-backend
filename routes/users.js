@@ -1248,7 +1248,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
 
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
  
- const orders = await Order.find({...query,to_id:userId,status:"completed",payment_status:"completed"}).sort({ schedule_date: 1 }).limit(10).lean()
+ const orders = await Order.find({...query,to_id:userId,status:"completed",payment_status:"completed"}).populate("user").sort({ schedule_date: 1 }).limit(10).lean()
  const cancelorders = await Order.find({...query,to_id:userId,status:"cancelled",payment_status:"completed",refunded:false}).sort({ schedule_date: 1 }).limit(10).lean()
  
  const totalFilterEarnings=[...orders,...cancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
