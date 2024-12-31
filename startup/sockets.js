@@ -11,6 +11,7 @@ const Order = require('../models/Order');
 const Request = require('../models/Request');
 const Coupon = require('../models/Coupon');
 const Transaction = require('../models/Transaction');
+const LoyalityPoint = require('../models/LoyalityPoint');
 
 const connectedUsers = {};
 
@@ -1019,16 +1020,18 @@ module.exports = function (server,app) {
         
           await transaction.save();
         }else{
+          const addresses = await LoyalityPoint.findOne({}).lean();
+
           const transaction=new Transaction({
             user:updatedOrder.user._id,
-            amount:10,
+            amount:(addresses?.points_per_ride||10),
             type:'points',
             order:orderId
           })
         
           await transaction.save();
 
-          user.points=Number(user.points) + 10;
+          user.points=Number(user.points) + (addresses?.points_per_ride||10);
           await user.save()
         }
         if (updatedOrder.bookingtype=='live') {
