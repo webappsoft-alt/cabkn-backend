@@ -473,7 +473,7 @@ router.put("/convert-point", auth, async (req, res) => {
 
   await transaction.save()
 
-  res.send({ success: true, message: "User payment added successfully", user, transaction });
+  res.send({ success: true, message: "Points have been converted successfully", user, transaction });
 });
 
 router.put("/order-wallet-payment",auth, async (req, res) => {
