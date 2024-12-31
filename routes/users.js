@@ -467,6 +467,7 @@ router.put("/convert-point", auth, async (req, res) => {
   await user.save()
 
   const transaction=new Transaction({
+    user:req.user._id,
     amount:Number(user.amount) + Number(Number(user.points)/10),
     type:'deposit-points'
   })
