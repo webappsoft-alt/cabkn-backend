@@ -1320,9 +1320,9 @@ const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: 
    return { ["x"]: moment(obj.x).format('ddd'), ["price"]: obj.price};
  });
 
+ const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
-
-  res.send({ success: true, totalEarnings,totalFilterEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning,newGraph });
+  res.send({ success: true, totalEarnings,totalFilterEarnings,totalWeekEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning,newGraph });
 });
 
 router.get('/customer/earnings',auth, async (req, res) => {
