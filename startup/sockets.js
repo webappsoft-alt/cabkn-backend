@@ -266,7 +266,7 @@ module.exports = function (server,app) {
          bookingtype,
          liability,
          ridertype,
-         adminprice:Number(price) * 0.15,
+         adminprice:Number(price) * 0.19,
          paymentId : paymentId||"",
          payment_status : "completed" 
        });
