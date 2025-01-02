@@ -1228,6 +1228,16 @@ router.get('/faqs/:id',  async (req, res) => {
   }
 });
 
+router.get('/adminuser',  async (req, res) => {
+  try {
+    const user = await User.findOne({type:'admin'}).lean();
+
+    res.status(200).json({ success: true,user});
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.delete('/faqs/:id', [auth,admin],  async (req, res) => {
   try {
     const serviceId = req.params.id;

@@ -525,9 +525,9 @@ module.exports = function (server,app) {
           await sendNotification({
             user: senderId,
             to_id: order.user._id,
-            description:order.bookingtype=='live'? `Your request has been accepted by ${user?.name} and your ride has been started.`:`Your request has been accepted by ${user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+            description:order.bookingtype=='live'? `Your request has been accepted by ${user?.name} and your ride has been started.`:`Your request has been accepted by ${user?.name} and your ride has been scheduled for ${date.toLocaleDateString()}.`,
             type: "order",
-            title: "Order accepted",
+            title: "Ride accepted",
             fcmtoken: order?.user?.fcmtoken,
             order: requestId,
           });
@@ -623,7 +623,7 @@ module.exports = function (server,app) {
             to_id: order.user._id.toString(),
             description: `${user?.name} has arrived your destination.`,
             type: "order",
-            title: "Order update",
+            title: "Ride update",
             fcmtoken: order.user.fcmtoken,
             order: orderId,
           });
@@ -691,7 +691,7 @@ module.exports = function (server,app) {
             to_id: order?.user?._id.toString(),
             description: `${order.to_id?.name} has requested you to pay his order payment.`,
             type: "order-payment",
-            title: "Order update",
+            title: "Ride update",
             fcmtoken: order?.user?.fcmtoken,
             order: orderId,
           });
@@ -825,12 +825,11 @@ module.exports = function (server,app) {
     
           const date=new Date(order.schedule_date)
 
-          console.log("request?.user?.fcmtoken===",request?.user?.fcmtoken,request.user?._id.toString())
           // Send notifications
           await sendNotification({
             user: senderId,
             to_id: request.user?._id.toString(),
-            description:order.bookingtype=='live'? `Your offer has been accepted by ${order?.user?.name} and your ride has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+            description:order.bookingtype=='live'? `Your offer has been accepted by ${order?.user?.name} and your ride has been started.`:`Your offer has been accepted by ${order?.user?.name} and your ride has been scheduled for ${date.toLocaleDateString()}.`,
             type: "order",
             title: "Offer Accepted",
             fcmtoken: request?.user?.fcmtoken,
@@ -853,7 +852,7 @@ module.exports = function (server,app) {
             success: true,
             title: 'Offer Accepted',
             type:order.bookingtype,
-            message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+            message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your ride has been scheduled for ${date.toLocaleDateString()}.`,
           });
         
           // Notify other riders to filter out the request
@@ -875,7 +874,7 @@ module.exports = function (server,app) {
           return callback({
             success: true,
             title: 'Offer Accepted',
-            message: 'The order has been started and notifications sent.',
+            message: 'The ride has been started and notifications sent.',
           });
         }
       } catch (error) {
@@ -914,8 +913,8 @@ module.exports = function (server,app) {
         if (order.status == 'pending') {
           return callback({
             success: false,
-            title: 'Order',
-            message: 'This Order is not booked yet.',
+            title: 'Ride',
+            message: 'This Ride is not booked yet.',
           });
         }
 
@@ -927,7 +926,7 @@ module.exports = function (server,app) {
             to_id: order.user._id.toString(),
             description: `${user?.name} has started your order.`,
             type: "order",
-            title: "Order update",
+            title: "Ride update",
             fcmtoken: order.user.fcmtoken,
             order: orderId,
           });
@@ -935,14 +934,14 @@ module.exports = function (server,app) {
           io.to(order.user._id.toString()).emit('pick-customer', {
             success: true,
             order,
-            title: "Order update",
-            message: `${user?.name} has started your order.`,
+            title: "Ride update",
+            message: `${user?.name} has started your ride.`,
           });
     
           return callback({
             success: true,
             order,
-            title: "Order update",
+            title: "Ride update",
             message: 'Alert has been sent to the customer.',
           });
       } catch (error) {
@@ -976,7 +975,7 @@ module.exports = function (server,app) {
         if (!validStatuses.includes(status)) {
           return callback({
             success: false,
-            title: 'Order Update',
+            title: 'Ride Update',
             message: 'Status is invalid.',
           });
         }
@@ -991,8 +990,8 @@ module.exports = function (server,app) {
         if (!updatedOrder) {
           return callback({
             success: false,
-            title: 'Order Update',
-            message: 'Order not found or cannot be updated.',
+            title: 'Ride Update',
+            message: 'Ride not found or cannot be updated.',
           });
         }
         const user = await User.findById(updatedOrder.user._id);
@@ -1003,7 +1002,7 @@ module.exports = function (server,app) {
           if (!user) {
             return callback({
               success: false,
-              title: 'Order Delete',
+              title: 'Ride Delete',
               message: "The User with the given ID was not found.",
             });
           }
@@ -1042,9 +1041,9 @@ module.exports = function (server,app) {
         await sendNotification({
           user: senderId,
           to_id: updatedOrder.user._id.toString(),
-          description: `Your Order has been ${status} by ${updatedOrder?.to_id?.name} and you have successfully earned 10 points for this ride.`,
+          description: `Your Ride has been ${status} by ${updatedOrder?.to_id?.name} and you have successfully earned 10 points for this ride.`,
           type: "order",
-          title: "Order Update",
+          title: "Ride Update",
           fcmtoken: updatedOrder.user.fcmtoken,
           order: orderId,
           noti: false,
@@ -1055,16 +1054,16 @@ module.exports = function (server,app) {
           io.to(updatedOrder.user._id.toString()).emit('cancel-order-customer', {
             success: true,
             order: updatedOrder,
-            title: 'Order Update',
-            message: 'Your order has been cancelled.',
+            title: 'Ride Update',
+            message: 'Your Ride has been cancelled.',
           });
         } else {
     
           io.to(updatedOrder.user._id.toString()).emit('update-order-customer', {
             success: true,
             order: updatedOrder,
-            title: 'Order Update',
-            message: `Your order have been successfully ${status}.`,
+            title: 'Ride Update',
+            message: `Your Ride have been successfully ${status}.`,
           });
         }
     
@@ -1072,8 +1071,8 @@ module.exports = function (server,app) {
         return callback({
           success: true,
           order: updatedOrder,
-          title: 'Order Updated',
-          message: `The order has been ${status} successfully.`,
+          title: 'Ride Updated',
+          message: `The Ride has been ${status} successfully.`,
         });
       } catch (error) {
         return callback({
@@ -1106,16 +1105,16 @@ module.exports = function (server,app) {
         if (!updatedOrder) {
           return callback({
             success: false,
-            title: 'Order Update',
-            message: 'Order not found or cannot be cancelled.',
+            title: 'Ride Update',
+            message: 'Ride not found or cannot be cancelled.',
           });
         }
 
         if (["completed",'cancelled','pending'].includes(updatedOrder.status)) {
           return callback({
             success: false,
-            title: 'Order Update',
-            message: 'Order not found or cannot be cancelled.',
+            title: 'Ride Update',
+            message: 'Ride not found or cannot be cancelled.',
           });
         }
 
@@ -1125,7 +1124,7 @@ module.exports = function (server,app) {
           if (!user) {
             return callback({
               success: false,
-              title: 'Order Update',
+              title: 'Ride Update',
               message: "The User with the given ID was not found.",
             });
           }
@@ -1160,9 +1159,9 @@ module.exports = function (server,app) {
         await sendNotification({
           user: senderId,
           to_id: updatedOrder.to_id._id.toString(),
-          description: `Your Order has been ${status} by ${updatedOrder?.user?.name}.`,
+          description: `Your Ride has been ${status} by ${updatedOrder?.user?.name}.`,
           type: "order",
-          title: "Order cancelled",
+          title: "Ride cancelled",
           fcmtoken: updatedOrder.to_id.fcmtoken,
           order: orderId,
           noti: false,
@@ -1172,16 +1171,16 @@ module.exports = function (server,app) {
         io.to(updatedOrder.user._id.toString()).emit('cancel-order-rider', {
             success: true,
             order: order,
-            title: 'Order Update',
-            message: 'Your order has been cancelled.',
+            title: 'Ride Update',
+            message: 'Your Ride has been cancelled.',
           });
     
         // Callback success response
         return callback({
           success: true,
           order: order,
-          title: 'Order Updated',
-          message: `The order has been ${status} successfully.`,
+          title: 'Ride Updated',
+          message: `The Ride has been ${status} successfully.`,
         });
       } catch (error) {
         return callback({
