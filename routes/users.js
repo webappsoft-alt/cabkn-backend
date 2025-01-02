@@ -572,7 +572,6 @@ router.put("/update-location", auth, async (req, res) => {
       message: "No valid fields provided for update.",
     });
   }
-  const { to_id, order } = req.body;
 
   const user = await User.findByIdAndUpdate(req.user._id, updateFields, {
     new: true,
@@ -580,9 +579,11 @@ router.put("/update-location", auth, async (req, res) => {
 
   if (!user) return res.status(400).send({ success: false, message: "The User with the given ID was not found.",});
 
-  if (to_id && order) {
+  const orders=await Order.find({to_id:req.user._id, status : { $in : ['accepted',"order-start"] }, bookingtype: "live"}).select("user").lean()
+
+  for (let order of orders) {
     const io = req.app.get('socketio');
-    io.to(to_id.toString()).emit('location-update', {order,location});
+    io.to(order.user.toString()).emit('location-update', {order:order._id,location});
   }
 
   res.send({ success: true, message: "User updated successfully", user });
