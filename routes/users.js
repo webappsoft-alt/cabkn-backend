@@ -1313,8 +1313,8 @@ const graphstartDate=moment().startOf('week');
 const todayEnd = moment().endOf('day');
 
 
-const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price createdAt").lean()
-const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price createdAt").lean()
+const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
+const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false}).select("status schedule_date price adminprice createdAt").lean()
 
  // Initialize the graph array
  let graph = dates.map(date => ({ x: date, price:0 }));
@@ -1333,7 +1333,7 @@ const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: 
 
  const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
-  res.send({ success: true, totalEarnings,totalFilterEarnings,totalWeekEarnings,orders:orders,totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning,newGraph });
+  res.send({ success: true, totalEarnings:totalEarnings.toFixed(2),totalFilterEarnings:totalFilterEarnings.toFixed(2),totalWeekEarnings:totalWeekEarnings.toFixed(2),orders:[...orders,...cancelorders],totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning:remainigEarning.toFixed(2),newGraph });
 });
 
 router.get('/customer/earnings',auth, async (req, res) => {
