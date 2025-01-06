@@ -992,6 +992,8 @@ router.put('/vehicle/:id', auth,  async (req, res) => {
         message: "The Vehicle with the given ID was not found.",
       });
 
+  await User.findByIdAndUpdate(userId,{ isVehicle : true,vehicle:req.params.id },{new:true})
+
   res.send({ success: true, message: "Vehicle updated successfully", vehicle:user });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
