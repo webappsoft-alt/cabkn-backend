@@ -12,6 +12,7 @@ const Request = require('../models/Request');
 const Coupon = require('../models/Coupon');
 const Transaction = require('../models/Transaction');
 const LoyalityPoint = require('../models/LoyalityPoint');
+const Vehicle = require('../models/Vehicle');
 
 const connectedUsers = {};
 
@@ -789,8 +790,10 @@ module.exports = function (server,app) {
               message: "Rider is not online yet.",
             });
           }
+
+          const vehicle= await Vehicle.findOneAndDelete({ user : request.user._id });
         
-          if (request.user.isVehicle!==true) {
+          if (!vehicle) {
             return callback({
               success: false,
               title: 'Request Update',
@@ -811,16 +814,14 @@ module.exports = function (server,app) {
           await request.save()
           // Update the order status
           order.status = 'accepted';
-          if (request.vehicle) {
-            order.vehicle = request.vehicle;
-          }
+          order.vehicle = vehicle._id;
 
           order.to_id = request.user._id;
           await order.save();
 
-          if (order.bookingtype=='live') {
-            await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
-          }
+          // if (order.bookingtype=='live') {
+          //   await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
+          // }
 
     
           const date=new Date(order.schedule_date)
