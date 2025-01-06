@@ -950,7 +950,7 @@ router.post('/vehicle', auth,  async (req, res) => {
     });
     await addresses.save();
 
-    const user = await User.findByIdAndUpdate(req.user._id,{ isVehicle : true },{new:true})
+    const user = await User.findByIdAndUpdate(req.user._id,{ isVehicle : true,vehicle:addresses._id },{new:true})
 
     res.status(201).json({ success: true, message: 'Vehicle created successfully', vehicle:addresses,user });
   } catch (error) {
@@ -1024,7 +1024,7 @@ router.delete('/vehicle/:id', auth,  async (req, res) => {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
 
-   const user = await User.findByIdAndUpdate(req.user._id,{ isVehicle : false },{new:true})
+   const user = await User.findByIdAndUpdate(req.user._id,{ isVehicle : false,$unset:{vehicle:""} },{new:true})
 
     res.status(200).json({ message: `Vehicle deleted successfully`, vehicle: service,user });
 

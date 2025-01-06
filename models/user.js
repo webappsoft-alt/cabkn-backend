@@ -114,6 +114,7 @@ const userSchema = new mongoose.Schema({
     enum: ['email', 'social-login']
   },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Like'}],
+  vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle'},
   createdAt: {
     type: Date,
     default: Date.now,

@@ -128,7 +128,12 @@ exports.getOrderDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("likes").lean();
 
-    const applications = await Order.findById(req.params.id).populate("user").populate("coupon").populate("vehicle").populate("ridertype").populate("liability").populate("to_id").lean();
+    const applications = await Order.findById(req.params.id).populate("user coupon liability ridertype").populate({
+      path: 'to_id',
+      populate: [
+        { path: 'vehicle', model: 'Vehicle' }
+      ]
+    }).lean();
 
     if (!applications) return res.status(200).json({ success: false,message: "No more Orders found"  });
 
