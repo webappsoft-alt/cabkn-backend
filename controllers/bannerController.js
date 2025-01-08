@@ -63,10 +63,10 @@ exports.editCategories = async (req, res) => {
     );
 
     if (service == null) {
-      return res.status(404).json({ message: 'banner not found' });
+      return res.status(404).json({ success:false,message: 'banner not found' });
     }
 
-    res.status(200).json({ message: `banner updated successfully`, banner: service });
+    res.status(200).json({ success:true,message: `banner updated successfully`, banner: service });
 
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
