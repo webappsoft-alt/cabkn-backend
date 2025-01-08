@@ -8,6 +8,7 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   title: String,
+  image: String,
   code: String,
   expirey_date: Date, // Timestamp for post creation
   used_by: [{
