@@ -31,6 +31,7 @@ const { generateRandomString } = require("../controllers/generateCode");
 const { sendNotification } = require("../controllers/notificationCreateService");
 const Transaction = require("../models/Transaction");
 const LoyalityPoint = require("../models/LoyalityPoint");
+const Notification = require("../models/Notification");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -795,46 +796,6 @@ router.get('/search/:id/:search?', auth , async (req, res) => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   res.send({ success: true, users: users,count: { totalPage: totalPages, currentPageSize: users.length } });
-});
-
-router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
-
-  const {type}=req.params;
-  const validTypes=["all","customer", "owner"]
-  if (!validTypes.includes(type)) {
-    return res.status(404).send({ success: false, message: 'User Type is not valid' });
-  }
-  const { title, description } = req.body;
-
-  const users = await User.find({type:type,status:"online"}).select("fcmtoken").lean()
-  const fcmTokens = [...new Set(users.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
-  if (fcmTokens.length > 0) {
-    // Create an array of message objects for each token
-    const messages = fcmTokens.map(token => ({
-      token: token,
-      notification: {
-          title: title,
-          body: description,
-      },
-      android: {
-          notification: {
-              sound: 'default',
-          },
-      },
-      apns: {
-          payload: {
-              aps: {
-                  sound: 'default',
-              },
-          },
-      },
-    }));
-    try {
-      await firebaseadmin.messaging().sendEach(messages)
-    } catch (error) {}
-  }
-
-  res.send({ success: true, message: 'notification sent successfully', });
 });
 
 router.put('/like/:userId', auth,  async (req, res) => {
@@ -1843,46 +1804,62 @@ router.get('/loyalitypoint', [auth,admin],  async (req, res) => {
   }
 });
 
+router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
 
-// router.post('/invites', auth,  async (req, res) => {
-//   try {
-//     const { 
-//       phone,
-//     } = req.body;
+  const {type}=req.params;
+  const validTypes=["all",'customer',"rider"]
+  if (!validTypes.includes(type)) {
+    return res.status(404).send({ success: false, message: 'User Type is not valid' });
+  }
+  const { title, description } = req.body;
 
-//     const addresses = new Invites({
-//       user:req.user._id,
-//       phone,
-//     });
-//     await addresses.save();
+  let query={}
 
-//     res.status(201).json({ success: true, message: 'Invites send successfully', invites:addresses });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: 'Internal server error' });
-//   }
-// });
+  if (type!=="all") {
+    query.type=type
+  }else{
+    query.type={$ne:"admin"}
+  }
+  query.status='online'
 
-// router.get('/invites/:id?', auth,  async (req, res) => {
-//   let query = {};
+  const users = await User.find(query).select("fcmtoken").lean()
+  const fcmTokens = [...new Set(users.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
+  if (fcmTokens.length > 0) {
+    // Create an array of message objects for each token
+    const messages = fcmTokens.map(token => ({
+      token: token,
+      notification: {
+          title: title,
+          body: description,
+      },
+      android: {
+          notification: {
+              sound: 'default',
+          },
+      },
+      apns: {
+          payload: {
+              aps: {
+                  sound: 'default',
+              },
+          },
+      },
+    }));
+    try {
+      await firebaseadmin.messaging().sendEach(messages)
+      const notifications= users.map(item=>({
+        user:req.user._id,
+        to_id:item._id,
+        type:"noti",
+        description,
+        title,
+      }))
+      await Notification.insertMany(notifications)
+    } catch (error) {}
+  }
 
-//   const userId=req.user._id
+  res.send({ success: true, message: 'notification sent successfully', });
+});
 
-//   if (req.params.id) {
-//     query._id = { $lt: req.params.id };
-//   }
-
-//   query.user = userId
-//   try {
-//     const categories = await Invites.find(query).sort({ _id: -1 }).lean();
-
-//     if (categories.length > 0) {
-//       res.status(200).json({ success: true, invites: categories });
-//     } else {
-//       res.status(200).json({ success: false,invites:[], message: 'No more invites found' });
-//     }
-//   } catch (error) {
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
 
 module.exports = router;
