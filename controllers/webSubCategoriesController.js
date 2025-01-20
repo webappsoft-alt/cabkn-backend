@@ -2,7 +2,7 @@ const Category = require("../models/WebSubCategories");
 
 exports.create = async (req, res) => {
   try {
-    const { name, images, about, address, lat, lng, category } = req.body;
+    const { name, images, about, address, lat, lng, category,title } = req.body;
 
     const subcategory = new Category({
       name,
@@ -12,6 +12,7 @@ exports.create = async (req, res) => {
       lat,
       lng,
       category,
+      title
     });
     await subcategory.save();
 
@@ -146,7 +147,7 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category } = req.body;
+    const { name, images, about, address, lat, lng, category,title } = req.body;
 
     const service = await Category.findOneAndUpdate(
       { _id: serviceId },
@@ -158,6 +159,7 @@ exports.editCategories = async (req, res) => {
         lat,
         lng,
         category,
+        title,
         updated_at: Date.now(),
       },
       { new: true }
