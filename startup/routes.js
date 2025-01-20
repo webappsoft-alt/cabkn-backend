@@ -4,6 +4,8 @@ const auth = require('../routes/auth');
 const users = require('../routes/users');
 const uploadImages = require('../routes/uploadImages');
 const categoryRoute = require('../routes/categoryRoute');
+const WebCategoryRoute = require('../routes/WebCategoryRoute');
+const WebSubCategoryRoute = require('../routes/WebSubCategoryRoute');
 const messageRoutes = require('../routes/messageRoutes');
 const notificationRoute = require('../routes/notificationRoute');
 const authMiddleware = require('../middleware/auth');
@@ -19,6 +21,8 @@ module.exports = function (app) {
   app.use('/api/users', users);
   app.use('/api/image', uploadImages);
   app.use('/api/category', categoryRoute);
+  app.use('/api/webcat', WebCategoryRoute);
+  app.use('/api/websubcat', WebSubCategoryRoute);
   app.use('/api/order',authMiddleware, orderRoutes);
   app.use('/api/coupon', couponRoute);
   app.use('/api/rating',authMiddleware, ratingRoutes);
