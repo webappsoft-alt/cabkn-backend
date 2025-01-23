@@ -20,6 +20,7 @@ exports.getCategories = async (req, res) => {
 
   let query = {};
 
+  query.status = 'active'
   try {
     const categories = await Category.find(query).sort({ _id: -1 }).lean();
     
@@ -41,6 +42,8 @@ exports.getAllCategories = async (req, res) => {
   const pageSize = 10;
   
   const skip = Math.max(0, (lastId - 1)) * pageSize;
+
+  query.status = 'active'
 
   try {
     const categories = await Category.find(query).sort({ _id: -1 }).skip(skip).limit(pageSize).lean();
