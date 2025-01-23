@@ -179,7 +179,7 @@ function passwordApiBodyValidate(body) {
 
 function emailApiBodyValidate(body) {
   const schema = Joi.object({
-    email: Joi.string().min(4).max(50).required(),
+    email:Joi.string().min(5).max(255).email(),
     type: Joi.string().min(2).max(50).required(),
   })
 
@@ -193,6 +193,14 @@ function phoneApiBodyValidate(body) {
   return schema.validate(body);
 }
 
+function emailBodyValidate(body) {
+  const schema = Joi.object({
+    email: Joi.string().min(5).max(255).email(),
+  })
+
+  return schema.validate(body);
+}
+
 exports.User = User;
 exports.validate = validateUser;
 exports.generateAuthToken = generateAuthToken;
@@ -200,3 +208,4 @@ exports.generateIdToken = generateIdToken;
 exports.passwordApiBodyValidate = passwordApiBodyValidate;
 exports.emailApiBodyValidate = emailApiBodyValidate;
 exports.phoneApiBodyValidate = phoneApiBodyValidate;
+exports.emailBodyValidate = emailBodyValidate;

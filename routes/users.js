@@ -27,11 +27,12 @@ const PriceKm = require("../models/PriceKm");
 const Privacy = require("../models/Privacy");
 const Terms = require("../models/Terms");
 const Invites = require("../models/Invites");
-const { generateRandomString } = require("../controllers/generateCode");
+const { generateRandomString, generateCode } = require("../controllers/generateCode");
 const { sendNotification } = require("../controllers/notificationCreateService");
 const Transaction = require("../models/Transaction");
 const LoyalityPoint = require("../models/LoyalityPoint");
 const Notification = require("../models/Notification");
+const { sendEmail } = require("../controllers/emailservice");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -39,13 +40,15 @@ router.get("/me", auth, async (req, res) => {
 });
 
 router.post("/forget-password", async (req, res) => {
-  const { error } = phoneApiBodyValidate(req.body);
+  const { error } = emailApiBodyValidate(req.body);
 
   if (error) return res.status(400).send({ message: error.details[0].message });
 
-  const { phone } = req.body;
+  const { email,type } = req.body;
 
-  const user = await User.findOne({ phone: phone });
+  const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
+
+  const user = await User.findOne({ email: lowerCaseEmail,type:type });
 
   if (!user)
     return res
@@ -61,12 +64,11 @@ router.post("/forget-password", async (req, res) => {
         message: "User has been deleted. Contact admin for further support.",
       });
 
-  // let verificationCode = generateCode();
-  let verificationCode = 1234;
+  const verificationCode = generateCode();
 
-  // await sendEmail(email, verificationCode);
+  await sendEmail(email, verificationCode);
   await User.findOneAndUpdate(
-    { phone: phone },
+    { email: lowerCaseEmail,type:type },
     { code: verificationCode }
   );
 
@@ -76,7 +78,6 @@ router.post("/forget-password", async (req, res) => {
     success: true,
     message: "Verification code sent successfully",
     token,
-    verificationCode,
   });
 });
 
@@ -141,33 +142,34 @@ router.put("/change-password", auth, async (req, res) => {
 });
 
 router.post("/send-code", async (req, res) => {
-  const { error } = phoneApiBodyValidate(req.body);
+  const { error } = emailApiBodyValidate(req.body);
   if (error)
     return res
       .status(400)
       .send({ success: false, message: error.details[0].message });
 
-  const { phone } = req.body;
+  const { email } = req.body;
+
+  const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
   try {
-    const existingUser = await User.findOne({ phone: phone });
+    const existingUser = await User.findOne({ email: lowerCaseEmail,type });
 
     if (existingUser) {
-      return res.status(400).json({ message: "Phone already registered" });
+      return res.status(400).json({ message: "Email already registered" });
     }
 
-    // const verificationCode = generateCode();
-    const verificationCode = 1234;
-    // await sendEmail(email, verificationCode);
+    const verificationCode = generateCode();
+    await sendEmail(email, verificationCode);
 
-    const existingTempUser = await TempUser.findOne({ phone: phone });
+    const existingTempUser = await TempUser.findOne({ email: lowerCaseEmail });
     if (existingTempUser) {
       await TempUser.findByIdAndUpdate(existingTempUser._id, {
         code: verificationCode,
       });
     } else {
       const tempVerification = new TempUser({
-        phone: phone,
+        email: lowerCaseEmail,
         code: verificationCode,
       });
       await tempVerification.save();
@@ -177,17 +179,18 @@ router.post("/send-code", async (req, res) => {
       verificationCode,
     });
   } catch (error) {
-    console.error("Error sending verification code:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
 
 router.post("/verify-otp/registration", async (req, res) => {
   try {
-    const { phone, code } = req.body;
+    const { email, code } = req.body;
+
+    const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
     const verificationRecord = await TempUser.findOne({
-      phone: phone,
+      email: lowerCaseEmail,
     });
 
     if (!verificationRecord || Number(verificationRecord.code) !== Number(code)) {
@@ -221,7 +224,7 @@ router.post("/signup/:type", async (req, res) => {
     const lowerCaseEmail = String(email).trim().toLocaleLowerCase();
 
     const verificationRecord = await TempUser.findOne({
-      phone: phone,
+      email: lowerCaseEmail,
     });
 
     if (!verificationRecord || Number(verificationRecord.code) !== Number(code)) {

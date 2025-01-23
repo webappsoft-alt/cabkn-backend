@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const tempVerificationSchema = new mongoose.Schema({
-  phone: String,
+  email: String,
   code: String,
 });
 
