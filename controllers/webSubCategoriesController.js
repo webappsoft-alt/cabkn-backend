@@ -37,7 +37,7 @@ exports.getCategories = async (req, res) => {
   query.status='active'
   
   try {
-    const categories = await Category.find(query).sort({ _id: -1 }).lean();
+    const categories = await Category.find(query).populate("category").sort({ _id: -1 }).lean();
 
     res.status(200).json({ success: true, categories: categories });
   } catch (error) {
@@ -64,7 +64,7 @@ exports.getAllCategories = async (req, res) => {
   query.status='active'
 
   try {
-    const categories = await Category.find(query)
+    const categories = await Category.find(query).populate("category")
       .sort({ _id: -1 })
       .skip(skip)
       .limit(pageSize)
@@ -114,8 +114,7 @@ exports.getAllCustomerCategories = async (req, res) => {
   query.status='active'
 
   try {
-    const categories = await Category.find(query)
-      .sort({ _id: -1 })
+    const categories = await Category.find(query).populate("category").sort({ _id: -1 })
       .skip(skip)
       .limit(pageSize)
       .lean();
@@ -166,7 +165,7 @@ exports.editCategories = async (req, res) => {
         updated_at: Date.now(),
       },
       { new: true }
-    );
+    ).populate("category");
 
     if (service == null) {
       return res.status(404).json({ message: "Category not found" });
