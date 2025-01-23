@@ -34,7 +34,8 @@ exports.getCategories = async (req, res) => {
   if (req.params.category) {
     query.category = req.params.category;
   }
-
+  query.status='active'
+  
   try {
     const categories = await Category.find(query).sort({ _id: -1 }).lean();
 
@@ -59,6 +60,8 @@ exports.getAllCategories = async (req, res) => {
   if (req.params.category) {
     query.category = req.params.category;
   }
+
+  query.status='active'
 
   try {
     const categories = await Category.find(query)
