@@ -176,7 +176,6 @@ router.post("/send-code", async (req, res) => {
     }
     return res.json({
       message: "Verification code sent successfully",
-      verificationCode,
     });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
