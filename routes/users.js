@@ -54,7 +54,7 @@ router.post("/forget-password", async (req, res) => {
     return res
       .status(400)
       .send({
-        message: "User is not registered with that Phone number",
+        message: "User is not registered with that email",
       });
 
   if (user.status == "deleted")
