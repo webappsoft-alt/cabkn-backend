@@ -148,7 +148,7 @@ router.post("/send-code", async (req, res) => {
       .status(400)
       .send({ success: false, message: error.details[0].message });
 
-  const { email } = req.body;
+  const { email,type } = req.body;
 
   const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
