@@ -33,6 +33,7 @@ const Transaction = require("../models/Transaction");
 const LoyalityPoint = require("../models/LoyalityPoint");
 const Notification = require("../models/Notification");
 const { sendEmail } = require("../controllers/emailservice");
+const Footer = require("../models/Footer");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -1863,5 +1864,47 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
   res.send({ success: true, message: 'notification sent successfully', });
 });
 
+router.post("/footer", async (req, res) => {
+  const { short_title, phone, tel, location, emails } = req.body;
+
+  // Create an object to store the fields to be updated
+  const updateFields = Object.fromEntries(
+    Object.entries({
+      short_title, phone, tel, location, emails
+    }).filter(([key, value]) => value !== undefined)
+  );
+
+  // Check if there are any fields to update
+  if (Object.keys(updateFields).length === 0) {
+    return res
+      .status(400)
+      .send({
+        success: false,
+        message: "No valid fields provided for update.",
+      });
+  }
+  let footer = await Footer.findOne({});
+  if (footer) {
+    footer = await Footer.findByIdAndUpdate(footer._id, updateFields, { new: true,});
+  } else {
+    footer = new Footer(updateFields);
+  }
+  await footer.save();
+  res.send({ success: true, footer });
+});
+
+router.get("/footer", async (req, res) => {
+  let footer = await Footer.findOne({});
+  if (footer) return res.status(200).send({ success: false, footer });
+
+  const lifooter = new Footer({
+    short_title: "",
+    phone: "",
+    tel: "",
+    location: "",
+    emails: "",
+  });
+  res.send({ success: true, footer: lifooter });
+});
 
 module.exports = router;
