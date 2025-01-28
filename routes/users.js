@@ -1864,7 +1864,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
   res.send({ success: true, message: 'notification sent successfully', });
 });
 
-router.post("/footer", async (req, res) => {
+router.post("/footer", [auth,admin],async (req, res) => {
   const { short_title, phone, tel, location, emails } = req.body;
 
   // Create an object to store the fields to be updated
