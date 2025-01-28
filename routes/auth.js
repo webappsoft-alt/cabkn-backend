@@ -41,6 +41,9 @@ router.post('/admin', async (req, res) => {
 
 router.post('/:type?', async (req, res) => {
   if (req.params.type == 'social-login') {
+    const { error } = socialvalidate(req.body);
+    if (error) return res.status(400).send({ success: false, message: error.details[0].message });
+  
     const { email, fcmtoken,name,type } = req.body;
     const lowerCaseEmail=String(email).trim().toLocaleLowerCase()
 
@@ -118,6 +121,19 @@ function validate(req) {
     password: Joi.string().min(5).max(255).required(),
     fcmtoken: Joi.string().min(0).max(1024).allow(null).optional(),
     type: Joi.string().min(2).max(1024).optional(),
+  };
+
+  const schema = Joi.object(emailSchema)
+
+  return schema.validate(req);
+}
+
+function socialvalidate(req) {
+  const emailSchema = {
+    email: Joi.string().min(5).max(255).email(),
+    fcmtoken: Joi.string().min(0).max(1024).allow(null).optional(),
+    type: Joi.string().min(2).max(1024).required(),
+    name: Joi.string().min(0).max(1024).optional(),
   };
 
   const schema = Joi.object(emailSchema)
