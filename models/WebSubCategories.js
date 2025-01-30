@@ -16,6 +16,7 @@ const categorySchema = new mongoose.Schema({
     enum: ['active', "deactivated"]
   },
   timeslots: [timeSlot],
+  price_per_person:String,
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'WebCategories', },
   images: [String],
   about:String,
