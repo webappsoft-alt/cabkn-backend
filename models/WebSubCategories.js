@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const timeSlot={
+  slot_date:Date,
+  slots:[String]
+}
+
 const categorySchema = new mongoose.Schema({
   title:String,
   name: {
@@ -10,6 +15,7 @@ const categorySchema = new mongoose.Schema({
     default: 'active',
     enum: ['active', "deactivated"]
   },
+  timeslots: [timeSlot],
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'WebCategories', },
   images: [String],
   about:String,

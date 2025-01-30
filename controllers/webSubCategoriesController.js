@@ -2,7 +2,7 @@ const Category = require("../models/WebSubCategories");
 
 exports.create = async (req, res) => {
   try {
-    const { name, images, about, address, lat, lng, category,title } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots } = req.body;
 
     const subcategory = new Category({
       name,
@@ -12,7 +12,8 @@ exports.create = async (req, res) => {
       lat,
       lng,
       category,
-      title
+      title,
+      timeslots
     });
     await subcategory.save();
 
@@ -149,19 +150,29 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots } = req.body;
+  
+    // Create an object to store the fields to be updated
+    const updateFields = Object.fromEntries(
+      Object.entries({
+        name, images, about, address, lat, lng, category,title,timeslots
+      }).filter(([key, value]) => value !== undefined)
+    );
+  
+    // Check if there are any fields to update
+    if (Object.keys(updateFields).length === 0) {
+      return res
+        .status(400)
+        .send({
+          success: false,
+          message: "No valid fields provided for update.",
+        });
+    }
 
     const service = await Category.findOneAndUpdate(
       { _id: serviceId },
       {
-        name,
-        images,
-        about,
-        address,
-        lat,
-        lng,
-        category,
-        title,
+        ...updateFields,
         updated_at: Date.now(),
       },
       { new: true }
