@@ -13,6 +13,7 @@ const Coupon = require('../models/Coupon');
 const Transaction = require('../models/Transaction');
 const LoyalityPoint = require('../models/LoyalityPoint');
 const Vehicle = require('../models/Vehicle');
+const WebSubCategories = require('../models/WebSubCategories');
 
 const connectedUsers = {};
 
@@ -194,7 +195,9 @@ module.exports = function (server,app) {
         couponId,
         note,
         favUserId,
-        order_id
+        order_id,
+        travelers,
+        subcatId
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -239,6 +242,20 @@ module.exports = function (server,app) {
        let userIds=await User.find(query).select("name fcmtoken").lean()
       //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
  
+      if (subcatId) {
+        const subCat = await WebSubCategories.findById(subcatId)
+        
+        if (subCat == null) {
+          return callback({
+            success: false,
+            title: 'Request Error',
+            message: "No subCatId found in that area.",
+          });
+        }
+        subCat.travelers=Number(subCat.travelers)-Number(travelers)
+
+        await subCat.save()
+      }
  
       //  if (userIds.length == 0 ) {
       //     return callback({

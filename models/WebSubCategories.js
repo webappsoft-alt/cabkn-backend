@@ -17,6 +17,10 @@ const categorySchema = new mongoose.Schema({
   },
   timeslots: [timeSlot],
   price_per_person:String,
+  travelers:{
+    type: Number,
+    default: 0,
+  },
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'WebCategories', },
   images: [String],
   about:String,
