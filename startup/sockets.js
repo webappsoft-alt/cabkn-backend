@@ -252,6 +252,13 @@ module.exports = function (server,app) {
             message: "No subCatId found in that area.",
           });
         }
+        if (Number(subCat.travelers) - Number(travelers) < 0) {
+          return callback({
+            success: false,
+            title: 'Travelers Error',
+            message: "Place is already booked.",
+          });
+        }
         subCat.travelers=Number(subCat.travelers)-Number(travelers)
 
         await subCat.save()
