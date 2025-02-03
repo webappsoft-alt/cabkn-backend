@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const timeSlot={
-  slot_date:Date,
+  // slot_date:Date,
   slots:[String]
 }
 
@@ -15,7 +15,7 @@ const categorySchema = new mongoose.Schema({
     default: 'active',
     enum: ['active', "deactivated"]
   },
-  timeslots: [timeSlot],
+  timeslots: [String],
   price_per_person:String,
   travelers:{
     type: Number,
