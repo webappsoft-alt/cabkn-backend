@@ -6,6 +6,7 @@ const schema = new mongoose.Schema({
   tel :String,
   location:String,
   emails:String,
+  videourl:String,
   createdAt: {
     type: Date,
     default: Date.now,

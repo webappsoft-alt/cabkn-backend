@@ -1865,12 +1865,12 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
 });
 
 router.post("/footer", [auth,admin],async (req, res) => {
-  const { short_title, phone, tel, location, emails } = req.body;
+  const { short_title, phone, tel, location, emails,videourl } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      short_title, phone, tel, location, emails
+      short_title, phone, tel, location, emails,videourl
     }).filter(([key, value]) => value !== undefined)
   );
 

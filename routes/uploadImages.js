@@ -66,5 +66,37 @@ router.post('/upload', upload.single('image'), async(req, res) => {
   }
 });
 
+router.post('/video', upload.single('video'), async(req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  try {    
+    // Read the uploaded Excel file
+    const file = req.file;
+    const destination = `uploads/${file.filename}`;
+    
+    // Upload the file to Firebase Storage
+    await bucket.upload(file.path, {
+      destination,
+      metadata: {
+        contentType: file.mimetype,
+      }
+    });
+    
+    // Make the file public
+    const fileInBucket = bucket.file(destination);
+    await fileInBucket.makePublic();
+    
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}`;
+    
+    // Delete the file after sending the response
+    fs.unlink(file.path, (err) => {
+    });
+    res.json({ video: publicUrl });
+  } catch (error) {
+    res.status(400).json({message:'Error in uploading. Try again later.',error});
+  }
+});
+
 
 module.exports = router; 
