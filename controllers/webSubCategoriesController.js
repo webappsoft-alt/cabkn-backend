@@ -2,7 +2,7 @@ const Category = require("../models/WebSubCategories");
 
 exports.create = async (req, res) => {
   try {
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price } = req.body;
 
     const subcategory = new Category({
       name,
@@ -15,7 +15,8 @@ exports.create = async (req, res) => {
       title,
       timeslots,
       price_per_person,
-      travelers
+      travelers,
+      location_price
     });
     await subcategory.save();
 
@@ -130,7 +131,7 @@ exports.getAllCustomerCategories = async (req, res) => {
   if (catId) {
     query.category={$ne:catId}
   }
-  
+
   query.status='active'
 
   try {
@@ -169,12 +170,12 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price } = req.body;
   
     // Create an object to store the fields to be updated
     const updateFields = Object.fromEntries(
       Object.entries({
-        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers
+        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price
       }).filter(([key, value]) => value !== undefined)
     );
   
