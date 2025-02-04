@@ -38,6 +38,12 @@ exports.getCategories = async (req, res) => {
     query.category = req.params.category;
   }
   query.status='active'
+
+  const {catId}=req.query;
+  if (catId) {
+    query.category={$ne:catId}
+  }
+
   
   try {
     const categories = await Category.find(query).populate("category").sort({ _id: -1 }).lean();
@@ -62,6 +68,11 @@ exports.getAllCategories = async (req, res) => {
   const skip = Math.max(0, lastId - 1) * pageSize;
   if (req.params.category) {
     query.category = req.params.category;
+  }
+
+  const {catId}=req.query;
+  if (catId) {
+    query.category={$ne:catId}
   }
 
   query.status='active'
@@ -114,6 +125,12 @@ exports.getAllCustomerCategories = async (req, res) => {
   if (req.params.category) {
     query.category = req.params.category;
   }
+
+  const {catId}=req.query;
+  if (catId) {
+    query.category={$ne:catId}
+  }
+  
   query.status='active'
 
   try {
