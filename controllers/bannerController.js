@@ -2,10 +2,11 @@ const Banner = require('../models/Banner');
 
 exports.create = async (req, res) => {
   try {
-    const { name, image } = req.body;
+    const { name, image,url } = req.body;
     const category = new Banner({
       name,
       image,
+      url:url||""
     });
     await category.save();
 
@@ -33,13 +34,13 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, image } = req.body;
+    const { name, image,url } = req.body;
 
 
       // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      name, image
+      name, image,url
     }).filter(([key, value]) => value !== undefined)
   );
 

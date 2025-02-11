@@ -3,10 +3,10 @@ const Coupon = require('../models/Coupon');
 exports.create = async (req, res) => {
   try {
     const userId=req.user._id
-    const { title,code,expirey_date,discount,image,url } = req.body;
+    const { title,code,expirey_date,discount,image } = req.body;
     const category = new Coupon({
       user:userId,
-      title,code,expirey_date,discount,image,url:url||""
+      title,code,expirey_date,discount,image
     });
     await category.save();
 
@@ -20,13 +20,13 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { title,code,expirey_date,discount,image,url } = req.body;
+    const { title,code,expirey_date,discount,image } = req.body;
 
 
     // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
-      title,code,expirey_date,discount,image,url
+      title,code,expirey_date,discount,image
     }).filter(([key, value]) => value !== undefined)
   );
 
