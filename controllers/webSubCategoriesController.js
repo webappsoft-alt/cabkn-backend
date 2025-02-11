@@ -166,6 +166,32 @@ exports.getAllCustomerCategories = async (req, res) => {
   }
 };
 
+exports.detailsSubCat = async (req, res) => {
+  const catId = req.params.id
+
+  try {
+    const category = await Category.findById(catId).populate("category").lean();
+
+    if (category) {
+      res
+        .status(200)
+        .json({
+          success: true,
+          category: category,
+        });
+    } else {
+      res
+        .status(200)
+        .json({
+          success: false,
+          message: "No categories found",
+        });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
