@@ -71,6 +71,7 @@ const orderSchema = new mongoose.Schema({
   },
   stops:[{latitude :String , longitude :String , address:String}],
   paymentId:String,
+  pincode:String,
   tip:{
     type: Number,
     default: 0,
