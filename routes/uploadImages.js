@@ -51,16 +51,21 @@ router.post('/upload', upload.single('image'), async(req, res) => {
     
     // Make the file public
     const fileInBucket = bucket.file(destination);
-    await fileInBucket.makePublic();
+    // await fileInBucket.makePublic();
+
+    const [url] = await fileInBucket.getSignedUrl({
+      action: 'read',
+      expires: '03-09-2027' // Set an appropriate expiration date
+    });
     
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}`;
+    // const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}`;
     
-    res.json({ image: publicUrl });
     // Delete the file after sending the response
     fs.unlink(file.path, (err) => {
     });
     fs.unlink(compressedFilePath, (err) => {
     });
+    res.json({ image: url });
   } catch (error) {
     res.status(400).json({message:'Error in uploading. Try again later.',error});
   }
