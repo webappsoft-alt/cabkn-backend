@@ -103,5 +103,30 @@ router.post('/video', upload.single('video'), async(req, res) => {
   }
 });
 
+router.post('/catimage', upload.single('image'), async(req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  try {    
+    // Read the uploaded Excel file
+    const file = req.file;    
+
+    res.json({ image: "https://api.cabkn.com/api/image/"+file.filename });
+  } catch (error) {
+    res.status(400).json({message:'Error in uploading. Try again later.',error});
+  }
+});
+
+
+router.get('/:image', (req, res) => {
+  const imageName = req.params.image; // You can get image name from query params or URL
+  const imagePath = path.join(__dirname, 'files', imageName);
+
+  res.sendFile(imagePath, (err) => {
+    if (err) {
+      res.status(404).send('Image not found');
+    }
+  });
+});
 
 module.exports = router; 
