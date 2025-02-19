@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const ratingSchema = new mongoose.Schema({
   title:String,
+  tooltip:String,
   image:String,
   price:{
     type: Number,
