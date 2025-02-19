@@ -2,7 +2,7 @@ const Category = require("../models/WebSubCategories");
 
 exports.create = async (req, res) => {
   try {
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights } = req.body;
 
     const subcategory = new Category({
       name,
@@ -16,7 +16,8 @@ exports.create = async (req, res) => {
       timeslots,
       price_per_person,
       travelers,
-      location_price
+      location_price,
+      heighlights
     });
     await subcategory.save();
 

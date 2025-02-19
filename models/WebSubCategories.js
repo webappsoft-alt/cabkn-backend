@@ -16,6 +16,7 @@ const categorySchema = new mongoose.Schema({
     enum: ['active', "deactivated"]
   },
   timeslots: [String],
+  heighlights: [String],
   price_per_person:String,
   location_price:String,
   travelers:{
