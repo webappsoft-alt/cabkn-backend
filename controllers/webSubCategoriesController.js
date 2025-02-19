@@ -197,12 +197,12 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights } = req.body;
   
     // Create an object to store the fields to be updated
     const updateFields = Object.fromEntries(
       Object.entries({
-        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price
+        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights
       }).filter(([key, value]) => value !== undefined)
     );
   
