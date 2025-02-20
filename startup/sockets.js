@@ -198,7 +198,9 @@ module.exports = function (server,app) {
         order_id,
         travelers,
         subcatId,
-        pincode
+        pincode,
+        passengerCount,
+        // paymentType
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -297,7 +299,9 @@ module.exports = function (server,app) {
          adminprice:Number(price) * 0.19,
          paymentId : paymentId||"",
          payment_status : "completed",
-         order_id:order_id||""
+         order_id:order_id||"",
+         passengerCount:passengerCount||0,
+        //  paymentType
        });
 
        if (couponId) {

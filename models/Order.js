@@ -105,6 +105,10 @@ const orderSchema = new mongoose.Schema({
     default:false
   },
   note:String,
+  passengerCount:{
+    type:Number,
+    default:0
+  },
   payment:[{
     amount:Number,
     date:Date
@@ -129,6 +133,11 @@ const orderSchema = new mongoose.Schema({
     default: 'live',
     enum: ['live', 'schedule']
   },
+  // paymentType: {
+  //   type: String,
+  //   default: 'cash',
+  //   enum: ['cash', 'paid']
+  // },
   createdAt: {
     type: Date,
     default: Date.now,
