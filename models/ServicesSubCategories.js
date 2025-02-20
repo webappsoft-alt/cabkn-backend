@@ -23,7 +23,7 @@ const categorySchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'WebCategories', },
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'ServicesCategories', },
   images: [String],
   about:String,
   address:String,
