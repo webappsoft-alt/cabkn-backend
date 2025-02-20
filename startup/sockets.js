@@ -200,7 +200,7 @@ module.exports = function (server,app) {
         subcatId,
         pincode,
         passengerCount,
-        // paymentType
+        paymentType
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -301,7 +301,7 @@ module.exports = function (server,app) {
          payment_status : "completed",
          order_id:order_id||"",
          passengerCount:passengerCount||0,
-        //  paymentType
+         paymentType:paymentType||"paid"
        });
 
        if (couponId) {
@@ -413,7 +413,8 @@ module.exports = function (server,app) {
     
         // Delete the order
         await Order.findByIdAndDelete(requestId);
-
+        if (order.paymentType=='paid') {
+        
           const user = await User.findById(senderId);
   
           if (!user) {
@@ -423,17 +424,20 @@ module.exports = function (server,app) {
               message: "The User with the given ID was not found.",
             });
           }
+
+            user.amount=Number(user.amount) + Number(order.price);
+            await user.save()
+            const transaction=new Transaction({
+              user:senderId,
+              amount:Number(order.price),
+              type:'refunded'
+            })
+          
+            await transaction.save()
+            
+          }
         
-          user.amount=Number(user.amount) + Number(order.price);
-          await user.save()
         
-          const transaction=new Transaction({
-            user:senderId,
-            amount:Number(order.price),
-            type:'refunded'
-          })
-        
-          await transaction.save()
         
         // Notify riders to filter the request
         const userIds = await User.find({ type: "rider", status: {$in:["online","offline"]} })
@@ -1031,26 +1035,27 @@ module.exports = function (server,app) {
     
         if (status === 'cancelled') {
           await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
-
-          if (!user) {
-            return callback({
-              success: false,
-              title: 'Ride Delete',
-              message: "The User with the given ID was not found.",
-            });
-          }
-        
-          user.amount=Number(user.amount) + Number(updatedOrder.price);
-          await user.save()
-        
-          const transaction=new Transaction({
-            user:updatedOrder.user._id,
-            amount:Number(updatedOrder.price),
-            type:'refunded',
-            order:orderId
-          });
-        
-          await transaction.save();
+          if (updatedOrder.paymentType=='paid') {
+             if (!user) {
+               return callback({
+                 success: false,
+                 title: 'Ride Delete',
+                 message: "The User with the given ID was not found.",
+               });
+             }
+           
+             user.amount=Number(user.amount) + Number(updatedOrder.price);
+             await user.save()
+           
+             const transaction=new Transaction({
+               user:updatedOrder.user._id,
+               amount:Number(updatedOrder.price),
+               type:'refunded',
+               order:orderId
+             });
+           
+             await transaction.save();
+         }
         }else{
           const addresses = await LoyalityPoint.findOne({}).lean();
 
@@ -1074,7 +1079,7 @@ module.exports = function (server,app) {
         await sendNotification({
           user: senderId,
           to_id: updatedOrder.user._id.toString(),
-          description: `Your Ride has been ${status} by ${updatedOrder?.to_id?.name} and you have successfully earned 10 points for this ride.`,
+          description: `Your Ride has been ${status} by ${updatedOrder?.to_id?.name} and you have successfully earned ${addresses?.points_per_ride||10} points for this ride.`,
           type: "order",
           title: "Ride Update",
           fcmtoken: updatedOrder.user.fcmtoken,
@@ -1163,18 +1168,21 @@ module.exports = function (server,app) {
           }
 
           await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status,refunded:true},{new:true})
+
+          if (updatedOrder.paymentType=='paid') {
         
-          user.amount=Number(user.amount) + Number(updatedOrder.price);
-          await user.save()
-        
-          const transaction=new Transaction({
-            user:senderId,
-            amount:Number(updatedOrder.price),
-            type:'refunded',
-            order:orderId
-          })
+            user.amount=Number(user.amount) + Number(updatedOrder.price);
+            await user.save()
+          
+            const transaction=new Transaction({
+              user:senderId,
+              amount:Number(updatedOrder.price),
+              type:'refunded',
+              order:orderId
+            })
         
           await transaction.save()
+        }
         }
 
         if (['order-start'].includes(updatedOrder.status)) {

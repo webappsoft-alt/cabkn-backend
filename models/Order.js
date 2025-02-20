@@ -133,11 +133,11 @@ const orderSchema = new mongoose.Schema({
     default: 'live',
     enum: ['live', 'schedule']
   },
-  // paymentType: {
-  //   type: String,
-  //   default: 'cash',
-  //   enum: ['cash', 'paid']
-  // },
+  paymentType: {
+    type: String,
+    default: 'cash',
+    enum: ['cash', 'paid']
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -43,7 +43,7 @@ exports.getCategories = async (req, res) => {
 
   const {catId}=req.query;
   if (catId) {
-    query.category={$ne:catId}
+    query.category=catId
   }
 
   
@@ -74,7 +74,7 @@ exports.getAllCategories = async (req, res) => {
 
   const {catId}=req.query;
   if (catId) {
-    query.category={$ne:catId}
+    query.category=catId
   }
 
   query.status='active'
@@ -130,7 +130,7 @@ exports.getAllCustomerCategories = async (req, res) => {
 
   const {catId}=req.query;
   if (catId) {
-    query.category={$ne:catId}
+    query.category=catId
   }
 
   query.status='active'
