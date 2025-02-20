@@ -1583,14 +1583,16 @@ router.post('/liabilty', [auth,admin],  async (req, res) => {
       price,
       distance,
       image,
-      tooltip
+      tooltip,
+      passenger
     } = req.body;
     const addresses = new Liabilties({
       title,
       price,
       distance,
       image,
-      tooltip
+      tooltip,
+      passenger
     });
     await addresses.save();
 
@@ -1607,7 +1609,8 @@ router.put('/liabilty/:id', [auth,admin],  async (req, res) => {
       price,
       distance,
       image,
-      tooltip
+      tooltip,
+      passenger
     } = req.body;
      // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
@@ -1616,7 +1619,8 @@ router.put('/liabilty/:id', [auth,admin],  async (req, res) => {
       price,
       distance,
       image,
-      tooltip
+      tooltip,
+      passenger
     }).filter(([key, value]) => value !== undefined)
   );
 

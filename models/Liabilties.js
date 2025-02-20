@@ -4,6 +4,7 @@ const ratingSchema = new mongoose.Schema({
   title:String,
   tooltip:String,
   image:String,
+  passenger:String,
   price:{
     type: Number,
     default:0
