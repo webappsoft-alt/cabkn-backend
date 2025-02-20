@@ -38,7 +38,7 @@ exports.fetchrequestOrder = async (req, res) => {
   }
 
   try {
-    const applications = await Order.find(query).sort({ _id: -1 }).populate("ridertype").populate("coupon").populate("liability").populate("user").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ _id: -1 }).populate("ridertype service").populate("coupon").populate("liability").populate("user").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, requests: applications });
@@ -110,7 +110,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon").populate("user").populate("vehicle").populate("ridertype").populate("liability").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon service").populate("user").populate("vehicle").populate("ridertype").populate("liability").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
@@ -128,7 +128,7 @@ exports.getOrderDetails = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("likes").lean();
 
-    const applications = await Order.findById(req.params.id).populate("user coupon liability ridertype").populate({
+    const applications = await Order.findById(req.params.id).populate("user coupon service liability ridertype").populate({
       path: 'to_id',
       populate: [
         { path: 'vehicle', model: 'Vehicle' }
@@ -193,7 +193,7 @@ exports.getAllSellerApplication = async (req, res) => {
   const pageSize = 10;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon").populate("to_id").populate("ridertype").populate("liability").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon service").populate("to_id").populate("ridertype").populate("liability").populate("vehicle").limit(pageSize).lean();
 
     if (applications.length > 0) {
       res.status(200).json({ success: true, orders: applications });
@@ -385,7 +385,7 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
       }
     }
 
-    const post = await Order.findOneAndUpdate({ _id:postId, user: userId },query, {new: true}).populate("to_id").lean();
+    const post = await Order.findOneAndUpdate({ _id:postId, user: userId },query, {new: true}).populate("to_id service").lean();
 
     if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
 
@@ -412,7 +412,7 @@ exports.updateApproveByRider = async (req, res) => {
     const postId = req.params.id;
     const userId = req.user._id;
 
-    const post = await Order.findOneAndUpdate({ _id:postId,to_id:userId},{payment_status:"recieved"}, {new: true}).populate("user").lean();
+    const post = await Order.findOneAndUpdate({ _id:postId,to_id:userId},{payment_status:"recieved"}, {new: true}).populate("user service").lean();
 
     if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
 

@@ -200,7 +200,8 @@ module.exports = function (server,app) {
         subcatId,
         pincode,
         passengerCount,
-        paymentType
+        paymentType,
+        service
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -322,9 +323,12 @@ module.exports = function (server,app) {
        if (stops) {
         newRequest.stops=stops
        }
+       if (service) {
+        newRequest.service=service
+       }
  
        await newRequest.save()
-       const request=await Order.findById(newRequest._id).populate("user").populate("ridertype").populate("liability")
+       const request=await Order.findById(newRequest._id).populate("user").populate("ridertype service").populate("liability")
        callback({request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
        for (let user of userIds) {
@@ -505,7 +509,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findById(requestId).populate("user").populate("ridertype").populate("liability");
+        const order = await Order.findById(requestId).populate("user").populate("ridertype service").populate("liability");
     
         if (!order) {
           return callback({
@@ -705,7 +709,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findById(orderId).populate("user").populate("to_id").lean();
+        const order = await Order.findById(orderId).populate("user").populate("to_id service").lean();
     
         if (!order) {
           return callback({

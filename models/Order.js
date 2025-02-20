@@ -11,6 +11,10 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
   },
+  service: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ServicesSubCategories',
+  },
   userIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
