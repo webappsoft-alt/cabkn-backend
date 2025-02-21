@@ -230,6 +230,10 @@ exports.AdminRides = async (req, res) => {
     query.bookingtype = req.body.bookingtype;
   }
   
+  if (req.body.paymentType) {
+    query.paymentType = req.body.paymentType;
+  }
+  
 
   if (req.body.paymentDone) {
     query.paymentDone = req.body.paymentDone;
