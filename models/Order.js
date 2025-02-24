@@ -140,7 +140,7 @@ const orderSchema = new mongoose.Schema({
   paymentType: {
     type: String,
     default: 'cash',
-    enum: ['cash', 'paid']
+    enum: ['cash', 'paid','wallet']
   },
   createdAt: {
     type: Date,
