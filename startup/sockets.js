@@ -171,7 +171,7 @@ module.exports = function (server,app) {
       const {lat,lng,to_id,order} = data
       // await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
   
-      io.to(to_id).emit('location-recieved', { lat,lng,to_id,order });
+      io.to(to_id).emit('location-recieved', { lat,lng,to_id,order,senderId });
       callback(data)
     });
 
