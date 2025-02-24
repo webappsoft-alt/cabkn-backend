@@ -28,6 +28,11 @@ const conversationSchema = new mongoose.Schema({
     default: Date.now,
     index: true
   },
+  updateAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);

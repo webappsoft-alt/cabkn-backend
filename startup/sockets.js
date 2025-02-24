@@ -66,6 +66,9 @@ module.exports = function (server,app) {
           conversationId = newConversation._id
 
           await newConversation.save();
+        }else{
+          conversation.updateAt=Date.now()
+          await conversation.save()
         }
 
         const newMessage = new Message({
