@@ -300,7 +300,7 @@ module.exports = function (server,app) {
          liability,
          ridertype,
          pincode,
-         adminprice:Number(price) * 0.19,
+         adminprice:Number(price) * 20,
          paymentId : paymentId||"",
          payment_status : "completed",
          order_id:order_id||"",

@@ -97,6 +97,9 @@ exports.getAllEmployeeApplication = async (req, res) => {
   if (req.body.bookingtype) {
     query.bookingtype = req.body.bookingtype;
   }
+  if (req.body.paymentType) {
+    query.paymentType = req.body.paymentType;
+  }
   query.to_id = userId;
 
   if (status == "all") {
@@ -233,6 +236,10 @@ exports.AdminRides = async (req, res) => {
   if (req.body.paymentType) {
     query.paymentType = req.body.paymentType;
   }
+
+  if (req.body.adminPayment) {
+    query.adminPayment = req.body.adminPayment;
+  }
   
 
   if (req.body.paymentDone) {
@@ -358,6 +365,20 @@ exports.updatePurchasePaymentByAdmin = async (req, res) => {
     if (!post) return res.status(404).send({ success: false, message: 'The Purchase with the given ID was not found.' });
 
     res.send({ success: true, message: 'Purchase payed successfully', purchase:post });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+exports.updatePaymentByAdmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Order.findOneAndUpdate({_id:postId}, {adminPayment:true}, {new: true});
+
+    if (!post) return res.status(404).send({ success: false, message: 'The payment with the given ID was not found.' });
+
+    res.send({ success: true, message: 'Payment recieved successfully', purchase:post });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Internal server error' });

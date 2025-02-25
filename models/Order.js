@@ -108,6 +108,10 @@ const orderSchema = new mongoose.Schema({
     type:Boolean,
     default:false
   },
+  adminPayment:{
+    type:Boolean,
+    default:false
+  },
   note:String,
   passengerCount:{
     type:Number,
