@@ -113,6 +113,11 @@ const userSchema = new mongoose.Schema({
     default: 'email',
     enum: ['email', 'social-login']
   },
+  homeAddress:{
+    address:String,
+    lat:String,
+    lng:String,
+  },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Like'}],
   vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle'},
   createdAt: {
