@@ -1249,6 +1249,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
   }
 
   const earnings = await Order.find({to_id:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance payment adminprice createdAt adminPayment paymentType").lean()
+  const totalCashAmountOrderCount = await Order.countDocuments({to_id:userId,status:"completed",payment_status:"completed",paymentType:'cash'})
   const cancelearnings = await Order.find({to_id:userId,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price distance payment adminprice createdAt").lean()
   const totalEarnings=[...earnings,...cancelearnings].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
   // Calculate the total amount received
@@ -1265,7 +1266,7 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
       return total
     }
   }, 0);
-  
+
   const remainigEarning=Number(totalEarnings)-Number(totalAmountReceived)
 
  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
@@ -1308,7 +1309,7 @@ const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: 
 
  const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
-  res.send({ success: true,totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), totalEarnings:totalEarnings.toFixed(2),totalFilterEarnings:totalFilterEarnings.toFixed(2),totalWeekEarnings:totalWeekEarnings.toFixed(2),orders:[...orders,...cancelorders],totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning:remainigEarning.toFixed(2),newGraph });
+  res.send({ success: true,totalCashAmountOrderCount,totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), totalEarnings:totalEarnings.toFixed(2),totalFilterEarnings:totalFilterEarnings.toFixed(2),totalWeekEarnings:totalWeekEarnings.toFixed(2),orders:[...orders,...cancelorders],totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning:remainigEarning.toFixed(2),newGraph });
 });
 
 router.get('/customer/earnings',auth, async (req, res) => {
