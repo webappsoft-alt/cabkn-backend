@@ -1,3 +1,5 @@
+const Transaction = require("../models/Transaction");
+const { User } = require("../models/user");
 const Category = require("../models/WebSubCategories");
 
 exports.usercreate = async (req, res) => {
@@ -246,12 +248,12 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,upload_status } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights } = req.body;
   
     // Create an object to store the fields to be updated
     const updateFields = Object.fromEntries(
       Object.entries({
-        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,upload_status
+        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights
       }).filter(([key, value]) => value !== undefined)
     );
   
@@ -301,6 +303,52 @@ exports.deactivateCategries = async (req, res) => {
 
     if (service == null) {
       return res.status(404).json({ message: "Category not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: `Category updated successfully`, Category: service });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.acceptOrRejectpayment = async (req, res) => {
+  try {
+    const serviceId = req.params.id;
+
+    const {upload_status}=req.body;
+
+    const service = await Category.findOneAndUpdate(
+      { _id: serviceId,upload_status:"pending" },
+      {
+        upload_status: upload_status,
+        updated_at: Date.now(),
+      },
+      { new: true }
+    );
+
+    if (service == null) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    if (upload_status=='reject') {
+      const user = await User.findById(service.user);
+  
+      if (!user) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+        user.amount=Number(user.amount) + Number(108);
+        await user.save()
+        const transaction=new Transaction({
+          user:service.user,
+          amount:Number(108),
+          type:'listing-refund'
+        })
+      
+        await transaction.save()
+        
     }
 
     res
