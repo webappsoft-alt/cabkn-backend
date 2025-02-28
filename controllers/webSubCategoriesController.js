@@ -1,10 +1,11 @@
 const Category = require("../models/WebSubCategories");
 
-exports.create = async (req, res) => {
+exports.usercreate = async (req, res) => {
   try {
     const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights } = req.body;
 
     const subcategory = new Category({
+      user:req.user._id,
       name,
       images,
       about,
@@ -17,7 +18,43 @@ exports.create = async (req, res) => {
       price_per_person,
       travelers,
       location_price,
-      heighlights
+      heighlights,
+      upload_status:'pending'
+    });
+    await subcategory.save();
+
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Data created successfully",
+        subcategory: subcategory,
+      });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.create = async (req, res) => {
+  try {
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights } = req.body;
+
+    const subcategory = new Category({
+      user:req.user._id,
+      name,
+      images,
+      about,
+      address,
+      lat,
+      lng,
+      category,
+      title,
+      timeslots,
+      price_per_person,
+      travelers,
+      location_price,
+      heighlights,
+      upload_status:"active"
     });
     await subcategory.save();
 
@@ -72,9 +109,16 @@ exports.getAllCategories = async (req, res) => {
     query.category = req.params.category;
   }
 
-  const {catId}=req.query;
+  const {catId,upload_status}=req.query;
+  
   if (catId) {
     query.category={$ne:catId}
+  }
+
+  if (upload_status) {
+    query.upload_status=upload_status
+  }else{
+    query.upload_status='active'
   }
 
   query.status='active'
@@ -128,12 +172,17 @@ exports.getAllCustomerCategories = async (req, res) => {
     query.category = req.params.category;
   }
 
-  const {catId}=req.query;
+  const {catId,otherId}=req.query;
   if (catId) {
     query.category={$ne:catId}
   }
 
   query.status='active'
+  if (otherId) {
+    query.user=otherId
+  }else{
+    query.upload_status="active"
+  }
 
   try {
     const categories = await Category.find(query).populate("category").sort({ _id: -1 })
@@ -197,12 +246,12 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,upload_status } = req.body;
   
     // Create an object to store the fields to be updated
     const updateFields = Object.fromEntries(
       Object.entries({
-        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights
+        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,upload_status
       }).filter(([key, value]) => value !== undefined)
     );
   

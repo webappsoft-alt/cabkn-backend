@@ -526,6 +526,48 @@ router.put("/order-card-payment", auth, async (req, res) => {
   res.send({ success: true, message: "User payed successfully", transaction });
 });
 
+router.put("/listing-wallet-payment",auth, async (req, res) => {
+  const { amount } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+  
+  if (Number(user.amount) < Number(amount)) return res.status(400).send({success: false,message: "You don't have enough amount in wallet. Please add amount in your wallet to complete your listing.",user});
+
+  user.amount=Number(user.amount) - Number(amount);
+  await user.save()
+
+  const transaction=new Transaction({
+    user:req.user._id,
+    amount,
+    type:'listing'
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "User payed successfully", user, transaction });
+});
+
+router.put("/listing-card-payment", auth, async (req, res) => {
+  const { amount, refId } = req.body;
+
+  const user = await User.findById(req.user._id);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
+  const transaction=new Transaction({
+    user:req.user._id,
+    amount,
+    type:'listing',
+    refId
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "User payed successfully", transaction });
+});
+
 router.get('/transactions/:id',auth,  async (req, res) => {
   let query = {};
   const lastId = parseInt(req.params.id)||1;

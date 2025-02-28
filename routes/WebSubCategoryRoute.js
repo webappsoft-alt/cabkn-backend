@@ -4,6 +4,7 @@ const categoriesController = require('../controllers/webSubCategoriesController'
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
+router.post('/user/create',auth,categoriesController.usercreate);
 router.post('/create', [auth,admin],categoriesController.create);
 router.get('/admin-all/:category?',[auth,admin], categoriesController.getCategories);
 router.get('/admin/:id/:category?', auth, categoriesController.getAllCategories);

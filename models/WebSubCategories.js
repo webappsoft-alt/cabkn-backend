@@ -6,6 +6,7 @@ const timeSlot={
 }
 
 const categorySchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', },
   title:String,
   name: {
     type: String,
@@ -33,6 +34,11 @@ const categorySchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
     index: true
+  },
+  upload_status: {
+    type: String,
+    default: 'active',
+    enum: ['pending', "active",'reject']
   },
   updated_at: {
     type: Date,
