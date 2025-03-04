@@ -284,7 +284,7 @@ exports.AdminRides = async (req, res) => {
       ...(filterStage ? [filterStage] : []),
       { $skip: skip },
       { $limit: pageSize },
-      { $sort: { createdAt: 1 } },
+      { $sort: { schedule_date: -1 } },
       {
         $lookup: {
           from: "users",
