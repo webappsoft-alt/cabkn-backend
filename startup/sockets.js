@@ -1153,7 +1153,7 @@ module.exports = function (server,app) {
           });
         }
 
-          const user = await User.findById(to_id._id);
+          const user = await User.findById(updatedOrder.to_id._id);
   
           if (!user) {
             return callback({
