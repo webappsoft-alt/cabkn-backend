@@ -1039,6 +1039,7 @@ module.exports = function (server,app) {
           });
         }
         const user = await User.findById(updatedOrder.user._id);
+        const addresses = await LoyalityPoint.findOne({}).lean();
     
         if (status === 'cancelled') {
           await Order.findOneAndUpdate({ _id: orderId, to_id: senderId }, { refunded: true });
@@ -1064,7 +1065,6 @@ module.exports = function (server,app) {
              await transaction.save();
          }
         }else{
-          const addresses = await LoyalityPoint.findOne({}).lean();
 
           const transaction=new Transaction({
             user:updatedOrder.user._id,
