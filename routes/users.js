@@ -1541,11 +1541,38 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
    });
 
    const totalEarnings=totalRiderOrders.reduce((a,b)=>a+b.adminprice,0)
+
+   // Aggregate completed rides grouped by to_id (rider)
+   const stats = await Order.aggregate([
+    { $match: { status: 'completed', to_id: { $ne: null } } }, // Only completed rides with a valid to_id
+    {
+      $group: {
+        _id: '$to_id',
+        totalRides: { $sum: 1 },
+        totalEarnings: { $sum: '$price' }
+      }
+    },
+    { $sort: { totalRides: -1, totalEarnings: -1 } }, // Sort by most rides, then highest earnings
+    { $limit: 1 } // Get the top rider
+  ]);
+
+  let topRider=null
+  if (stats.length !== 0) {
+    topRider = await User.findById(stats[0]._id).select('name');
+  
+    topRider={
+      name: topRider ? topRider.name : 'Unknown',
+      totalRides: stats[0].totalRides,
+      totalEarnings: stats[0].totalEarnings
+    };
+  }
+
  
   
   res.send({ success: true, 
     graph:newGraph,
     totalEarnings,
+    topRider,
     customer:{
       totalUsers,
       growth: growth.toFixed(2),
