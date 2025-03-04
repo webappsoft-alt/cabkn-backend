@@ -1165,8 +1165,6 @@ module.exports = function (server,app) {
 
           await Order.findOneAndUpdate({ _id: orderId, user: senderId },{ tip:Number(amount) },{new:true})
 
-          if (updatedOrder.paymentType=='paid') {
-        
             user.amount=Number(user.amount) + Number(amount);
             await user.save()
           
@@ -1178,7 +1176,6 @@ module.exports = function (server,app) {
             })
         
           await transaction.save()
-        }
     
         // Notify the customer about the update
         await sendNotification({
