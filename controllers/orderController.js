@@ -219,7 +219,7 @@ exports.AdminRides = async (req, res) => {
   }
 
   const { status } = req.params;
-  const validStatuses = ["all", "pending", "accepted","order-start", "completed", "cancelled"];
+  const validStatuses = ["all", "pending", "accepted","order-start", "completed", "cancelled",'active'];
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
@@ -227,6 +227,9 @@ exports.AdminRides = async (req, res) => {
 
   if (status !== "all") {
     query.status = status;
+  }
+  if (status == "active") {
+    query.status = {$in:["accepted","order-start",]};
   }
 
   if (req.body.bookingtype) {
