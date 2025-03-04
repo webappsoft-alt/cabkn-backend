@@ -1588,6 +1588,8 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
       growth: growthOrder.toFixed(2),
       status: growthOrder >= 0 ? 'positive' : 'negative'
     },
+    todayEarning:0,
+    todayCommision:0,
    });
 });
 
