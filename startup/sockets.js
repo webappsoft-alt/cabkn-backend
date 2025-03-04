@@ -1128,6 +1128,92 @@ module.exports = function (server,app) {
       }
     });
     
+    socket.on('tip-order-customer', async ({ orderId,amount }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        // Find and update the order
+        const updatedOrder = await Order.findOne({ _id: orderId, user: senderId }).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
+    
+        if (!updatedOrder) {
+          return callback({
+            success: false,
+            title: 'Ride Update',
+            message: 'Ride not found.',
+          });
+        }
+
+          const user = await User.findById(to_id._id);
+  
+          if (!user) {
+            return callback({
+              success: false,
+              title: 'Ride Update',
+              message: "The User with the given ID was not found.",
+            });
+          }
+
+          await Order.findOneAndUpdate({ _id: orderId, user: senderId },{ tip:Number(amount) },{new:true})
+
+          if (updatedOrder.paymentType=='paid') {
+        
+            user.amount=Number(user.amount) + Number(amount);
+            await user.save()
+          
+            const transaction=new Transaction({
+              user:senderId,
+              amount:Number(amount),
+              type:'tip',
+              order:orderId
+            })
+        
+          await transaction.save()
+        }
+    
+        // Notify the customer about the update
+        await sendNotification({
+          user: senderId,
+          to_id: updatedOrder.to_id._id.toString(),
+          description: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
+          type: "order",
+          title: "Ride update",
+          fcmtoken: updatedOrder.to_id.fcmtoken,
+          order: orderId,
+          noti: false,
+        });
+        
+        io.to(updatedOrder.to_id._id.toString()).emit('tip-order-rider', {
+            success: true,
+            order: updatedOrder,
+            title: 'Ride Update',
+            message: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
+          });
+    
+        // Callback success response
+        return callback({
+          success: true,
+          order: updatedOrder,
+          title: 'Ride Updated',
+          message: `You have successfully given ${amount} as a tip`,
+        });
+      } catch (error) {
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
     socket.on('cancel-order-customer', async ({ orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
@@ -1216,7 +1302,7 @@ module.exports = function (server,app) {
         });
         const order=await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status},{new:true}).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
         
-        io.to(updatedOrder.user._id.toString()).emit('cancel-order-rider', {
+        io.to(updatedOrder.to_id._id.toString()).emit('cancel-order-rider', {
             success: true,
             order: order,
             title: 'Ride Update',
