@@ -1318,29 +1318,25 @@ function findDateIndex(createdAt,dates) {
   return -1;
 }
 
-router.post('/rider/dashboard/:id?',auth, async (req, res) => {
+router.post('/rider/dashboard',auth, async (req, res) => {
   const userId=req.user._id
-  
-  let query={}
-  if (req.params.id) {
-    query._id = { $lt: req.params.id };
-  }
-
-  const {startDate,endDate}=req.body;
-
-  if (startDate&&endDate) {
-    query.schedule_date = { $gte: startDate, $lte: endDate }
-  }
+  const totalCashAmountOrderCount = await Order.countDocuments({to_id:userId,status:"completed",payment_status:"completed",paymentType:'cash'})
 
   const earnings = await Order.find({to_id:userId,status:"completed",payment_status:"completed"}).select("status schedule_date price distance payment adminprice createdAt adminPayment paymentType").lean()
-  const totalCashAmountOrderCount = await Order.countDocuments({to_id:userId,status:"completed",payment_status:"completed",paymentType:'cash'})
   const cancelearnings = await Order.find({to_id:userId,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price distance payment adminprice createdAt").lean()
   const totalEarnings=[...earnings,...cancelearnings].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
+
+  const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
+
   // Calculate the total amount received
   const totalAmountReceived = earnings.reduce((total, order) => {
+    if (order.paymentType!=='cash') {
     // Sum up the payment amounts for each order
     const orderTotal = order.payment.reduce((sum, payment) => sum + payment.amount, 0);
     return total + orderTotal;
+    }else{
+      return total
+    }
   }, 0);
 
   const totalEarningPaidToAdmin = earnings.reduce((total, order) => {
@@ -1351,49 +1347,36 @@ router.post('/rider/dashboard/:id?',auth, async (req, res) => {
     }
   }, 0);
 
-  const remainigEarning=Number(totalEarnings)-Number(totalAmountReceived)
+  const totalPaidEarnings = [...earnings,...cancelearnings].reduce((total, order) => {
+    if (order.paymentType!=='cash') {
+      return total + Number(Number(order.price) - Number(order.adminprice));
+    }else{
+      return total
+    }
+  }, 0);
 
- const totaldistance=earnings.reduce((a,b)=>a+b.distance,0)
- 
- const orders = await Order.find({...query,to_id:userId,status:"completed",payment_status:"completed"}).populate("user").sort({ schedule_date: 1 }).limit(10).lean()
- const cancelorders = await Order.find({...query,to_id:userId,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).sort({ schedule_date: 1 }).limit(10).lean()
- 
- const totalFilterEarnings=[...orders,...cancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
- const totalFilterdistance=orders.reduce((a,b)=>a+b.distance,0)
+  const totalRemainigAmount=Number(totalPaidEarnings)-Number(totalAmountReceived)
 
+  const graphstartDate=moment().startOf('week');
+  const todayEnd = moment().endOf('day');
+  
+  
+  const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
+  const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price adminprice createdAt").lean()
 
- const now = new Date();
- let dates = [];
- for (let i = 0; i < 7; i++) {
-   let date = new Date(now);
-   date.setDate(now.getDate() - (i));
-   dates.unshift(date.toISOString());
- }
-const graphstartDate=moment().startOf('week');
-const todayEnd = moment().endOf('day');
-
-
-const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
-const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price adminprice createdAt").lean()
-
- // Initialize the graph array
- let graph = dates.map(date => ({ x: date, price:0 }));
-
- // Increment the y value for the correct date ranges
- [...graphorders,...graphcancelorders].forEach(order => {
-   const index = findDateIndex(order.schedule_date,dates);
-   if (index !== -1 && index < graph.length) {
-     graph[index].price += 1;
-   }
- });
-
- let newGraph = graph.map(obj => {
-   return { ["x"]: moment(obj.x).format('ddd'), ["price"]: obj.price};
- });
 
  const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
-  res.send({ success: true,totalCashAmountOrderCount,totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), totalEarnings:totalEarnings.toFixed(2),totalFilterEarnings:totalFilterEarnings.toFixed(2),totalWeekEarnings:totalWeekEarnings.toFixed(2),orders:[...orders,...cancelorders],totaldistance,totalFilterdistance,totalAmountReceived,remainigEarning:remainigEarning.toFixed(2),newGraph });
+  res.send({ 
+    success: true,
+    totaldistance, 
+    totalEarnings:totalEarnings.toFixed(2),
+    totalWeekEarnings:totalWeekEarnings.toFixed(2),
+    totalAmountReceived,
+    totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), 
+    totalCashAmountOrderCount,
+    totalRemainigAmount
+  });
 });
 
 router.get('/customer/earnings',auth, async (req, res) => {
