@@ -34,6 +34,7 @@ const LoyalityPoint = require("../models/LoyalityPoint");
 const Notification = require("../models/Notification");
 const { sendEmail } = require("../controllers/emailservice");
 const Footer = require("../models/Footer");
+const WebSubCategories = require("../models/WebSubCategories");
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -1494,6 +1495,7 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
       growthowner = ((totalownerUsers - totalownerUsersYesterday) / totalownerUsersYesterday) * 100;
    }
 
+   const totalWebCategories = await WebSubCategories.countDocuments({user:{$ne:req.user._id},upload_status:"active",});
 
    const totalOrder = await Order.countDocuments({status:"completed",});
 
@@ -1567,11 +1569,38 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
     };
   }
 
- 
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0); // Set time to beginning of the day
+
+  const tomorrow = new Date();
+  tomorrow.setDate(todayDate.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0); // Set time to beginning of next day
+
+  const todayWebCategories = await WebSubCategories.countDocuments({
+    user:{$ne:req.user._id},
+    upload_status:"active",
+    createdAt: {
+      $gte: todayDate, // Greater than or equal to today
+      $lt: tomorrow, // Less than tomorrow
+    },
+  });
+  const todayOrders = await Order.find({
+    status:"completed",
+    createdAt: {
+      $gte: todayDate, // Greater than or equal to today
+      $lt: tomorrow, // Less than tomorrow
+    },
+  }).select("price createdAt adminprice");
+
+  const todaywebEarnings=todayWebCategories * Number(108)
+  const totalwebEarnings=totalWebCategories * Number(108)
+
+  const todayCommision=todayOrders.reduce((a,b)=>a+b.adminprice,0)
+
   
   res.send({ success: true, 
     graph:newGraph,
-    totalEarnings,
+    totalEarnings:totalwebEarnings+Number(totalEarnings),
     topRider,
     customer:{
       totalUsers,
@@ -1588,8 +1617,8 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
       growth: growthOrder.toFixed(2),
       status: growthOrder >= 0 ? 'positive' : 'negative'
     },
-    todayEarning:0,
-    todayCommision:0,
+    todayEarning:todaywebEarnings+Number(todayCommision),
+    todayCommision:todayCommision,
    });
 });
 
