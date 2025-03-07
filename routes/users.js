@@ -669,9 +669,11 @@ router.put("/update-location", auth, async (req, res) => {
 
   const orders=await Order.find({to_id:req.user._id, status : { $in : ['accepted',"order-start"] }, bookingtype: "live"}).select("user").lean()
 
+  const adminUser = await User.findOne({type:"admin"}).select("type");
+  const io = req.app.get('socketio');
   for (let order of orders) {
-    const io = req.app.get('socketio');
     io.to(order.user.toString()).emit('location-update', {order:order._id,location});
+    io.to(adminUser._id.toString()).emit('location-update-admin', {order:order._id,location,user:user._id});
   }
 
   res.send({ success: true, message: "User updated successfully", user });
