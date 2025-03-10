@@ -151,6 +151,12 @@ const orderSchema = new mongoose.Schema({
     default: Date.now,
     index: true
   },
+  prickTime: {
+    type: Date,
+  },
+  dropTime: {
+    type: Date,
+  },
 });
 
 // orderSchema.index({ location: '2dsphere' });

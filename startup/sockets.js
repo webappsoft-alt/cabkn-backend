@@ -944,7 +944,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findByIdAndUpdate(orderId,{status:"order-start"} ,{new:true}).populate("user");
+        const order = await Order.findByIdAndUpdate(orderId,{status:"order-start",prickTime:Date.now()} ,{new:true}).populate("user");
     
         if (!order) {
           return callback({
@@ -1065,7 +1065,7 @@ module.exports = function (server,app) {
              await transaction.save();
          }
         }else{
-
+          await Order.findOneAndUpdate({ _id: orderId,},{ dropTime: Date.now() })
           const transaction=new Transaction({
             user:updatedOrder.user._id,
             amount:(addresses?.points_per_ride||10),
