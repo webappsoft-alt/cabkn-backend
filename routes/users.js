@@ -1501,12 +1501,74 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
   
    const now = new Date();
    let dates = [];
-   for (let i = 0; i < 12; i++) {
-    let date = new Date(now);
-    date.setMonth(now.getMonth() - i);
-    dates.unshift(date.toISOString());
+  //  for (let i = 0; i < 12; i++) {
+  //   let date = new Date(now);
+  //   date.setMonth(now.getMonth() - i);
+  //   dates.unshift(date.toISOString());
+  // }
+  // const startDate = moment().startOf('year');
+  // const todayEnd = moment().endOf('day');
+
+  let startDate=moment().startOf('day');
+  switch (req.query.date) {
+    case 'daily':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setHours(now.getHours() - (i * 2));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('day');
+      break;
+    case 'weekly':
+      for (let i = 0; i < 7; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('week');
+      break;
+    case 'monthly':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 2));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('month');
+      break;
+    case 'quarterly':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 5));
+        dates.unshift(date.toISOString());
+      }
+      startDate = moment().subtract(3, 'months');
+      break;
+    case 'sixmonth':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 10));
+        dates.unshift(date.toISOString());
+      }
+      startDate = moment().subtract(6, 'months');
+      break;
+    case 'yearly':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setMonth(now.getMonth() - i);
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('year');
+      break;
+  
+    default:
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 2));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('month');
+      break;
   }
-  const startDate = moment().startOf('year');
   const todayEnd = moment().endOf('day');
  
   const orders = await Order.find({createdAt: { $gte: startDate, $lte: todayEnd },status:"completed",}).select("price createdAt adminprice").lean()
@@ -1524,7 +1586,7 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
    });
  
    let newGraph = graph.map(obj => {
-     return { ["x"]: moment(obj.x).format('MMM'), ["y"]: obj.price,"z":obj.adminprice};
+     return { ["x"]: convertLabels(req.query.date,obj.x), ["y"]: obj.price,"z":obj.adminprice};
    });
 
    const totalEarnings=totalRiderOrders.reduce((a,b)=>a+b.adminprice,0)

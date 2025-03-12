@@ -1,3 +1,5 @@
+const moment = require("moment");
+
 exports.generateCode = () => {
      return Math.floor(1000 + Math.random() * 9000).toString();
 }
@@ -29,3 +31,30 @@ exports.generateTXIDString = () => {
      return randomString+(Math.floor(10000 + Math.random() * 90000).toString());
 }
 
+
+exports.convertLabels=(label,date)=>{
+     switch (label) {
+         case 'daily':
+            return moment(date).format('hh:mm A')
+           break;
+         case 'weekly':
+             return moment(date).format('ddd');
+           break;
+         case 'monthly':
+             return  moment(date).format('MM/DD/YYYY');
+           break;
+         case 'quarterly':
+             return moment(date).format('MM/DD/YYYY');
+           break;
+         case 'sixmonth':
+             return  moment(date).format('MM/DD/YYYY');
+           break;
+         case 'yearly':
+             return  moment(date).format('MMM');
+           break;
+       
+         default:  
+         return moment(date).format('MM/DD/YYYY');  
+           break;
+       }
+ }
