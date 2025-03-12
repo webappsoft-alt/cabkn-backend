@@ -77,7 +77,7 @@ app.get('/delete/users', (req, res) => {
 </head>
 <body>
     <div class="container">
-        <h1>BINS APP CORP - Account Data Deletion</h1>
+        <h1>Cabkn APP CORP - Account Data Deletion</h1>
         <p>
             Welcome to Cabkn APP CORP. If you wish to permanently delete your account and all associated data, please enter your email address below. 
             After submitting, you will receive an email with a link to confirm the deletion. Once you click the link, all data associated 
