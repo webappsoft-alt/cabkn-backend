@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     minlength: 5,
     maxlength: 255,
   },
+  delete_request:{
+    type: Boolean,
+    default: false,
+  },
   phone: {
     type: String,
     required: true,

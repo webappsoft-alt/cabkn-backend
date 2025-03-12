@@ -19,8 +19,8 @@ exports.sendEmail = async (email, code) => {
      const mailOptions = {
           from: 'Support@ticketkn.com',
           to: email, // Replace with the recipient's email address
-          subject: 'Rider app Verification',
-          text: 'Your Rider app verification code is ' + code,
+          subject: 'Cabkn app Verification',
+          text: 'Your Cabkn app verification code is ' + code,
      };
 
      // Send the email
@@ -196,3 +196,50 @@ exports.purchaseEmail = async (email,eventName,eventDate,location,typeTicket) =>
      });
 }
 
+
+exports.deleteUserEmail = async (email, deleteLink) => {
+     // Create a Nodemailer transporter object
+     const transporter = nodemailer.createTransport({
+      host: 'smtp.office365.com', // SMTP server address for Outlook
+      port: 587, // SMTP port
+      secure: false, // Set to true for port 465, false for others
+      auth: {
+        user: 'Support@ticketkn.com', // Your Outlook email
+        pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
+      }
+ });
+
+  const mailOptions = {
+    from: 'Support@ticketkn.com',
+    to: email,
+       subject: 'Cabkn APP CORP - Confirm Your Account Deletion',
+       text: `
+            Dear Cabkn APP CORP User,
+            
+            We received a request to permanently delete your Cabkn APP CORP account. If you did not make this request, please ignore this email.
+            
+            To proceed with the deletion of your account and all associated data, please click the link below:
+            
+            Delete My Account: ${deleteLink}
+            
+            Please note that once you confirm the deletion, this action cannot be undone, and all your data will be permanently removed from our system.
+            
+            If you have any questions or concerns, feel free to contact our support team.
+            
+            Thank you for using Cabkn APP CORP.
+            
+            Best regards,
+            The Cabkn APP CORP Team
+       `
+   };
+   
+
+  // Send the email
+  transporter.sendMail(mailOptions, (error, info) => {
+       if (error) {
+            logger.error('Error sending email: ', error);
+       } else {
+            logger.info('Email sent: ' + info.response);
+       }
+  });
+}
