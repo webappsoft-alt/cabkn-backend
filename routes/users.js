@@ -497,7 +497,7 @@ router.put("/order-wallet-payment",auth, async (req, res) => {
   user.amount=Number(user.amount) - Number(amount);
   await user.save()
 
-  const transaction=new Transaction({
+  const transaction = new Transaction({
     user:req.user._id,
     amount,
     type:'purchase'
@@ -506,6 +506,49 @@ router.put("/order-wallet-payment",auth, async (req, res) => {
   await transaction.save()
 
   res.send({ success: true, message: "User payed successfully", user, transaction });
+});
+
+router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
+  const { amount,otherId } = req.body;
+
+  const user = await User.findById(otherId);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+  
+  user.amount=Number(user.amount) + Number(amount);
+  await user.save()
+
+  const transaction = new Transaction({
+    user:otherId,
+    amount,
+    type:'admin-deposit'
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "You have deposited amount successfully", user, transaction });
+});
+router.put("/withdrawl-admin-wallet-payment",[auth,admin], async (req, res) => {
+  const { amount,otherId } = req.body;
+
+  const user = await User.findById(otherId);
+
+  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
+  if (Number(user.amount) < Number(amount)) return res.status(400).send({success: false,message: "User don't have enough amount in wallet.",user});
+
+  user.amount=Number(user.amount) - Number(amount);
+  await user.save()
+
+  const transaction = new Transaction({
+    user:otherId,
+    amount,
+    type:'admin-withdrawl'
+  })
+
+  await transaction.save()
+
+  res.send({ success: true, message: "You have withdrawl amount successfully", user, transaction });
 });
 
 router.put("/order-card-payment", auth, async (req, res) => {
