@@ -470,13 +470,13 @@ router.put("/convert-point", auth, async (req, res) => {
 
   const addresses = await LoyalityPoint.findOne({}).lean();
 
-  user.amount=Number(user.amount) + Number(Number(user.points)/(addresses?.convert_rate_per_xcd||10));
+  user.amount=Number(user.amount) + Number(Number(user.points)/(addresses.convert_rate_per_xcd));
   user.points=0;
   await user.save()
 
   const transaction=new Transaction({
     user:req.user._id,
-    amount:Number(user.amount) + Number(Number(user.points)/(addresses?.convert_rate_per_xcd||10)),
+    amount:Number(user.amount) + Number(Number(user.points)/(addresses?.convert_rate_per_xcd)),
     type:'deposit-points'
   })
 
