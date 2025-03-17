@@ -1691,7 +1691,7 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
   res.send({ success: true, 
     graph:newGraph,
     totalEarnings:totalwebEarnings+Number(totalEarnings),
-    todayCommision:totalEarnings,
+    totalCommision:totalEarnings,
     topRider,
     customer:{
       totalUsers,
