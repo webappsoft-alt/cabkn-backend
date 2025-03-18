@@ -14,6 +14,7 @@ const Transaction = require('../models/Transaction');
 const LoyalityPoint = require('../models/LoyalityPoint');
 const Vehicle = require('../models/Vehicle');
 const WebSubCategories = require('../models/WebSubCategories');
+const { sendCompleteOrderEmail } = require('../controllers/emailservice');
 
 const connectedUsers = {};
 
@@ -1065,6 +1066,7 @@ module.exports = function (server,app) {
              await transaction.save();
          }
         }else{
+          await sendCompleteOrderEmail(updatedOrder.to_id.email,updatedOrder.order_id)
           await Order.findOneAndUpdate({ _id: orderId,},{ dropTime: Date.now() })
           const transaction=new Transaction({
             user:updatedOrder.user._id,
