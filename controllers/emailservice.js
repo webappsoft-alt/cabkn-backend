@@ -245,7 +245,7 @@ exports.deleteUserEmail = async (email, deleteLink) => {
 }
 
 
-exports.sendCompleteOrderEmail = async (order_id) => {
+exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRESS,DROPOFF_ADDRESS,DRIVER_NAME,VEHICLE_REGISTRATION,Subtotal,TOTAL_AMOUNT) => {
   // Create a Nodemailer transporter object
   const transporter = nodemailer.createTransport({
        host: 'smtp.office365.com', // SMTP server address for Outlook
@@ -257,12 +257,102 @@ exports.sendCompleteOrderEmail = async (order_id) => {
        }
   });
 
+  const template=`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Completion Email</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #1E1E1E;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .header {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: #2A2A2A;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #0EBE3C;
+        }
+        .info {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .info strong {
+            color: #ffffff;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Dear ${customerName},<br>Your ride has been completed</div>
+        <div class="image" style="text-align: center;">
+            <img src="https://api.cabkn.com/api/image/imageemail.jpg" alt="Ride Image" style="max-width: 100%; border-radius: 10px;">
+        </div>
+        <div class="section">
+            <div class="section-title">Trip Detail</div>
+            <div class="info">
+                <p><strong>OrderId:</strong> ${order_id}</p>
+                <p><strong>Pickup Address:</strong> ${PICKUP_ADDRESS}</p>
+                <p><strong>Drop-off Address:</strong> ${DROPOFF_ADDRESS}</p>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Driver Detail</div>
+            <div class="info">
+                <p><strong>Name:</strong> ${DRIVER_NAME}</p>
+                <p><strong>Vehicle Registration Number:</strong> ${VEHICLE_REGISTRATION}</p>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Fare Detail</div>
+            <div class="info">
+                <p><strong>Sub Total:</strong> ${Subtotal}</p>
+                <p><strong>Total Amount:</strong> <span style="font-size: 20px; font-weight: bold;">${TOTAL_AMOUNT}</span></p>
+            </div>
+        </div>
+        <div class="footer">&copy; 2025 CabKN. All rights reserved.</div>
+    </div>
+</body>
+</html>
+`
+
   // Email data
   const mailOptions = {
        from: 'Support@ticketkn.com',
        to: email, // Replace with the recipient's email address
        subject: 'Ride complete',
-       text: 'Your Cabkn app ride has been completed. Order Id is ' + order_id,
+       html: template,
   };
 
   // Send the email

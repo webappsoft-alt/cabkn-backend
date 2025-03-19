@@ -1030,7 +1030,7 @@ module.exports = function (server,app) {
           { _id: orderId, status: {$in:["accepted","order-start"]}, to_id: senderId },
           { status: status },
           { new: true }
-        ).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
+        ).populate("to_id").populate("user").populate("ridertype").populate("liability").populate("vehicle").lean();
     
         if (!updatedOrder) {
           return callback({
@@ -1066,7 +1066,7 @@ module.exports = function (server,app) {
              await transaction.save();
          }
         }else{
-          await sendCompleteOrderEmail(updatedOrder.to_id.email,updatedOrder.order_id)
+          await sendCompleteOrderEmail(updatedOrder.user.email,updatedOrder.order_id,updatedOrder.user.name,updatedOrder.start_address,updatedOrder.end_address,updatedOrder.to_id.name,updatedOrder.vehicle?.license||updatedOrder.vehicle?.name||"",updatedOrder.price,updatedOrder.price)
           await Order.findOneAndUpdate({ _id: orderId,},{ dropTime: Date.now() })
           const transaction=new Transaction({
             user:updatedOrder.user._id,
