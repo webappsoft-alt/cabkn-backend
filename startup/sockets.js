@@ -493,7 +493,7 @@ module.exports = function (server,app) {
           });
         }
 
-        const user = await User.findById(senderId).lean();
+        const user = await User.findById(senderId).lean()
 
         if (user.status !== 'online') {
           return callback({
@@ -557,9 +557,7 @@ module.exports = function (server,app) {
 
           // Update the order status
           order.status = 'accepted';
-          if (vehicle) {
-            order.vehicle = vehicle;
-          }
+          order.vehicle = user.vehicle;
 
           order.to_id = senderId;
           await order.save();
