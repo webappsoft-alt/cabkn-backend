@@ -285,6 +285,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
             font-size: 22px;
             font-weight: bold;
             margin-bottom: 20px;
+            color: #ffffff;
         }
         .section {
             background: #2A2A2A;
@@ -301,6 +302,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
         .info {
             font-size: 16px;
             line-height: 1.5;
+            color: #ffffff;
         }
         .info strong {
             color: #ffffff;
@@ -310,6 +312,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
             margin-top: 20px;
             font-size: 14px;
             opacity: 0.8;
+            color: #ffffff;
         }
     </style>
 </head>
