@@ -20,7 +20,13 @@ const connectedUsers = {};
 
 module.exports = function (server,app) {
 
-  const io = require("socket.io")(server)
+  const io = require("socket.io")(server, {
+    cors: {
+      origin: "*",
+    },
+  });
+  
+  app.set('socketio', io);
 
   io.on('connection', (socket) => {
 
@@ -1343,7 +1349,6 @@ module.exports = function (server,app) {
       }
     });
 
-    app.set('socketio', io);
   });
 }
 

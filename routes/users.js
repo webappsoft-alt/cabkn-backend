@@ -318,7 +318,7 @@ router.post("/signup/:type", async (req, res) => {
       
         await transaction.save()
 
-        findRefferal.amount=findRefferal.amount+20
+        findRefferal.amount=Number(findRefferal.amount)+20
         await findRefferal.save();
       }
     }
@@ -526,6 +526,9 @@ router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
 
   await transaction.save()
 
+  const io = req.app.get('socketio');
+  io.to(user._id.toString()).emit('user_update', {success:true,user:user});    
+
   res.send({ success: true, message: "You have deposited amount successfully", user, transaction });
 });
 router.put("/withdrawl-admin-wallet-payment",[auth,admin], async (req, res) => {
@@ -547,6 +550,9 @@ router.put("/withdrawl-admin-wallet-payment",[auth,admin], async (req, res) => {
   })
 
   await transaction.save()
+
+  const io = req.app.get('socketio');
+  io.to(user._id.toString()).emit('user_update', {success:true,user:user});    
 
   res.send({ success: true, message: "You have withdrawl amount successfully", user, transaction });
 });
