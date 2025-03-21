@@ -967,17 +967,6 @@ module.exports = function (server,app) {
           });
         }
 
-          const findOrder=await Order.findOne({user:to_id,status:{$in:['accepted',"order-start"]},bookingtype:"live"}).lean()
-
-          if (findOrder) {
-            return callback({
-              success: false,
-              title: 'Request Error',
-              message: 'You are already in a ride. Please complete this before starting another one.',
-              order:findOrder
-            });
-          }
-
           const to_user = await User.findById(to_id).lean()
 
           if (findOrder) {
