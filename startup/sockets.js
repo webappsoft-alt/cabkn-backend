@@ -950,7 +950,6 @@ module.exports = function (server,app) {
         }
     
         const order = await Order.findById(orderId).populate("user").populate("ridertype").populate("liability");
-        console.log("orderorder")
     
         if (!order) {
           return callback({
@@ -959,7 +958,6 @@ module.exports = function (server,app) {
             message: 'Invalid order ID.',
           });
         }
-        console.log("orderorderpending")
 
     
         if (order.status !== 'pending') {
@@ -969,10 +967,8 @@ module.exports = function (server,app) {
             message: 'Order has already been assigned to someone else.',
           });
         }
-        console.log("to_id")
 
           const to_user = await User.findById(to_id).lean()
-          console.log("to_user")
 
           if (!to_user) {
             return callback({
@@ -981,7 +977,6 @@ module.exports = function (server,app) {
               message: 'You are already in a ride. Please complete this before starting another one.',
             });
           }
-          console.log("accepted")
 
           // Update the order status
           order.status = 'accepted';
