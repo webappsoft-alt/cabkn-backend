@@ -963,13 +963,13 @@ module.exports = function (server,app) {
           return callback({
             success: false,
             title: 'Order Update',
-            message: 'You have already assigned that order to someone else.',
+            message: 'Order has already been assigned to someone else.',
           });
         }
 
           const to_user = await User.findById(to_id).lean()
 
-          if (findOrder) {
+          if (!to_user) {
             return callback({
               success: false,
               title: 'Request Error',
