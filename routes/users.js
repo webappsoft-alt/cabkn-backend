@@ -858,6 +858,16 @@ router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
     query.type={$ne:"admin"};
   }
 
+  const {status,isVehicle}=req.query;
+
+  if (status) {
+    query.status=status
+  }
+  
+  if (isVehicle) {
+    query.isVehicle=isVehicle
+  }
+
   const pageSize = 10;
 
   const skip = Math.max(0, (lastId - 1)) * pageSize;

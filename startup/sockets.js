@@ -485,7 +485,7 @@ module.exports = function (server,app) {
       }
     });    
 
-    socket.on('update-request-rider', async ({ requestId, status,vehicle }, callback) => {
+    socket.on('update-request-rider', async ({ requestId, status }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
@@ -926,6 +926,133 @@ module.exports = function (server,app) {
             message: 'The ride has been started and notifications sent.',
           });
         }
+      } catch (error) {
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
+
+    socket.on('update-order-admin', async ({ to_id, orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findById(orderId).populate("user").populate("ridertype").populate("liability");
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'Invalid order ID.',
+          });
+        }
+    
+        if (order.status !== 'pending') {
+          return callback({
+            success: false,
+            title: 'Order Update',
+            message: 'You have already assigned that order to someone else.',
+          });
+        }
+
+          const findOrder=await Order.findOne({user:senderId,status:{$in:['accepted',"order-start"]},bookingtype:"live"}).lean()
+
+          if (findOrder) {
+            return callback({
+              success: false,
+              title: 'Request Error',
+              message: 'You are already in a ride. Please complete this before starting another one.',
+              order:findOrder
+            });
+          }
+
+          const to_user = await User.findById(to_id).lean()
+
+          if (findOrder) {
+            return callback({
+              success: false,
+              title: 'Request Error',
+              message: 'You are already in a ride. Please complete this before starting another one.',
+            });
+          }
+
+          // Update the order status
+          order.status = 'accepted';
+          order.vehicle = to_user.vehicle;
+
+          order.to_id = to_user._id;
+          await order.save();
+
+          // if (order.bookingtype=='live') {
+          //   await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
+          // }
+
+    
+          const date=new Date(order.schedule_date)
+
+          // Send notifications
+          await sendNotification({
+            user: senderId,
+            to_id: to_user?._id.toString(),
+            description:order.bookingtype=='live'? `You have been assigned by admin to a ride and your ride has been started.`:`You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+            type: "order",
+            title: "Offer Accepted",
+            fcmtoken: to_user?.fcmtoken,
+            order: orderId,
+          });
+    
+          // await sendNotification({
+          //   user: request.user?._id.toString(),
+          //   to_id: senderId,
+          //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
+          //   type: "order",
+          //   title: "Offer Accepted",
+          //   fcmtoken: order?.user?.fcmtoken,
+          //   order: orderId,
+          //   request: requestId,
+          // });
+
+          io.to(to_user._id.toString()).emit('update-request-rider', {
+            success: true,
+            title: 'Offer Accepted',
+            type:order.bookingtype,
+            message: order.bookingtype=='live'? `You have been assigned by admin to a ride and your ride has been started.`:`You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+          });
+        
+          // Notify other riders to filter out the request
+          const userIds = await User.find({
+            type: "rider",
+            status: {$in:["online","offline"]},
+            _id: { $ne: to_user._id.toString() },
+          })
+            .select("fcmtoken")
+            .lean();
+    
+          for (let user of userIds) {
+            io.to(user._id.toString()).emit('filter-request-rider', {
+              request: orderId,
+              success: true,
+            });
+          }
+    
+          return callback({
+            success: true,
+            title: 'Offer Accepted',
+            message: 'The ride has been started and notifications sent.',
+          });
+        
       } catch (error) {
         return callback({
           success: false,
