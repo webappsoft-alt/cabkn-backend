@@ -211,7 +211,8 @@ module.exports = function (server,app) {
         pincode,
         passengerCount,
         paymentType,
-        service
+        service,
+        quantity
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -312,7 +313,8 @@ module.exports = function (server,app) {
          payment_status : "completed",
          order_id:order_id||"",
          passengerCount:passengerCount||0,
-         paymentType:paymentType||"paid"
+         quantity:quantity||0,
+         paymentType:paymentType||"paid",
        });
 
        if (couponId) {
