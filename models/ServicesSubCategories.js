@@ -10,6 +10,10 @@ const categorySchema = new mongoose.Schema({
   name: {
     type: String,
   },
+  quantity: {
+    type: Number,
+    default:0
+  },
   status: {
     type: String,
     default: 'active',
