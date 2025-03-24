@@ -8,6 +8,11 @@ const categorySchema = new mongoose.Schema({
     type: String,
   },
   url:String,
+  type: {
+    type: String,
+    default: 'coupon',
+    enum: ['active', "ads","ride"]
+  },
   createdAt: {
     type: Date,
     default: Date.now,
