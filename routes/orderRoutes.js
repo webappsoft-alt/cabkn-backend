@@ -14,6 +14,7 @@ router.put('/admin/update-purchases/:id',admin, orderController.updatePurchasePa
 router.put('/admin/update-payment/:id',admin, orderController.updatePaymentByAdmin);
 router.put('/customer/pay/:id', orderController.updatePurchasePaymentByCustomer);
 router.put('/rider/approve/:id', orderController.updateApproveByRider);
+router.put('/rider/creditDone/:id', orderController.creditDoneAdmin);
 
 
 module.exports = router;

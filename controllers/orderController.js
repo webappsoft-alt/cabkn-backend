@@ -462,3 +462,18 @@ exports.updateApproveByRider = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
+
+exports.creditDoneAdmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Order.findOneAndUpdate({ _id:postId},{creditDone:true}, {new: true}).lean();
+
+    if (!post) return res.status(404).send({ success: false, message: 'The Order with the given ID was not found.' });
+
+    res.send({ success: true, message: 'Credit added successfully', order:post });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
