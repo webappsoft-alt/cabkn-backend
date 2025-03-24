@@ -13,6 +13,11 @@ const categorySchema = new mongoose.Schema({
     default: 'coupon',
     enum: ['coupon', "ads","ride"]
   },
+  location:{
+    address:String,
+    lat:String,
+    lng:String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
