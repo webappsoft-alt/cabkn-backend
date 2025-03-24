@@ -11,7 +11,7 @@ const categorySchema = new mongoose.Schema({
   type: {
     type: String,
     default: 'coupon',
-    enum: ['active', "ads","ride"]
+    enum: ['coupon', "ads","ride"]
   },
   createdAt: {
     type: Date,
