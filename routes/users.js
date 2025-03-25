@@ -1488,8 +1488,13 @@ router.post('/rider/dashboard',auth, async (req, res) => {
   const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
   const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price adminprice createdAt").lean()
 
+  const graphstartDate=moment().startOf('week');
 
- const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
+  const weekOrder = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
+  const weekcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price adminprice createdAt").lean()
+
+
+ const totalWeekEarnings=[...weekOrder,...weekcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
     // Initialize the graph array
     let graph = dates.map(date => ({ x: date, price:0 }));
