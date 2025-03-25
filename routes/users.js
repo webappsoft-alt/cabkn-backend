@@ -1420,19 +1420,73 @@ router.post('/rider/dashboard',auth, async (req, res) => {
 
   let dates = [];
 
-  const graphstartDate=moment().startOf('week');
   const now = new Date();
-
-  for (let i = 0; i < 7; i++) {
-    let date = new Date(now);
-    date.setDate(now.getDate() - (i));
-    dates.unshift(date.toISOString());
+  
+  let startDate=moment().startOf('day');
+  switch (req.query.date) {
+    case 'daily':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setHours(now.getHours() - (i * 2));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('day');
+      break;
+    case 'weekly':
+      for (let i = 0; i < 7; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('week');
+      break;
+    case 'monthly':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 2));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('month');
+      break;
+    case 'quarterly':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 5));
+        dates.unshift(date.toISOString());
+      }
+      startDate = moment().subtract(3, 'months');
+      break;
+    case 'sixmonth':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 10));
+        dates.unshift(date.toISOString());
+      }
+      startDate = moment().subtract(6, 'months');
+      break;
+    case 'yearly':
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setMonth(now.getMonth() - i);
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('year');
+      break;
+  
+    default:
+      for (let i = 0; i < 12; i++) {
+        let date = new Date(now);
+        date.setDate(now.getDate() - (i * 2));
+        dates.unshift(date.toISOString());
+      }
+      startDate=moment().startOf('month');
+      break;
   }
   const todayEnd = moment().endOf('day');
   
   
-  const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
-  const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: graphstartDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price adminprice createdAt").lean()
+  const graphorders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"completed",payment_status:"completed"}).select("status schedule_date price adminprice createdAt").lean()
+  const graphcancelorders = await Order.find({to_id:userId,schedule_date: { $gte: startDate, $lte: todayEnd },status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("status schedule_date price adminprice createdAt").lean()
 
 
  const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
@@ -1449,7 +1503,7 @@ router.post('/rider/dashboard',auth, async (req, res) => {
     });
   
     let newGraph = graph.map(obj => {
-      return { ["x"]: convertLabels("weekly",obj.x), ["y"]: obj.price};
+      return { ["x"]: convertLabels(req.query.date,obj.x), ["y"]: obj.price};
     });
 
   res.send({ 
