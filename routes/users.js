@@ -1474,12 +1474,12 @@ router.post('/rider/dashboard',auth, async (req, res) => {
       break;
   
     default:
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 7; i++) {
         let date = new Date(now);
-        date.setDate(now.getDate() - (i * 2));
+        date.setDate(now.getDate() - (i));
         dates.unshift(date.toISOString());
       }
-      startDate=moment().startOf('month');
+      startDate=moment().startOf('week');
       break;
   }
   const todayEnd = moment().endOf('day');
