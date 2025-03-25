@@ -100,6 +100,17 @@ exports.getAllEmployeeApplication = async (req, res) => {
   if (req.body.paymentType) {
     query.paymentType = req.body.paymentType;
   }
+  
+  if (req.body.paymentDone) {
+    query.paymentDone = req.body.paymentDone;
+  }
+  if (req.body.adminPayment) {
+    query.adminPayment = req.body.adminPayment;
+  }
+  if (req.body.refunded) {
+    query.refunded = req.body.refunded;
+  }
+
   query.to_id = userId;
 
   if (status == "all") {
