@@ -1418,7 +1418,16 @@ router.post('/rider/dashboard',auth, async (req, res) => {
 
   const totalRemainigAmount=Number(totalPaidEarnings)-Number(totalAmountReceived)
 
+  let dates = [];
+
   const graphstartDate=moment().startOf('week');
+  const now = new Date();
+
+  for (let i = 0; i < 7; i++) {
+    let date = new Date(now);
+    date.setDate(now.getDate() - (i));
+    dates.unshift(date.toISOString());
+  }
   const todayEnd = moment().endOf('day');
   
   
@@ -1428,9 +1437,25 @@ router.post('/rider/dashboard',auth, async (req, res) => {
 
  const totalWeekEarnings=[...graphorders,...graphcancelorders].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
+    // Initialize the graph array
+    let graph = dates.map(date => ({ x: date, price:0 }));
+  
+    // Increment the y value for the correct date ranges
+    [...graphorders,...graphcancelorders].forEach(order => {
+      const index = findDateIndex(order.createdAt,dates);
+      if (index !== -1 && index < graph.length) {
+       graph[index].price = Number(graph[index].price) + Number(Number(order.price)-Number(order.adminprice));
+      }
+    });
+  
+    let newGraph = graph.map(obj => {
+      return { ["x"]: convertLabels("weekly",obj.x), ["y"]: obj.price};
+    });
+
   res.send({ 
     success: true,
     totaldistance, 
+    graph:newGraph,
     totalEarnings:totalEarnings.toFixed(2),
     totalWeekEarnings:totalWeekEarnings.toFixed(2),
     totalAmountReceived,
