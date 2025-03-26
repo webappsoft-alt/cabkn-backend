@@ -230,7 +230,7 @@ exports.AdminRides = async (req, res) => {
   }
 
   const { status } = req.params;
-  const validStatuses = ["all", "pending", "accepted","order-start", "completed", "cancelled",'active'];
+  const validStatuses = ["all", "pending", "accepted", "order-start", "completed", "cancelled", "active"];
 
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ success: false, message: "Invalid status" });
@@ -239,14 +239,14 @@ exports.AdminRides = async (req, res) => {
   if (status !== "all") {
     query.status = status;
   }
-  if (status == "active") {
-    query.status = {$in:["accepted","order-start",]};
+  if (status === "active") {
+    query.status = { $in: ["accepted", "order-start"] };
   }
 
   if (req.body.bookingtype) {
     query.bookingtype = req.body.bookingtype;
   }
-  
+
   if (req.body.paymentType) {
     query.paymentType = req.body.paymentType;
   }
@@ -254,11 +254,11 @@ exports.AdminRides = async (req, res) => {
   if (req.body.adminPayment) {
     query.adminPayment = req.body.adminPayment;
   }
-  
 
   if (req.body.paymentDone) {
     query.paymentDone = req.body.paymentDone;
   }
+
   if (req.body.refunded) {
     query.refunded = req.body.refunded;
   }
@@ -267,19 +267,43 @@ exports.AdminRides = async (req, res) => {
   const skip = Math.max(0, (lastId - 1)) * pageSize;
 
   try {
-    const matchStage = { $match: query };
+    let pipeline = [{ $match: query }];
 
-    const searchStage =  {
+    // Location-based search
+    if (req.body.latitude && req.body.longitude) {
+      const userLocation = {
+        type: "Point",
+        coordinates: [parseFloat(req.body.longitude), parseFloat(req.body.latitude)],
+      };
+
+      pipeline.unshift({
+        $geoNear: {
+          near: userLocation,
+          distanceField: "distance",
+          maxDistance: 5000, // 5km radius (Adjustable)
+          spherical: true,
+          query: {
+            $or: [
+              { start_location: { $exists: true } },
+              { end_location: { $exists: true } },
+            ],
+          },
+        },
+      });
+    }
+
+    // User search filter
+    if (req.body.search) {
+      pipeline.push(
+        {
           $lookup: {
             from: "users",
             localField: "user",
             foreignField: "_id",
             as: "user",
           },
-        }
-
-    const filterStage = req.body.search
-      ? {
+        },
+        {
           $match: {
             $or: [
               { "user.name": { $regex: req.body.search, $options: "i" } },
@@ -287,12 +311,10 @@ exports.AdminRides = async (req, res) => {
             ],
           },
         }
-      : null;
+      );
+    }
 
-    const applications = await Order.aggregate([
-      matchStage,
-      ...(searchStage ? [searchStage] : []),
-      ...(filterStage ? [filterStage] : []),
+    pipeline.push(
       { $skip: skip },
       { $limit: pageSize },
       { $sort: { schedule_date: -1 } },
@@ -335,12 +357,14 @@ exports.AdminRides = async (req, res) => {
           foreignField: "_id",
           as: "coupon",
         },
-      },
-    ]);
+      }
+    );
+
+    const applications = await Order.aggregate(pipeline);
 
     for (let post of applications) {
-      post.paidAmount = post.payment.reduce((a,b)=>a+Number(b.amount),0);
-      post.totalPayment = Number(post.price) - Number(post?.adminprice||0)
+      post.paidAmount = post.payment.reduce((a, b) => a + Number(b.amount), 0);
+      post.totalPayment = Number(post.price) - Number(post?.adminprice || 0);
     }
 
     const totalCount = await Order.countDocuments(query);
@@ -365,7 +389,6 @@ exports.AdminRides = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 exports.updatePurchasePaymentByAdmin = async (req, res) => {
   try {

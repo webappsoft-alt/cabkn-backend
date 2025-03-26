@@ -27,19 +27,19 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
   }],
-  price:{
+  price: {
     type: Number,
     default: 0,
   },
-  refunded:{
+  refunded: {
     type: Boolean,
     default: false,
   },
-  adminprice:{
+  adminprice: {
     type: Number,
     default: 0,
   },
-  distance:{
+  distance: {
     type: Number,
     default: 0,
   },
@@ -47,9 +47,12 @@ const orderSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ['Point'],
+      required: true,
     },
     coordinates: {
       type: [Number],
+      required: true,
+      index: '2dsphere', // Adding 2dsphere index
     },
   },
   start_address: String,
@@ -68,76 +71,79 @@ const orderSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ['Point'],
+      required: true,
     },
     coordinates: {
       type: [Number],
+      required: true,
+      index: '2dsphere', // Adding 2dsphere index
     },
   },
-  stops:[{latitude :String , longitude :String , address:String}],
-  paymentId:String,
-  pincode:String,
-  tip:{
+  stops: [{ latitude: String, longitude: String, address: String }],
+  paymentId: String,
+  pincode: String,
+  tip: {
     type: Number,
     default: 0,
   },
-  customer_rating:{
+  customer_rating: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',
   },
-  liability:{
+  liability: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Liabilties',
+    ref: 'Liabilities',
   },
-  ridertype:{
+  ridertype: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'RideType',
   },
-  coupon:{
+  coupon: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Coupon',
   },
-  vehicle:{
+  vehicle: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Vehicle',
   },
-  driver_rating:{
+  driver_rating: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Rating',
   },
-  paymentDone:{
-    type:Boolean,
-    default:false
+  paymentDone: {
+    type: Boolean,
+    default: false
   },
-  creditDone:{
-    type:Boolean,
-    default:false
+  creditDone: {
+    type: Boolean,
+    default: false
   },
-  adminPayment:{
-    type:Boolean,
-    default:false
+  adminPayment: {
+    type: Boolean,
+    default: false
   },
-  note:String,
-  passengerCount:{
-    type:Number,
-    default:0
+  note: String,
+  passengerCount: {
+    type: Number,
+    default: 0
   },
   quantity: {
     type: Number,
-    default:0
+    default: 0
   },
-  payment:[{
-    amount:Number,
-    date:Date
+  payment: [{
+    amount: Number,
+    date: Date
   }],
   status: {
     type: String,
     default: 'pending',
-    enum: ['pending', 'accepted',"order-start","completed",'cancelled']
+    enum: ['pending', 'accepted', "order-start", "completed", 'cancelled']
   },
   payment_status: {
     type: String,
     default: 'pending',
-    enum: ['pending', 'completed',"recieved"]
+    enum: ['pending', 'completed', "received"]
   },
   type: {
     type: String,
@@ -152,14 +158,14 @@ const orderSchema = new mongoose.Schema({
   paymentType: {
     type: String,
     default: 'cash',
-    enum: ['cash', 'paid','wallet']
+    enum: ['cash', 'paid', 'wallet']
   },
   createdAt: {
     type: Date,
     default: Date.now,
     index: true
   },
-  prickTime: {
+  pickTime: {
     type: Date,
   },
   dropTime: {
@@ -167,6 +173,8 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-// orderSchema.index({ location: '2dsphere' });
+// Explicitly define geospatial indexes
+orderSchema.index({ start_location: '2dsphere' });
+orderSchema.index({ end_location: '2dsphere' });
 
 module.exports = mongoose.model('Order', orderSchema);
