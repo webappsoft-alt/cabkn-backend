@@ -269,7 +269,7 @@ exports.AdminRides = async (req, res) => {
   try {
     let pipeline = [{ $match: query }];
 
-    // Location-based search
+    // Location-based search using latitude and longitude
     if (req.body.latitude && req.body.longitude) {
       const userLocation = {
         type: "Point",
@@ -292,7 +292,7 @@ exports.AdminRides = async (req, res) => {
       });
     }
 
-    // User search filter
+    // User & Address search filter
     if (req.body.search) {
       pipeline.push(
         {
@@ -308,6 +308,8 @@ exports.AdminRides = async (req, res) => {
             $or: [
               { "user.name": { $regex: req.body.search, $options: "i" } },
               { "user.email": { $regex: req.body.search, $options: "i" } },
+              { start_address: { $regex: req.body.search, $options: "i" } }, // Search in start address
+              { end_address: { $regex: req.body.search, $options: "i" } },   // Search in end address
             ],
           },
         }
