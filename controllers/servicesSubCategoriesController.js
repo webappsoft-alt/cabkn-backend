@@ -80,6 +80,15 @@ exports.getAllCategories = async (req, res) => {
 
   query.status='active'
 
+  if (req.query.search) {
+    const searchQuery=req.query.search
+    query.$or = [
+      { name: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search
+      { title: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search
+      { address: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search
+    ];
+  }
+
   try {
     const categories = await Category.find(query).populate("category")
       .sort({ _id: -1 })

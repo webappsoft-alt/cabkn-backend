@@ -56,6 +56,13 @@ exports.getAllCategories = async (req, res) => {
     query._id={$ne:catId}
   }
 
+  if (req.query.search) {
+    const searchQuery=req.query.search
+    query.$or = [
+      { name: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search
+    ];
+  }
+
   try {
     const categories = await Category.find(query).sort({ _id: -1 }).skip(skip).limit(pageSize).lean();
 
