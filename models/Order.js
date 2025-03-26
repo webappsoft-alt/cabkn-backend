@@ -49,11 +49,7 @@ const orderSchema = new mongoose.Schema({
       enum: ['Point'],
       required: true,
     },
-    coordinates: {
-      type: [Number],
-      required: true,
-      index: '2dsphere', // Adding 2dsphere index
-    },
+    coordinates: [Number],
   },
   start_address: String,
   end_address: String,
@@ -73,11 +69,7 @@ const orderSchema = new mongoose.Schema({
       enum: ['Point'],
       required: true,
     },
-    coordinates: {
-      type: [Number],
-      required: true,
-      index: '2dsphere', // Adding 2dsphere index
-    },
+    coordinates: [Number],
   },
   stops: [{ latitude: String, longitude: String, address: String }],
   paymentId: String,
@@ -123,6 +115,8 @@ const orderSchema = new mongoose.Schema({
     default: false
   },
   note: String,
+  color: String,
+  size: String,
   passengerCount: {
     type: Number,
     default: 0
@@ -173,8 +167,8 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-// Explicitly define geospatial indexes
-orderSchema.index({ start_location: '2dsphere' });
-orderSchema.index({ end_location: '2dsphere' });
+// // Explicitly define geospatial indexes
+// orderSchema.index({ start_location: '2dsphere' });
+// orderSchema.index({ end_location: '2dsphere' });
 
 module.exports = mongoose.model('Order', orderSchema);

@@ -212,7 +212,9 @@ module.exports = function (server,app) {
         passengerCount,
         paymentType,
         service,
-        quantity
+        quantity,
+        color,
+        size
       } = data;
        const senderId = Object.keys(connectedUsers).find(
          (key) => connectedUsers[key] === socket.id
@@ -315,6 +317,8 @@ module.exports = function (server,app) {
          passengerCount:passengerCount||0,
          quantity:quantity||0,
          paymentType:paymentType||"paid",
+         color:color||"",
+         size:size||""
        });
 
        if (couponId) {
@@ -386,6 +390,7 @@ module.exports = function (server,app) {
  
  
      } catch (error) {
+      console.log("error====>>",error)
        callback({
         success: false,
         title: 'Request Error',
