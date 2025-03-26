@@ -868,6 +868,15 @@ router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
     query.isVehicle=isVehicle
   }
 
+  if (req.query.search) {
+    const searchQuery=req.query.search
+    query.$or = [
+      { name: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search
+      { email: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search
+    ];
+  }
+
+
   const pageSize = 10;
 
   const skip = Math.max(0, (lastId - 1)) * pageSize;
