@@ -344,7 +344,7 @@ module.exports = function (server,app) {
        }
  
        await newRequest.save()
-       const request=await Order.findById(newRequest._id).populate("user").populate("ridertype service").populate("liability")
+       const request=await Order.findById(newRequest._id).populate("user ridertype service liability")
        callback({request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
        for (let user of userIds) {

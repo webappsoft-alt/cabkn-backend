@@ -84,7 +84,7 @@ const orderSchema = new mongoose.Schema({
   },
   liability: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Liabilities',
+    ref: 'Liabilties',
   },
   ridertype: {
     type: mongoose.Schema.Types.ObjectId,
