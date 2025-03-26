@@ -1,6 +1,8 @@
 const Order = require('../models/Order');
 const Rating = require('../models/Rating');
+const SubWebCatRating = require('../models/SubWebCatRating');
 const { User } = require('../models/user');
+const WebSubCategories = require('../models/WebSubCategories');
 const { sendNotification } = require('./notificationCreateService');
 
 function calculateAverage(initialValue, numberToAdd) {
@@ -58,6 +60,96 @@ exports.createRating = async (req, res) => {
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, message: 'Internal server error', error });
+  }
+};
+
+exports.websubcreateRating = async (req, res) => {
+  try {
+    const { webSubCategory, rating,review } = req.body;
+    const userId = req.user._id;
+
+    const ratings = new SubWebCatRating({
+      user: userId,
+      webSubCategory,rating,review
+    });
+
+    
+    const events = await WebSubCategories.findById(webSubCategory)
+        
+    if (!events) return res.status(400).json({ message: 'Place does not exist for that ID.' });
+    
+    events.avgRating = calculateAverage(events.avgRating || 0, rating)
+    events.totalReviews = events.totalReviews + 1
+  
+    await ratings.save();
+    await events.save()
+
+    res.status(201).json({ success: true, message: 'Rating created successfully', ratings });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, message: 'Internal server error', error });
+  }
+};
+
+exports.getSubCatRatings = async (req, res) => {
+  let query = {};
+  const subcat=req.params.subcat
+  query.webSubCategory = subcat
+
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  const pageSize = 10;
+
+  try {
+    const user = await WebSubCategories.findById(subcat)
+    if (!user) return res.status(500).json({ message:"No data found!"});
+
+    const rating = await SubWebCatRating.find(query).sort({ _id: -1 }).populate("user")
+      .limit(pageSize)
+      .lean();
+
+    const totalLength = await SubWebCatRating.countDocuments({ webSubCategory: subcat, });
+    const rating1 = await SubWebCatRating.countDocuments({ webSubCategory: subcat, rating: 1 });
+    const rating2 = await SubWebCatRating.countDocuments({ webSubCategory: subcat, rating: 2 });
+    const rating3 = await SubWebCatRating.countDocuments({ webSubCategory: subcat, rating: 3 });
+    const rating4 = await SubWebCatRating.countDocuments({ webSubCategory: subcat, rating: 4 });
+    const rating5 = await SubWebCatRating.countDocuments({ webSubCategory: subcat, rating: 5 });
+
+    const numbers = [(rating1*1), (rating2*2), (rating3*3),(rating4*4),(rating5*5)];
+    const average = numbers.reduce((a, b) => a + b, 0) / totalLength;
+    if (rating.length > 0) {
+      res.status(200).json({
+        success: true,
+        ratings: rating,
+        totalLength: totalLength,
+        totalsRating: {
+          1: rating1,
+          2: rating2,
+          3: rating3,
+          4: rating4,
+          5: rating5,
+        },
+        avg_rating:average||0
+      });
+    } else {
+      res.status(200).json({
+        success: false, message:"No more rating found!",
+        ratings: [],
+        totalLength: totalLength,
+        totalsRating: {
+          1: rating1,
+          2: rating2,
+          3: rating3,
+          4: rating4,
+          5: rating5,
+        },
+        avg_rating:average||0
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error"});
   }
 };
 

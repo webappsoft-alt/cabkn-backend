@@ -30,6 +30,14 @@ const categorySchema = new mongoose.Schema({
   address:String,
   lat:String,
   lng:String,
+  totalReviews:{
+    type:Number,
+    default:0
+  },
+  avgRating:{
+    type:Number,
+    default:0
+  },
   createdAt: {
     type: Date,
     default: Date.now,
