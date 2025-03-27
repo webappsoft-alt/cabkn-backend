@@ -29,7 +29,7 @@ module.exports = function (app) {
   app.use('/api/servicesubcat', ServicesSubCategoryRoute);
   app.use('/api/order',authMiddleware, orderRoutes);
   app.use('/api/coupon', couponRoute);
-  app.use('/api/rating',authMiddleware, ratingRoutes);
+  app.use('/api/rating', ratingRoutes);
   app.use('/api/msg',authMiddleware, messageRoutes);
   app.use('/api/notification',authMiddleware, notificationRoute);
   app.use('/api/support', supportRoute);
