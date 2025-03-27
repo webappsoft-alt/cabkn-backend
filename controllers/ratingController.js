@@ -83,8 +83,9 @@ exports.websubcreateRating = async (req, res) => {
   
     await ratings.save();
     await events.save()
+    const findratings=await SubWebCatRating.findById(ratings._id).populate("user")
 
-    res.status(201).json({ success: true, message: 'Rating created successfully', ratings });
+    res.status(201).json({ success: true, message: 'Rating created successfully', ratings:findratings });
   } catch (error) {
     console.log(error)
     res.status(500).json({ success: false, message: 'Internal server error', error });
