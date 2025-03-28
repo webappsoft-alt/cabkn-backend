@@ -2177,7 +2177,9 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
   if (!validTypes.includes(type)) {
     return res.status(404).send({ success: false, message: 'User Type is not valid' });
   }
-  const { title, description } = req.body;
+  const { title, description,imageUrl } = req.body;
+
+  let image=imageUrl||""
 
   let query={}
 
@@ -2197,6 +2199,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
       notification: {
           title: title,
           body: description,
+          imageUrl:image
       },
       android: {
           notification: {
@@ -2209,6 +2212,9 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
                   sound: 'default',
               },
           },
+      },
+      fcm_options: {
+        image: image, // Image URL
       },
     }));
     try {
