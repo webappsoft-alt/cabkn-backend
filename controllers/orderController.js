@@ -341,6 +341,14 @@ exports.AdminRides = async (req, res) => {
           as: "coupon",
         },
       },
+      {
+        $lookup: {
+          from: "servicesSubCategories",
+          localField: "service",
+          foreignField: "_id",
+          as: "coupon",
+        },
+      },
     ]);
 
     for (let post of applications) {
