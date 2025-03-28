@@ -343,10 +343,10 @@ exports.AdminRides = async (req, res) => {
       },
       {
         $lookup: {
-          from: "servicesSubCategories",
+          from: "servicessubcategories",
           localField: "service",
           foreignField: "_id",
-          as: "coupon",
+          as: "service",
         },
       },
     ]);
