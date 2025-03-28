@@ -2213,9 +2213,6 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
               },
           },
       },
-      fcm_options: {
-        image: image, // Image URL
-      },
     }));
     try {
       await firebaseadmin.messaging().sendEach(messages)
