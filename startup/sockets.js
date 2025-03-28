@@ -1,6 +1,7 @@
 const config = require('config');
 const jwt = require('jsonwebtoken');
 const admin = require("firebase-admin");
+const moment = require("moment");
 
 // Models
 const Conversation = require('../models/Conversation');
@@ -746,7 +747,7 @@ module.exports = function (server,app) {
           await sendNotification({
             user: senderId,
             to_id: order.user._id.toString(),
-            description: `Your upcoming ride is on ${moment(order.schedule_date).format("MM-DD-YYYY")} from ${order.start_address} to ${order.end_address}`,
+            description: `Your upcoming ride is on ${moment(order.schedule_date).format('MM/DD/YYYY')} from ${order.start_address} to ${order.end_address}`,
             type: "order",
             title: "Ride Reminder",
             fcmtoken: order.user.fcmtoken,
@@ -756,7 +757,7 @@ module.exports = function (server,app) {
           await sendNotification({
             user: senderId,
             to_id: order.to_id._id.toString(),
-            description: `Your upcoming ride is on ${moment(order.schedule_date).format("MM-DD-YYYY")} from ${order.start_address} to ${order.end_address}`,
+            description: `Your upcoming ride is on ${moment(order.schedule_date).format('MM/DD/YYYY')} from ${order.start_address} to ${order.end_address}`,
             type: "order",
             title: "Ride Reminder",
             fcmtoken: order.user.fcmtoken,
