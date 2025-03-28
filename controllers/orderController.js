@@ -262,6 +262,9 @@ exports.AdminRides = async (req, res) => {
   if (req.body.refunded) {
     query.refunded = req.body.refunded;
   }
+  if (req.body.service==true||req.body.service=="true") {
+    query.service = {$exist:true};
+  }
 
   const pageSize = 10;
   const skip = Math.max(0, (lastId - 1)) * pageSize;
