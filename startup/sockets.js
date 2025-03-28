@@ -711,6 +711,77 @@ module.exports = function (server,app) {
       }
     });
 
+    socket.on('reminder-alert-rider', async ({ orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(
+          (key) => connectedUsers[key] === socket.id
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const order = await Order.findById(orderId).populate("user to_id");
+    
+        if (!order) {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'Invalid order ID.',
+          });
+        }
+    
+        if (order.status == 'pending') {
+          return callback({
+            success: false,
+            title: 'Order',
+            message: 'This Order is not booked yet.',
+          });
+        }
+    
+          await sendNotification({
+            user: senderId,
+            to_id: order.user._id.toString(),
+            description: `Your upcoming ride is on ${moment(order.schedule_date).format("MM-DD-YYYY")} from ${order.start_address} to ${order.end_address}`,
+            type: "order",
+            title: "Ride Reminder",
+            fcmtoken: order.user.fcmtoken,
+            order: orderId,
+          });
+
+          await sendNotification({
+            user: senderId,
+            to_id: order.to_id._id.toString(),
+            description: `Your upcoming ride is on ${moment(order.schedule_date).format("MM-DD-YYYY")} from ${order.start_address} to ${order.end_address}`,
+            type: "order",
+            title: "Ride Reminder",
+            fcmtoken: order.user.fcmtoken,
+            order: orderId,
+          });
+    
+          return callback({
+            success: true,
+            order,
+            title: "Order update",
+            message: 'Reminder has been sent to both users.',
+          });
+      } catch (error) {
+        console.error('Error updating request:', error.message);
+    
+        // Emit error to client and invoke callback with error
+        socket.emit('receive_request_error', error.message);
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
+
     socket.on('send-payment-alert-rider', async ({ orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
