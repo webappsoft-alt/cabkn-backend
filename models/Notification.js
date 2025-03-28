@@ -27,6 +27,7 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  image:String,
   seen: {
     type: Boolean,
     default: false,
