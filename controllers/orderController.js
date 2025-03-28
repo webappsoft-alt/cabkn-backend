@@ -262,8 +262,8 @@ exports.AdminRides = async (req, res) => {
   if (req.body.refunded) {
     query.refunded = req.body.refunded;
   }
-  if (req.body.service==true||req.body.service=="true") {
-    query.service = {$exist:true};
+  if (req.body.service == true || req.body.service == "true") {
+    query.service = { $exists: true };
   }
 
   const pageSize = 10;
@@ -337,6 +337,14 @@ exports.AdminRides = async (req, res) => {
         $lookup: {
           from: "coupons",
           localField: "coupon",
+          foreignField: "_id",
+          as: "coupon",
+        },
+      },
+      {
+        $lookup: {
+          from: "servicesSubCategories",
+          localField: "service",
           foreignField: "_id",
           as: "coupon",
         },
