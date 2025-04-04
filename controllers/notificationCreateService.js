@@ -12,7 +12,8 @@ exports.sendNotification = async ({
      fcmtoken = '',
      order="",
      request="",
-     support=""
+     support="",
+     usertype="rider"
 }) => {
      try {
 
@@ -56,7 +57,7 @@ exports.sendNotification = async ({
                 data: messageData || {}, 
                  token: fcmtoken, // replace with the user's device token
                  notification: {
-                   title: title,
+                   title: usertype=='rider'?"CabKN Driver: "+title:"CabKN: "+title,
                    body: description,
                  },
                  android: {

@@ -291,6 +291,7 @@ router.post("/signup/:type", async (req, res) => {
           type: "referral",
           title: "Congratulations! You've Earned $20",
           fcmtoken: fcmtoken||"",
+          usertype:newUser.type
         });
 
         const logintransaction=new Transaction({
@@ -308,6 +309,7 @@ router.post("/signup/:type", async (req, res) => {
           type: "referral",
           title: "Congratulations! You've Earned $20",
           fcmtoken: findRefferal.fcmtoken,
+          usertype:findRefferal.type
         });
 
         const transaction=new Transaction({

@@ -20,6 +20,9 @@ const categorySchema = new mongoose.Schema({
   heighlights: [String],
   price_per_person:String,
   location_price:String,
+  start_time:String,
+  end_time:String,
+  schedule:String,
   travelers:{
     type: Number,
     default: 0,

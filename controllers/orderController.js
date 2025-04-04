@@ -285,10 +285,11 @@ exports.AdminRides = async (req, res) => {
       ? {
           $match: {
             $or: [
-              { "user.name": { $regex: req.body.search, $options: "i" } },
-              { "to_id.name": { $regex: req.body.search, $options: "i" } },
-              { "start_address": { $regex: req.body.search, $options: "i" } },
-              { "end_address": { $regex: req.body.search, $options: "i" } },
+              { "order_id": { $regex: req.body.search, $options: "i" } },
+              // { "user.name": { $regex: req.body.search, $options: "i" } },
+              // { "to_id.name": { $regex: req.body.search, $options: "i" } },
+              // { "start_address": { $regex: req.body.search, $options: "i" } },
+              // { "end_address": { $regex: req.body.search, $options: "i" } },
             ],
           },
         }
@@ -450,6 +451,7 @@ exports.updatePurchasePaymentByCustomer = async (req, res) => {
       title: "Order Update",
       fcmtoken: post.to_id.fcmtoken,
       order: postId,
+      usertype:post.to_id.type
     });
 
     res.send({ success: true, message: 'Payment payed successfully', order:post });
@@ -477,6 +479,7 @@ exports.updateApproveByRider = async (req, res) => {
         title: "Order Update",
         fcmtoken: post.user.fcmtoken,
         order: postId,
+        usertype:post.user.type
       });
   
 

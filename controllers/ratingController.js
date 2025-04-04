@@ -49,7 +49,8 @@ exports.createRating = async (req, res) => {
       type: "rating",
       title: "New Rating",
       fcmtoken:  user.fcmtoken||"",
-      order:order
+      order:order,
+      usertype:user.type
     });
     
     await ratings.save();

@@ -83,7 +83,8 @@ exports.attendTheSupport = async (req, res) => {
       type: "support",
       title: title,
       fcmtoken: service.user.fcmtoken,
-      support:serviceId
+      support:serviceId,
+      usertype:service.user.type
     });
 
     res.status(200).json({ message: `Support updated successfully`, service: service });

@@ -15,7 +15,7 @@ const Transaction = require('../models/Transaction');
 const LoyalityPoint = require('../models/LoyalityPoint');
 const Vehicle = require('../models/Vehicle');
 const WebSubCategories = require('../models/WebSubCategories');
-const { sendCompleteOrderEmail } = require('../controllers/emailservice');
+const { sendCompleteOrderEmail, cancelOrderCustomer } = require('../controllers/emailservice');
 
 const connectedUsers = {};
 
@@ -90,7 +90,7 @@ module.exports = function (server,app) {
 
         io.to(recipientId).emit('recieved-message', savedMessage);
         
-        const otherUser = await User.findById(recipientId).select("fcmtoken").lean()
+        const otherUser = await User.findById(recipientId).select("fcmtoken type").lean()
         
         await sendNotification({
           user : senderId,
@@ -99,6 +99,7 @@ module.exports = function (server,app) {
           type :'message',
           title :"New Message",
           fcmtoken :otherUser.fcmtoken||"",
+          usertype:otherUser.type
       })
 
       return callback(savedMessage);
@@ -366,7 +367,7 @@ module.exports = function (server,app) {
        token: token,
        data: messageData || {}, 
        notification: {
-           title: 'New Request',
+           title: 'CabKN: New Request',
            body: 'You have received a new request.',
        },
        android: {
@@ -588,6 +589,7 @@ module.exports = function (server,app) {
             title: "Ride accepted",
             fcmtoken: order?.user?.fcmtoken,
             order: requestId,
+            usertype:order?.user?.type
           });
     
           // await sendNotification({
@@ -682,8 +684,9 @@ module.exports = function (server,app) {
             description: `${user?.name} has arrived your destination.`,
             type: "order",
             title: "Ride update",
-            fcmtoken: order.user.fcmtoken,
+            fcmtoken: order.user?.fcmtoken,
             order: orderId,
+            usertype:order?.user?.type
           });
 
           io.to(order.user._id.toString()).emit('receive-alert-customer', {
@@ -752,6 +755,7 @@ module.exports = function (server,app) {
             title: "Ride Reminder",
             fcmtoken: order.user.fcmtoken,
             order: orderId,
+            usertype:order?.user?.type
           });
 
           await sendNotification({
@@ -760,8 +764,9 @@ module.exports = function (server,app) {
             description: `Your upcoming ride is on ${moment(order.schedule_date).format('MM/DD/YYYY')} from ${order.start_address} to ${order.end_address}`,
             type: "order",
             title: "Ride Reminder",
-            fcmtoken: order.user.fcmtoken,
+            fcmtoken: order.to_id.fcmtoken,
             order: orderId,
+            usertype:order?.to_id?.type
           });
     
           return callback({
@@ -823,6 +828,7 @@ module.exports = function (server,app) {
             title: "Ride update",
             fcmtoken: order?.user?.fcmtoken,
             order: orderId,
+            usertype:order?.user?.type
           });
 
           io.to(order.user._id.toString()).emit('receive-payment-alert-customer', {
@@ -964,6 +970,7 @@ module.exports = function (server,app) {
             fcmtoken: request?.user?.fcmtoken,
             order: orderId,
             request: requestId,
+            usertype:request?.user?.type
           });
     
           // await sendNotification({
@@ -1081,6 +1088,7 @@ module.exports = function (server,app) {
             title: "Offer Accepted",
             fcmtoken: to_user?.fcmtoken,
             order: orderId,
+            usertype:to_user?.type
           });
     
           // await sendNotification({
@@ -1175,6 +1183,7 @@ module.exports = function (server,app) {
             title: "Ride update",
             fcmtoken: order.user.fcmtoken,
             order: orderId,
+            usertype:order.user?.type
           });
 
           io.to(order.user._id.toString()).emit('pick-customer', {
@@ -1256,6 +1265,7 @@ module.exports = function (server,app) {
            
              user.amount=Number(user.amount) + Number(updatedOrder.price);
              await user.save()
+             io.to(user._id.toString()).emit('user_update', {success:true,user:user});
            
              const transaction=new Transaction({
                user:updatedOrder.user._id,
@@ -1295,6 +1305,7 @@ module.exports = function (server,app) {
           fcmtoken: updatedOrder.user.fcmtoken,
           order: orderId,
           noti: false,
+          usertype:updatedOrder.user?.type
         });
     
         // Emit relevant messages based on the order status
@@ -1390,6 +1401,7 @@ module.exports = function (server,app) {
           fcmtoken: updatedOrder.to_id.fcmtoken,
           order: orderId,
           noti: false,
+          usertype:updatedOrder.to_id?.type
         });
         
         io.to(updatedOrder.to_id._id.toString()).emit('tip-order-rider', {
@@ -1414,7 +1426,7 @@ module.exports = function (server,app) {
         });
       }
     });
-    socket.on('cancel-order-customer', async ({ orderId }, callback) => {
+    socket.on('cancel-order-customer', async ({ orderId,reason }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(
           (key) => connectedUsers[key] === socket.id
@@ -1466,6 +1478,8 @@ module.exports = function (server,app) {
         
             user.amount=Number(user.amount) + Number(updatedOrder.price);
             await user.save()
+
+            io.to(user._id.toString()).emit('user_update', {success:true,user:user});
           
             const transaction=new Transaction({
               user:senderId,
@@ -1488,6 +1502,8 @@ module.exports = function (server,app) {
             await User.findByIdAndUpdate(updatedOrder.to_id._id,{ isRiding : false },{new:true})
           }
         }
+
+        await cancelOrderCustomer(updatedOrder.order_id, updatedOrder?.user?.name, updatedOrder?.user?.email, updatedOrder.start_address, updatedOrder.end_address, updatedOrder.price, updatedOrder.distance, moment(updatedOrder.schedule_date).format('MM/DD/YYYY'), reason)
     
         // Notify the customer about the update
         await sendNotification({
@@ -1499,6 +1515,7 @@ module.exports = function (server,app) {
           fcmtoken: updatedOrder.to_id.fcmtoken,
           order: orderId,
           noti: false,
+          usertype:updatedOrder.to_id?.type
         });
         const order=await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status},{new:true}).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
         

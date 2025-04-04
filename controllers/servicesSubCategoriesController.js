@@ -2,7 +2,7 @@ const Category = require("../models/ServicesSubCategories");
 
 exports.create = async (req, res) => {
   try {
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,quantity,size,color } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,quantity,size,color,start_time,end_time,schedule, } = req.body;
 
     const subcategory = new Category({
       name,
@@ -18,7 +18,8 @@ exports.create = async (req, res) => {
       travelers,
       location_price,
       heighlights,
-      quantity,size,color
+      quantity,size,color,
+      start_time:start_time||"",end_time:end_time||"",schedule:schedule||"",
     });
     await subcategory.save();
 
@@ -207,12 +208,12 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,quantity,size,color } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,quantity,size,color,start_time,end_time,schedule, } = req.body;
   
     // Create an object to store the fields to be updated
     const updateFields = Object.fromEntries(
       Object.entries({
-        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,quantity,size,color
+        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,quantity,size,color,start_time,end_time,schedule,
       }).filter(([key, value]) => value !== undefined)
     );
   

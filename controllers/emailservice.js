@@ -367,3 +367,48 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
        }
   });
 }
+
+exports.cancelOrderCustomer = async ( order_id, userName, userEmail, startLocation, endLocation, price, distance, rideDate, reason ) => {
+  // Create a Nodemailer transporter object
+  const transporter = nodemailer.createTransport({
+       host: 'smtp.office365.com', // SMTP server address for Outlook
+       port: 587, // SMTP port
+       secure: false, // Set to true for port 465, false for others
+       auth: {
+         user: 'Support@ticketkn.com', // Your Outlook email
+         pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
+       }
+  });
+
+  const htmlContent = `
+  <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h2 style="color: #e63946;">🚫 Ride Cancelled</h2>
+    <p><strong>Order Number:</strong> ${order_id}</p>
+    <p><strong>User Name:</strong> ${userName}</p>
+    <p><strong>User Email:</strong> ${userEmail}</p>
+    <p><strong>Start Location:</strong> ${startLocation}</p>
+    <p><strong>End Location:</strong> ${endLocation}</p>
+    <p><strong>Distance:</strong> ${distance} km</p>
+    <p><strong>Price:</strong> $${price}</p>
+    <p><strong>Ride Date:</strong> ${rideDate}</p>
+    <p><strong>Reason for Cancellation:</strong> ${reason || "Not specified"}</p>
+  </div>
+`;
+
+  // Email data
+  const mailOptions = {
+       from: 'Support@ticketkn.com',
+       to: "Mrmarlegrant@gmail.com", // Replace with the recipient's email address
+       subject: `Ride Cancelled: Order #${order_id}`,
+       html: htmlContent,
+  };
+
+  // Send the email
+  transporter.sendMail(mailOptions, (error, info) => {
+       if (error) {
+            logger.error('Error sending email: ', error);
+       } else {
+            logger.info('Email sent: ' + info.response);
+       }
+  });
+}
