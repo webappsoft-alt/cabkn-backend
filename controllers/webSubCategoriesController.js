@@ -41,7 +41,7 @@ exports.usercreate = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights, start_time,end_time,schedule, } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights, start_time,start_date,schedule, } = req.body;
 
     const subcategory = new Category({
       user:req.user._id,
@@ -59,7 +59,7 @@ exports.create = async (req, res) => {
       location_price,
       heighlights,
       upload_status:"active",
-      start_time:start_time||"",end_time:end_time||"",schedule:schedule||"",
+      start_time:start_time||"",start_date:start_date||"",schedule:schedule||"",
     });
     await subcategory.save();
 
@@ -260,12 +260,12 @@ exports.editCategories = async (req, res) => {
   try {
     const serviceId = req.params.id;
 
-    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,start_time,end_time,schedule, } = req.body;
+    const { name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,start_time,start_date,schedule, } = req.body;
   
     // Create an object to store the fields to be updated
     const updateFields = Object.fromEntries(
       Object.entries({
-        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,start_time,end_time,schedule,
+        name, images, about, address, lat, lng, category,title,timeslots,price_per_person,travelers,location_price,heighlights,start_time,start_date,schedule,
       }).filter(([key, value]) => value !== undefined)
     );
   

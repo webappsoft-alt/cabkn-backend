@@ -21,7 +21,7 @@ const categorySchema = new mongoose.Schema({
   price_per_person:String,
   location_price:String,
   start_time:String,
-  end_time:String,
+  start_date:String,
   schedule:String,
   travelers:{
     type: Number,
