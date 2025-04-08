@@ -90,8 +90,11 @@ exports.getAllEmployeeApplication = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
-  if (req.params.id) {
-    query._id = { $lt: req.params.id };
+  const lastId = parseInt(req.params.id) || 1;
+
+  // Validate lastId
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: "Invalid last_id" });
   }
 
   if (req.body.bookingtype) {
@@ -122,14 +125,18 @@ exports.getAllEmployeeApplication = async (req, res) => {
   }
 
   const pageSize = 10;
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon service").populate("user").populate("vehicle").populate("ridertype").populate("liability").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon service").populate("user").populate("vehicle").populate("ridertype").populate("liability").skip(skip).limit(pageSize).lean();
+
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     if (applications.length > 0) {
-      res.status(200).json({ success: true, orders: applications });
+      res.status(200).json({ success: true, orders: applications,count: { totalPage: totalPages, currentPageSize: applications.length }, });
     } else {
-      res.status(200).json({ success: false,orders:[], message: "No more Orders found" });
+      res.status(200).json({ success: false,orders:[], message: "No more Orders found",count: { totalPage: totalPages, currentPageSize: applications.length }, });
     }
   } catch (error) {
     console.log(error)
@@ -186,8 +193,11 @@ exports.getAllSellerApplication = async (req, res) => {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
-   if (req.params.id) {
-    query._id = { $lt: req.params.id };
+  const lastId = parseInt(req.params.id) || 1;
+
+  // Validate lastId
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: "Invalid last_id" });
   }
   
   if (req.body.bookingtype) {
@@ -205,14 +215,18 @@ exports.getAllSellerApplication = async (req, res) => {
   }
 
   const pageSize = 10;
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
 
   try {
-    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon service").populate("to_id").populate("ridertype").populate("liability").populate("vehicle").limit(pageSize).lean();
+    const applications = await Order.find(query).sort({ schedule_date: -1 }).populate("coupon service").populate("to_id").populate("ridertype").populate("liability").populate("vehicle").skip(skip).limit(pageSize).lean();
+
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     if (applications.length > 0) {
-      res.status(200).json({ success: true, orders: applications });
+      res.status(200).json({ success: true, orders: applications,count: { totalPage: totalPages, currentPageSize: applications.length }, });
     } else {
-      res.status(200).json({ success: false,orders:[], message: "No more Orders found" });
+      res.status(200).json({ success: false,orders:[], message: "No more Orders found",count: { totalPage: totalPages, currentPageSize: applications.length }, });
     }
   } catch (error) {
     console.log(error)
