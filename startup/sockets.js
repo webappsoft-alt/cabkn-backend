@@ -1472,7 +1472,7 @@ module.exports = function (server,app) {
             });
           }
 
-          await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status,refunded:true},{new:true})
+          await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status,refunded:true,completed_date:Date.now()},{new:true})
 
           if (updatedOrder.paymentType=='paid') {
         
