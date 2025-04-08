@@ -159,6 +159,7 @@ const orderSchema = new mongoose.Schema({
     default: Date.now,
     index: true
   },
+  completed_date:Date,
   pickTime: {
     type: Date,
   },
