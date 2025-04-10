@@ -2179,7 +2179,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
   if (!validTypes.includes(type)) {
     return res.status(404).send({ success: false, message: 'User Type is not valid' });
   }
-  const { title, description,imageUrl } = req.body;
+  const { title, description,imageUrl,weburl } = req.body;
 
   let image=imageUrl||""
 
@@ -2198,6 +2198,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
     // Create an array of message objects for each token
     const messages = fcmTokens.map(token => ({
       token: token,
+      data:weburl||"",
       notification: {
           title: title,
           body: description,
@@ -2224,7 +2225,8 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
         type:"noti",
         description,
         title,
-        image:image
+        image:image,
+        weburl:weburl||""
       }))
       await Notification.insertMany(notifications)
     } catch (error) {}
