@@ -35,6 +35,9 @@ const Notification = require("../models/Notification");
 const { sendEmail } = require("../controllers/emailservice");
 const Footer = require("../models/Footer");
 const WebSubCategories = require("../models/WebSubCategories");
+const { Worker } = require("worker_threads");
+const jobQueue = require("./jobQueue");
+
 
 router.get("/me", auth, async (req, res) => {
   const user = await User.findById(req.user._id).select("-password").lean();
@@ -2193,49 +2196,35 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
   query.status='online'
 
   const users = await User.find(query).select("fcmtoken").lean()
+
+  const notifications= users.map(item=>({
+    user:req.user._id,
+    to_id:item._id,
+    type:"noti",
+    description,
+    title,
+    image:image,
+    weburl:weburl||""
+  }))
+  await Notification.insertMany(notifications)
+
   const fcmTokens = [...new Set(users.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
-  if (fcmTokens.length > 0) {
-    // Create an array of message objects for each token
-    const messages = fcmTokens.map(token => ({
-      token: token,
-      data:weburl||"",
-      notification: {
-          title: title,
-          body: description,
-          imageUrl:image
-      },
-      android: {
-          notification: {
-              sound: 'default',
-          },
-      },
-      apns: {
-          payload: {
-              aps: {
-                  sound: 'default',
-              },
-          },
-      },
-    }));
-    try {
-     const result= await firebaseadmin.messaging().sendEach(messages)
-     console.log("customer@gmail.com===",result.successCount)
-     console.log("customer@gmail.com===",result.failureCount)
-      const notifications= users.map(item=>({
-        user:req.user._id,
-        to_id:item._id,
-        type:"noti",
-        description,
-        title,
-        image:image,
-        weburl:weburl||""
-      }))
-      await Notification.insertMany(notifications)
-    } catch (error) {}
-  }
+
+  const data={fcmTokens:fcmTokens,title:title,description,image,weburl:weburl||""}
+
+  jobQueue.addJob({ data });
 
   res.send({ success: true, message: 'notification sent successfully', });
 });
+
+
+// Start worker thread
+const worker = new Worker("./routes/notificationProcessor.js");
+jobQueue.processJobs((job) => new Promise((resolve) => {
+    worker.postMessage(job);
+    worker.once("message", resolve);
+}));
+
 
 router.post("/footer", [auth,admin],async (req, res) => {
   const { short_title, phone, tel, location, emails,videourl } = req.body;
