@@ -2198,7 +2198,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
     // Create an array of message objects for each token
     const messages = fcmTokens.map(token => ({
       token: token,
-      data:weburl||"",
+      // data:weburl||"",
       notification: {
           title: title,
           body: description,
