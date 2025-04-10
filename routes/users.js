@@ -2218,7 +2218,9 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
       },
     }));
     try {
-      await firebaseadmin.messaging().sendEach(messages)
+     const result= await firebaseadmin.messaging().sendEach(messages)
+     console.log("customer@gmail.com===",result.successCount)
+     console.log("customer@gmail.com===",result.failureCount)
       const notifications= users.map(item=>({
         user:req.user._id,
         to_id:item._id,
