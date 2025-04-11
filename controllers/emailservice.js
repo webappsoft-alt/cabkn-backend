@@ -10,8 +10,8 @@ exports.sendEmail = async (email, code) => {
           port: 587, // SMTP port
           secure: false, // Set to true for port 465, false for others
           auth: {
-            user: 'support@cabkn.com', // Your Outlook email
-            pass: "Kevind35$" // Your Outlook email password or app password
+            user: 'Support@ticketkn.com', // Your Outlook email
+            pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
           }
      });
 
