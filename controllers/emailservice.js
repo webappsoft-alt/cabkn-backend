@@ -17,7 +17,7 @@ exports.sendEmail = async (email, code) => {
 
      // Email data
      const mailOptions = {
-          from: 'support@cabkn.com',
+          from: 'Support@ticketkn.com',
           to: email, // Replace with the recipient's email address
           subject: 'Cabkn app Verification',
           text: 'Your Cabkn app verification code is ' + code,
