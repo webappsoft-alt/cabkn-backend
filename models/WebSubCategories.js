@@ -8,7 +8,7 @@ const timeSlot={
 const categorySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'user', },
   title:String,
-  name: Array,
+  name: [{ category:  { type: mongoose.Schema.Types.ObjectId, ref: 'WebCategories'}, title: String}],
   status: {
     type: String,
     default: 'active',

@@ -79,13 +79,23 @@ exports.getCategories = async (req, res) => {
   let query = {};
 
   if (req.params.category) {
-    query.category = req.params.category;
+    query.$or = [
+      { category: req.params.category },
+      { 'name.category': req.params.category }
+    ];
   }
   query.status='active'
 
   const {catId}=req.query;
   if (catId) {
-    query.category={$ne:catId}
+    query.$and = [
+      {
+        $or: [
+          { category: { $ne: catId } },
+          { 'name.category': { $ne: catId } }
+        ]
+      }
+    ];
   }
 
   
@@ -111,15 +121,24 @@ exports.getAllCategories = async (req, res) => {
 
   const skip = Math.max(0, lastId - 1) * pageSize;
   if (req.params.category) {
-    query.category = req.params.category;
+    query.$or = [
+      { category: req.params.category },
+      { 'name.category': req.params.category }
+    ];
   }
 
   const {catId,upload_status}=req.query;
   
   if (catId) {
-    query.category={$ne:catId}
+    query.$and = [
+      {
+        $or: [
+          { category: { $ne: catId } },
+          { 'name.category': { $ne: catId } }
+        ]
+      }
+    ];
   }
-
   if (upload_status) {
     query.upload_status=upload_status
   }else{
@@ -183,12 +202,23 @@ exports.getAllCustomerCategories = async (req, res) => {
 
   const skip = Math.max(0, lastId - 1) * pageSize;
   if (req.params.category) {
-    query.category = req.params.category;
+    query.$or = [
+      { category: req.params.category },
+      { 'name.category': req.params.category }
+    ];
   }
+
 
   const {catId,otherId}=req.query;
   if (catId) {
-    query.category={$ne:catId}
+    query.$and = [
+      {
+        $or: [
+          { category: { $ne: catId } },
+          { 'name.category': { $ne: catId } }
+        ]
+      }
+    ];
   }
 
   query.status='active'
