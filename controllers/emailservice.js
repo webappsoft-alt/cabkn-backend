@@ -10,14 +10,14 @@ exports.sendEmail = async (email, code) => {
           port: 587, // SMTP port
           secure: false, // Set to true for port 465, false for others
           auth: {
-            user: 'Support@ticketkn.com', // Your Outlook email
-            pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
+            user: 'support@cabkn.com', // Your Outlook email
+            pass: "Kevind35$" // Your Outlook email password or app password
           }
      });
 
      // Email data
      const mailOptions = {
-          from: 'Support@ticketkn.com',
+          from: 'support@cabkn.com',
           to: email, // Replace with the recipient's email address
           subject: 'Cabkn app Verification',
           text: 'Your Cabkn app verification code is ' + code,
