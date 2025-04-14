@@ -265,14 +265,15 @@ exports.AdminRides = async (req, res) => {
     query.paymentType = req.body.paymentType;
   }
 
-  if (req.body.adminPayment) {
+  if (req.body?.adminPayment==true||req.body?.adminPayment==false) {
     query.adminPayment = req.body.adminPayment;
   }
   
 
-  if (req.body.paymentDone) {
+  if (req.body?.paymentDone==true||req.body?.paymentDone==false) {
     query.paymentDone = req.body.paymentDone;
   }
+
   if (req.body.refunded) {
     query.refunded = req.body.refunded;
   }
