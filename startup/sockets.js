@@ -417,7 +417,6 @@ module.exports = function (server,app) {
     
         // Fetch the order
         const order = await Order.findOne({ _id: requestId, user: senderId });
-        console.log({_id: requestId, user: senderId})
     
         if (!order) {
           return callback({
@@ -449,11 +448,11 @@ module.exports = function (server,app) {
             });
           }
 
-            user.amount=Number(user.amount) + Number(order.price);
+            user.amount=Number(user.amount) + Number(Number(order.price) - Number(order.adminprice));
             await user.save()
             const transaction=new Transaction({
               user:senderId,
-              amount:Number(order.price),
+              amount:Number(Number(order.price) - Number(order.adminprice)),
               type:'refunded'
             })
           
@@ -1476,14 +1475,14 @@ module.exports = function (server,app) {
 
           if (updatedOrder.paymentType=='paid') {
         
-            user.amount=Number(user.amount) + Number(updatedOrder.price);
+            user.amount=Number(user.amount) + Number(Number(updatedOrder.price) - Number(updatedOrder.adminprice));
             await user.save()
 
             io.to(user._id.toString()).emit('user_update', {success:true,user:user});
           
             const transaction=new Transaction({
               user:senderId,
-              amount:Number(updatedOrder.price),
+              amount:Number(Number(updatedOrder.price) - Number(updatedOrder.adminprice)),
               type:'refunded',
               order:orderId
             })
