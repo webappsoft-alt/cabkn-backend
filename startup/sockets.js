@@ -1154,7 +1154,7 @@ module.exports = function (server,app) {
           });
         }
     
-        const order = await Order.findByIdAndUpdate(orderId,{status:"order-start",prickTime:Date.now()} ,{new:true}).populate("user");
+        const order = await Order.findByIdAndUpdate(orderId,{status:"order-start",pickTime:Date.now()} ,{new:true}).populate("user");
     
         if (!order) {
           return callback({
