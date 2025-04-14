@@ -6,6 +6,8 @@ const auth = require('../middleware/auth');
 router.post('/create', auth, ratingController.createRating);
 router.post('/websubcat', auth, ratingController.websubcreateRating);
 router.get('/websubcat/:subcat/:id?',ratingController.getSubCatRatings);
+router.post('/servicesubcat', auth, ratingController.servicesubcreateRating);
+router.get('/servicesubcat/:subcat/:id?',ratingController.getserviceSubCatRatings);
 router.get('/all/:userId/:id?', ratingController.getUserRatings);
 
 module.exports = router;

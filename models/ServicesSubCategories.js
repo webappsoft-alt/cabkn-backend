@@ -30,6 +30,14 @@ const categorySchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  totalReviews:{
+    type:Number,
+    default:0
+  },
+  avgRating:{
+    type:Number,
+    default:0
+  },
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'ServicesCategories', },
   images: [String],
   about:String,
