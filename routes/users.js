@@ -1525,11 +1525,15 @@ router.post('/rider/dashboard',auth, async (req, res) => {
       return { ["x"]: convertLabels(req.query.date,obj.x), ["y"]: obj.price};
     });
 
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+
   res.send({ 
     success: true,
     totaldistance, 
     graph:newGraph,
-    totalEarnings:totalEarnings.toFixed(2),
+    totalEarnings:(Number(totalEarnings) + Number(user.amount)).toFixed(2),
     totalWeekEarnings:totalWeekEarnings.toFixed(2),
     totalAmountReceived,
     totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), 
