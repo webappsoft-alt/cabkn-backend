@@ -365,9 +365,9 @@ module.exports = function (server,app) {
        ) // Ensure all fields in newUpdateFields are strings
      };
      
-      const data={fcmTokens:fcmTokens,title:"'CabKN: New Request'",description:"You have received a new request.",image:"",weburl:"",data: messageData || {}, }
+      const valueData={fcmTokens:fcmTokens,title:"'CabKN: New Request'",description:"You have received a new request.",image:"",weburl:"",data: messageData || {}, }
     
-      jobQueue.addJob({ data });
+      jobQueue.addJob({ data:valueData });
      
        // Create an array of message objects for each token
     //  const messages = fcmTokens.map(token => ({
