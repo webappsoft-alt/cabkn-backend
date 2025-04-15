@@ -36,7 +36,7 @@ if (!isMainThread) {
         for (let fcmtoken of job.data.fcmTokens) {
           try {
             const message = {
-              data: job.data?.weburl?{weburl:job.data.weburl} : {}, 
+              data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
               token: fcmtoken, // replace with the user's device token
               notification: {
                 title: job.data.title,

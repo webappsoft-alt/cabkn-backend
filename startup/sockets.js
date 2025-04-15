@@ -16,6 +16,8 @@ const LoyalityPoint = require('../models/LoyalityPoint');
 const Vehicle = require('../models/Vehicle');
 const WebSubCategories = require('../models/WebSubCategories');
 const { sendCompleteOrderEmail, cancelOrderCustomer } = require('../controllers/emailservice');
+const { Worker } = require("worker_threads");
+const jobQueue = require("../routes/jobQueue");
 
 const connectedUsers = {};
 
@@ -362,33 +364,38 @@ module.exports = function (server,app) {
          Object.entries(request).map(([key, value]) => [key, String(value)])
        ) // Ensure all fields in newUpdateFields are strings
      };
+     
+      const data={fcmTokens:fcmTokens,title:"'CabKN: New Request'",description:"You have received a new request.",image:"",weburl:"",data: messageData || {}, }
+    
+      jobQueue.addJob({ data });
+     
        // Create an array of message objects for each token
-     const messages = fcmTokens.map(token => ({
-       token: token,
-       data: messageData || {}, 
-       notification: {
-           title: 'CabKN: New Request',
-           body: 'You have received a new request.',
-       },
-       android: {
-        notification: {
-           sound: 'ride', // Exclude the file extension
-           defaultSound:false,
-           channelId:"sound_ride",
-           priority:"high"
-        },
-        },
-        apns: {
-            payload: {
-                aps: {
-                    sound: 'ride.mp3',
-                },
-            },
-        },
-     }));
-     try { 
-      await admin.messaging().sendEach(messages) 
-    } catch (error) {}
+    //  const messages = fcmTokens.map(token => ({
+    //    token: token,
+    //    data: messageData || {}, 
+    //    notification: {
+    //        title: 'CabKN: New Request',
+    //        body: 'You have received a new request.',
+    //    },
+    //    android: {
+    //     notification: {
+    //        sound: 'ride', // Exclude the file extension
+    //        defaultSound:false,
+    //        channelId:"sound_ride",
+    //        priority:"high"
+    //     },
+    //     },
+    //     apns: {
+    //         payload: {
+    //             aps: {
+    //                 sound: 'ride.mp3',
+    //             },
+    //         },
+    //     },
+    //  }));
+    //  try { 
+    //   await admin.messaging().sendEach(messages) 
+    // } catch (error) {}
  
  
      } catch (error) {
@@ -1611,3 +1618,9 @@ const allSeen = async (senderId, recipientId) => {
   } catch (error) {
   }
 };
+// Start worker thread
+const worker = new Worker("./routes/notificationProcessor.js");
+jobQueue.processJobs((job) => new Promise((resolve) => {
+    worker.postMessage(job);
+    worker.once("message", resolve);
+}));
