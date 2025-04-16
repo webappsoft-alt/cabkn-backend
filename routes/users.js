@@ -889,11 +889,41 @@ router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
   const users = await User.find(query).sort({ _id: -1 }).skip(skip).limit(pageSize).lean();
   if (req.params.type=='rider') {
     for (let user of users) {
-      const earnings = await Order.find({to_id:user._id,status:"completed",payment_status:"completed"}).select("price adminprice").lean()
+      const earnings = await Order.find({to_id:user._id,status:"completed",payment_status:"completed"}).select("price adminprice paymentType payment adminPayment").lean()
       const cancelearnings = await Order.find({to_id:user._id,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("price adminprice").lean()
       const totalEarnings=[...earnings,...cancelearnings].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
-      user.totalEarnings=(Number(totalEarnings) + Number(user.amount)).toFixed(2);
+        // Calculate the total amount received
+      const totalAmountReceived = earnings.reduce((total, order) => {
+        if (order.paymentType!=='cash') {
+        // Sum up the payment amounts for each order
+        const orderTotal = order.payment.reduce((sum, payment) => sum + payment.amount, 0);
+        return total + orderTotal;
+        }else{
+          return total
+        }
+      }, 0);
+    
+      const totalEarningPaidToAdmin = earnings.reduce((total, order) => {
+        if (order.adminPayment==false && order.paymentType=='cash') {
+          return total + order.adminprice;
+        }else{
+          return total
+        }
+      }, 0);
+    
+      const totalPaidEarnings = [...earnings,...cancelearnings].reduce((total, order) => {
+        if (order.paymentType!=='cash') {
+          return total + Number(Number(order.price) - Number(order.adminprice));
+        }else{
+          return total
+        }
+      }, 0);
+
+      user.totalEarnings=totalEarnings
+      user.totalPaidEarnings=totalPaidEarnings
+      user.totalAmountReceived=totalAmountReceived
+      user.totalEarningPaidToAdmin=totalEarningPaidToAdmin
     }
   }
 
