@@ -887,6 +887,15 @@ router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
   const skip = Math.max(0, (lastId - 1)) * pageSize;
 
   const users = await User.find(query).sort({ _id: -1 }).skip(skip).limit(pageSize).lean();
+  if (req.params.type=='rider') {
+    for (let user of users) {
+      const earnings = await Order.find({to_id:user._id,status:"completed",payment_status:"completed"}).select("price adminprice").lean()
+      const cancelearnings = await Order.find({to_id:user._id,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("price adminprice").lean()
+      const totalEarnings=[...earnings,...cancelearnings].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
+
+      user.totalEarnings=(Number(totalEarnings) + Number(user.amount)).toFixed(2);
+    }
+  }
 
   const totalCount = await User.countDocuments(query);
   const totalPages = Math.ceil(totalCount / pageSize);
