@@ -705,6 +705,45 @@ router.get('/transactions/:id',auth,  async (req, res) => {
   }
 });
 
+router.get('/admin-transactions/:otherId/:id',auth,  async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id)||1;
+
+   // Check if lastId is a valid number
+   if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: 'Invalid last_id' });
+  }
+
+  const pageSize = 10;
+  
+  const skip = Math.max(0, (lastId - 1)) * pageSize;
+  query.user=req.params.otherId;
+
+  if (req.query.type) {
+    query.type=req.query.type
+  }
+
+  if (req.query.type=='withdrawdeposit') {
+    query.type={$in:['admin-deposit','admin-withdrawl']}
+  }
+  
+  try {
+    const categories = await Transaction.find(query).sort({ _id: -1 }).skip(skip)
+    .limit(pageSize).lean();
+
+    const totalCount = await Transaction.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (categories.length > 0) {
+      res.status(200).json({ success: true, transactions: categories,count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    } else {
+      res.status(200).json({ success: false,transactions:[], message: 'No more transactions found',count: { totalPage: totalPages, currentPageSize: categories.length }  });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 router.put("/update-location", auth, async (req, res) => {
   const { location } = req.body;
   
