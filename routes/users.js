@@ -514,7 +514,7 @@ router.put("/order-wallet-payment",auth, async (req, res) => {
 });
 
 router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
-  const { amount,otherId } = req.body;
+  const { amount,otherId,reason } = req.body;
 
   const user = await User.findById(otherId);
 
@@ -526,7 +526,8 @@ router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
   const transaction = new Transaction({
     user:otherId,
     amount,
-    type:'admin-deposit'
+    type:'admin-deposit',
+    reason:reason||"",
   })
 
   await transaction.save()
@@ -537,7 +538,7 @@ router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
   res.send({ success: true, message: "You have deposited amount successfully", user, transaction });
 });
 router.put("/withdrawl-admin-wallet-payment",[auth,admin], async (req, res) => {
-  const { amount,otherId } = req.body;
+  const { amount,otherId,reason } = req.body;
 
   const user = await User.findById(otherId);
 
@@ -551,7 +552,8 @@ router.put("/withdrawl-admin-wallet-payment",[auth,admin], async (req, res) => {
   const transaction = new Transaction({
     user:otherId,
     amount,
-    type:'admin-withdrawl'
+    type:'admin-withdrawl',
+    reason:reason||"",
   })
 
   await transaction.save()
@@ -1579,11 +1581,19 @@ router.post('/rider/dashboard',auth, async (req, res) => {
   const totaladminDepositAmount=transaction.reduce((a,b)=>a+b.amount,0)
   const totaladminWithdrawlAmount=withdrawltransaction.reduce((a,b)=>a+b.amount,0)
 
+  const totalEarningsRider=Number(totalPaidEarnings) + (totaladminDepositAmount)
+
+  const totalPaidAmount=Number(totalAmountReceived) + (totaladminWithdrawlAmount)
+  
+  const totalUnPaidAmount=Number(totalEarningsRider) - (totalPaidAmount)
+
   res.send({ 
     success: true,
     totaldistance, 
     graph:newGraph,
-    totalEarnings:(Number(totalEarnings) + Number(user.amount)).toFixed(2),
+    totalEarnings:totalEarningsRider.toFixed(2),
+    totalPaidAmount:totalPaidAmount.toFixed(2),
+    totalUnPaidAmount:totalUnPaidAmount.toFixed(2),
     totalWeekEarnings:totalWeekEarnings.toFixed(2),
     totalAmountReceived,
     totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), 

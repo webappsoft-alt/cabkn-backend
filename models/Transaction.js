@@ -15,6 +15,7 @@ const transactionSchema = new mongoose.Schema({
     default: 0,
   },
   refId:String,
+  reason:String,
   type: {
     type: String,
     default: 'deposit',
