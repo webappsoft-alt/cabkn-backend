@@ -467,7 +467,6 @@ router.put("/add-amount", auth, async (req, res) => {
 
 router.put("/convert-point", auth, async (req, res) => {
   try {
-    console.log("api-====")
     const user = await User.findById(req.user._id);
   
     if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
@@ -477,7 +476,7 @@ router.put("/convert-point", auth, async (req, res) => {
     const addresses = await LoyalityPoint.findOne({}).lean();
   
     user.amount=Number(user.amount) + Number(Number(user.points)/(addresses.convert_rate_per_xcd));
-    // user.points=0;
+    user.points=0;
     await user.save()
   
     const transaction=new Transaction({
@@ -490,7 +489,6 @@ router.put("/convert-point", auth, async (req, res) => {
   
     res.send({ success: true, message: "Points have been converted successfully", user, transaction });
   } catch (error) {
-    console.log(error)
     res.status(500).send({ success: true, message: "Internal server error" });
   }
 
