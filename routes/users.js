@@ -466,28 +466,34 @@ router.put("/add-amount", auth, async (req, res) => {
 });
 
 router.put("/convert-point", auth, async (req, res) => {
+  try {
+    console.log("api-====")
+    const user = await User.findById(req.user._id);
+  
+    if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+  
+    if (Number(user.points)<10) return res.status(400).send({success: false,message: "The User doesn't have any suitable points to convert this into amount."});
+  
+    const addresses = await LoyalityPoint.findOne({}).lean();
+  
+    user.amount=Number(user.amount) + Number(Number(user.points)/(addresses.convert_rate_per_xcd));
+    // user.points=0;
+    await user.save()
+  
+    const transaction=new Transaction({
+      user:req.user._id,
+      amount:Number(user.amount) + Number(Number(user.points)/(addresses?.convert_rate_per_xcd)),
+      type:'deposit-points'
+    })
+  
+    await transaction.save()
+  
+    res.send({ success: true, message: "Points have been converted successfully", user, transaction });
+  } catch (error) {
+    console.log(error)
+    res.status(500).send({ success: true, message: "Internal server error" });
+  }
 
-  const user = await User.findById(req.user._id);
-
-  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
-
-  if (Number(user.points)<10) return res.status(400).send({success: false,message: "The User doesn't have any suitable points to convert this into amount."});
-
-  const addresses = await LoyalityPoint.findOne({}).lean();
-
-  user.amount=Number(user.amount) + Number(Number(user.points)/(addresses.convert_rate_per_xcd));
-  user.points=0;
-  await user.save()
-
-  const transaction=new Transaction({
-    user:req.user._id,
-    amount:Number(user.amount) + Number(Number(user.points)/(addresses?.convert_rate_per_xcd)),
-    type:'deposit-points'
-  })
-
-  await transaction.save()
-
-  res.send({ success: true, message: "Points have been converted successfully", user, transaction });
 });
 
 router.put("/order-wallet-payment",auth, async (req, res) => {
