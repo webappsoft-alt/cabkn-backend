@@ -1474,6 +1474,13 @@ router.post('/rider/dashboard',auth, async (req, res) => {
       return total
     }
   }, 0);
+  const totalCashPaidEarnings = [...earnings,...cancelearnings].reduce((total, order) => {
+    if (order.paymentType == 'cash') {
+      return total + Number(Number(order.price) - Number(order.adminprice));
+    }else{
+      return total
+    }
+  }, 0);
 
   const totalRemainigAmount=Number(totalPaidEarnings)-Number(totalAmountReceived)
 
@@ -1581,9 +1588,9 @@ router.post('/rider/dashboard',auth, async (req, res) => {
   const totaladminDepositAmount=transaction.reduce((a,b)=>a+b.amount,0)
   const totaladminWithdrawlAmount=withdrawltransaction.reduce((a,b)=>a+b.amount,0)
 
-  const totalEarningsRider=Number(totalPaidEarnings) + (totaladminDepositAmount)
+  const totalEarningsRider=Number(totalEarnings) + (totaladminDepositAmount)
 
-  const totalPaidAmount=Number(totalAmountReceived) + (totaladminWithdrawlAmount)
+  const totalPaidAmount= totalAmountReceived + totaladminWithdrawlAmount+totalCashPaidEarnings
   
   const totalUnPaidAmount=Number(totalEarningsRider) - (totalPaidAmount)
 
