@@ -890,7 +890,7 @@ router.get('/admin/:type/:id',[auth,admin], async (req, res) => {
   if (req.params.type=='rider') {
     for (let user of users) {
       const earnings = await Order.find({to_id:user._id,status:"completed",payment_status:"completed"}).select("price adminprice paymentType payment adminPayment").lean()
-      const cancelearnings = await Order.find({to_id:user._id,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("price adminprice").lean()
+      const cancelearnings = await Order.find({to_id:user._id,status:"cancelled",payment_status:"completed",refunded:false,paymentType:{$ne:"cash"}}).select("price adminprice paymentType payment adminPayment").lean()
       const totalEarnings=[...earnings,...cancelearnings].reduce((a,b)=>a+ Number(Number(b.price)-Number(b.adminprice)),0)
 
         // Calculate the total amount received
