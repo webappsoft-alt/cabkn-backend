@@ -677,6 +677,10 @@ router.get('/transactions/:id',auth,  async (req, res) => {
   
   const skip = Math.max(0, (lastId - 1)) * pageSize;
   query.user=req.user._id;
+
+  if (req.query.type) {
+    query.type=req.query.type
+  }
   
   try {
     const categories = await Transaction.find(query).sort({ _id: -1 }).skip(skip)
@@ -1568,6 +1572,13 @@ router.post('/rider/dashboard',auth, async (req, res) => {
 
     if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
 
+
+  const transaction = await Transaction.find({user:userId,type:'admin-deposit'}).select("amount").lean()
+  const withdrawltransaction = await Transaction.find({user:userId,type:'admin-withdrawl'}).select("amount").lean()
+
+  const totaladminDepositAmount=transaction.reduce((a,b)=>a+b.amount,0)
+  const totaladminWithdrawlAmount=withdrawltransaction.reduce((a,b)=>a+b.amount,0)
+
   res.send({ 
     success: true,
     totaldistance, 
@@ -1577,7 +1588,9 @@ router.post('/rider/dashboard',auth, async (req, res) => {
     totalAmountReceived,
     totalEarningPaidToAdmin:totalEarningPaidToAdmin.toFixed(2), 
     totalCashAmountOrderCount,
-    totalRemainigAmount
+    totalRemainigAmount,
+    totaladminDepositAmount,
+    totaladminWithdrawlAmount
   });
 });
 
