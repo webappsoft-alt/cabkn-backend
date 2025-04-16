@@ -683,6 +683,10 @@ router.get('/transactions/:id',auth,  async (req, res) => {
   if (req.query.type) {
     query.type=req.query.type
   }
+
+  if (req.query.type=='withdrawdeposit') {
+    query.type={$in:['admin-deposit','admin-withdrawl']}
+  }
   
   try {
     const categories = await Transaction.find(query).sort({ _id: -1 }).skip(skip)
