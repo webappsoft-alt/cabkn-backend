@@ -10,14 +10,14 @@ exports.sendEmail = async (email, code) => {
           port: 587, // SMTP port
           secure: false, // Set to true for port 465, false for others
           auth: {
-            user: 'Support@ticketkn.com', // Your Outlook email
+            user: 'Support@cabkn.com', // Your Outlook email
             pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
           }
      });
 
      // Email data
      const mailOptions = {
-          from: 'Support@ticketkn.com',
+          from: 'Support@cabkn.com',
           to: email, // Replace with the recipient's email address
           subject: 'Cabkn app Verification',
           text: 'Your Cabkn app verification code is ' + code,
@@ -171,7 +171,7 @@ exports.purchaseEmail = async (email,eventName,eventDate,location,typeTicket) =>
           port: 587, // SMTP port
           secure: false, // Set to true for port 465, false for others
           auth: {
-            user: 'Support@ticketkn.com', // Your Outlook email
+            user: 'Support@cabkn.com', // Your Outlook email
             pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
           }
      });
@@ -180,7 +180,7 @@ exports.purchaseEmail = async (email,eventName,eventDate,location,typeTicket) =>
 
      // Email data
      const mailOptions = {
-          from: 'Support@ticketkn.com',
+          from: 'Support@cabkn.com',
           to: email, // Replace with the recipient's email address
           subject: "TicketKN ticekt purchase",
           html: html,
@@ -204,13 +204,13 @@ exports.deleteUserEmail = async (email, deleteLink) => {
       port: 587, // SMTP port
       secure: false, // Set to true for port 465, false for others
       auth: {
-        user: 'Support@ticketkn.com', // Your Outlook email
+        user: 'Support@cabkn.com', // Your Outlook email
         pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
       }
  });
 
   const mailOptions = {
-    from: 'Support@ticketkn.com',
+    from: 'Support@cabkn.com',
     to: email,
        subject: 'Cabkn APP CORP - Confirm Your Account Deletion',
        text: `
@@ -252,7 +252,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
        port: 587, // SMTP port
        secure: false, // Set to true for port 465, false for others
        auth: {
-         user: 'Support@ticketkn.com', // Your Outlook email
+         user: 'Support@cabkn.com', // Your Outlook email
          pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
        }
   });
@@ -314,6 +314,31 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
             opacity: 0.8;
             color: #ffffff;
         }
+        .app-badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .app-badge {
+            max-width: 150px;
+            height: auto;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .cta-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #0EBE3C;
+        }
+        .cta-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -344,6 +369,26 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
                 <p><strong>Total Amount:</strong> <span style="font-size: 20px; font-weight: bold;">${TOTAL_AMOUNT}</span></p>
             </div>
         </div>
+        
+        <!-- New CTA Section for App Installation -->
+        <div class="cta-section">
+            <div class="cta-title">Enjoy a Seamless Ride Experience</div>
+            <div class="cta-text">
+                Download the CabKN app for faster bookings, real-time tracking, exclusive offers, and easier payments.
+            </div>
+            <div class="app-badges">
+                <a href="https://play.google.com/store/apps/details?id=com.cabkn.app" target="_blank">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/2560px-Google_Play_Store_badge_EN.svg.png" alt="Get on Google Play" class="app-badge">
+                </a>
+                <a href="https://apps.apple.com/pk/app/cabkn/id6740235227" target="_blank">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/2560px-Download_on_the_App_Store_Badge.svg.png" alt="Download on the App Store" class="app-badge">
+                </a>
+            </div>
+            <div class="cta-text">
+                Rate your ride and share your experience to help us serve you better!
+            </div>
+        </div>
+        
         <div class="footer">&copy; 2025 CabKN. All rights reserved.</div>
     </div>
 </body>
@@ -352,7 +397,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
 
   // Email data
   const mailOptions = {
-       from: 'Support@ticketkn.com',
+       from: 'Support@cabkn.com',
        to: email, // Replace with the recipient's email address
        subject: 'Ride complete',
        html: template,
@@ -375,7 +420,7 @@ exports.cancelOrderCustomer = async ( order_id, userName, userEmail, startLocati
        port: 587, // SMTP port
        secure: false, // Set to true for port 465, false for others
        auth: {
-         user: 'Support@ticketkn.com', // Your Outlook email
+         user: 'Support@cabkn.com', // Your Outlook email
          pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
        }
   });
@@ -397,7 +442,7 @@ exports.cancelOrderCustomer = async ( order_id, userName, userEmail, startLocati
 
   // Email data
   const mailOptions = {
-       from: 'Support@ticketkn.com',
+       from: 'Support@cabkn.com',
        to: "Mrmarlegrant@gmail.com", // Replace with the recipient's email address
        subject: `Ride Cancelled: Order #${order_id}`,
        html: htmlContent,
