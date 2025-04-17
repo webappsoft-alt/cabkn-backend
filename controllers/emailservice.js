@@ -301,7 +301,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
         }
         .info {
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 1.1;
             color: #ffffff;
         }
         .info strong {
@@ -317,8 +317,9 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
         .app-badges {
             display: flex;
             justify-content: center;
+            align-self:center;
             gap: 15px;
-            margin: 20px 0;
+            margin: 20px 25px;
         }
         .app-badge {
             max-width: 150px;
@@ -338,15 +339,36 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
             font-size: 16px;
             margin-bottom: 20px;
             line-height: 1.5;
+            color: #ffffff;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">Dear ${customerName},<br>Your ride has been completed</div>
         <div class="image" style="text-align: center;">
-            <img src="https://api.cabkn.com/api/image/imageemail.jpg" alt="Ride Image" style="max-width: 100%; border-radius: 10px;">
+            <img src="https://api.cabkn.com/api/image/cabkIcon.png" alt="Ride Image" style="max-width: 100%; border-radius: 10px; height:150px;">
         </div>
+
+           <!-- New CTA Section for App Installation -->
+        <div class="cta-section">
+            <div class="cta-title">Enjoy a Seamless Ride Experience</div>
+            <div class="cta-text">
+                Download the CabKN app for faster bookings, real-time tracking, exclusive offers, and easier payments.
+            </div>
+            <div class="app-badges">
+                <a href="https://play.google.com/store/apps/details?id=com.cabkn.app" target="_blank">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/2560px-Google_Play_Store_badge_EN.svg.png" alt="Get on Google Play" class="app-badge">
+                </a>
+                <a href="https://apps.apple.com/pk/app/cabkn/id6740235227" target="_blank">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/2560px-Download_on_the_App_Store_Badge.svg.png" alt="Download on the App Store" class="app-badge">
+                </a>
+            </div>
+            <div class="footer">
+                Rate your ride and share your experience to help us serve you better!
+            </div>
+        </div>
+
+        <div class="header">Dear ${customerName},<br>Your ride has been completed</div>
         <div class="section">
             <div class="section-title">Trip Detail</div>
             <div class="info">
@@ -367,25 +389,6 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
             <div class="info">
                 <p><strong>Sub Total:</strong> ${Subtotal}</p>
                 <p><strong>Total Amount:</strong> <span style="font-size: 20px; font-weight: bold;">${TOTAL_AMOUNT}</span></p>
-            </div>
-        </div>
-        
-        <!-- New CTA Section for App Installation -->
-        <div class="cta-section">
-            <div class="cta-title">Enjoy a Seamless Ride Experience</div>
-            <div class="cta-text">
-                Download the CabKN app for faster bookings, real-time tracking, exclusive offers, and easier payments.
-            </div>
-            <div class="app-badges">
-                <a href="https://play.google.com/store/apps/details?id=com.cabkn.app" target="_blank">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/2560px-Google_Play_Store_badge_EN.svg.png" alt="Get on Google Play" class="app-badge">
-                </a>
-                <a href="https://apps.apple.com/pk/app/cabkn/id6740235227" target="_blank">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/2560px-Download_on_the_App_Store_Badge.svg.png" alt="Download on the App Store" class="app-badge">
-                </a>
-            </div>
-            <div class="cta-text">
-                Rate your ride and share your experience to help us serve you better!
             </div>
         </div>
         
