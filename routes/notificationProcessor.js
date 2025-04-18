@@ -35,18 +35,13 @@ if (!isMainThread) {
         const uniqueStrings = [...new Set(job.data.fcmTokens.filter(item => typeof item === 'string'))];
         for (let fcmtoken of uniqueStrings) {
           try {
-            let dataImage={}
-            if (job.data.image) {
-              dataImage={
-                imageUrl: job.data.image
-              }
-            }
             const message = {
               data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
               token: fcmtoken, // replace with the user's device token
               notification: {
                 title: job.data.title,
                 body: job.data.description,
+                imageUrl: job.data.image
               },
               android: {
                 notification: {
