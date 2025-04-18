@@ -34,35 +34,36 @@ if (!isMainThread) {
     parentPort.on("message", async (job) => {
         console.log(`Worker processing: ${JSON.stringify(job.data.title)}`);
         for (let fcmtoken of job.data.fcmTokens) {
-          try {
-            const message = {
-              data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
-              token: fcmtoken, // replace with the user's device token
-              notification: {
-                title: job.data.title,
-                body: job.data.description,
-                imageUrl: job.data.image
-              },
-              android: {
-                notification: {
-                  sound: "default",
-                },
-              },
-              apns: {
-                payload: {
-                  aps: {
-                    sound: "default",
-                  },
-                },
-              },
-            };
+          console.log("=====",fcmtoken)
+          // try {
+          //   const message = {
+          //     data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
+          //     token: fcmtoken, // replace with the user's device token
+          //     notification: {
+          //       title: job.data.title,
+          //       body: job.data.description,
+          //       imageUrl: job.data.image
+          //     },
+          //     android: {
+          //       notification: {
+          //         sound: "default",
+          //       },
+          //     },
+          //     apns: {
+          //       payload: {
+          //         aps: {
+          //           sound: "default",
+          //         },
+          //       },
+          //     },
+          //   };
                   
-            const res=await admin.messaging().send(message);
-            console.log("notii==",res)
+          //   const res=await admin.messaging().send(message);
+          //   console.log("notii==",res)
 
-          } catch (error) {
+          // } catch (error) {
             
-          }
+          // }
         }
 
         parentPort.postMessage({ success: true });
