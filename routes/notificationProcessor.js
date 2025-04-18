@@ -41,7 +41,7 @@ if (!isMainThread) {
               notification: {
                 title: job.data.title,
                 body: job.data.description,
-                imageUrl: job?.data?.image
+                imageUrl: job?.data?.image||""
               },
               android: {
                 notification: {
