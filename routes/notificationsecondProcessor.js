@@ -32,7 +32,9 @@ admin.initializeApp({
 
 if (!isMainThread) {
     parentPort.on("message", async (job) => {
+
         const uniqueStrings = [...new Set(job.data.fcmTokens.filter(item => typeof item === 'string'))];
+
         for (let fcmtoken of uniqueStrings) {
           try {
             const message = {
@@ -41,7 +43,7 @@ if (!isMainThread) {
               notification: {
                 title: job.data.title,
                 body: job.data.description,
-                imageUrl: job?.data?.image
+                imageUrl: job?.data?.image||""
               },
               android: {
                 notification: {

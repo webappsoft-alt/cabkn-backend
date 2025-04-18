@@ -17,7 +17,7 @@ const Vehicle = require('../models/Vehicle');
 const WebSubCategories = require('../models/WebSubCategories');
 const { sendCompleteOrderEmail, cancelOrderCustomer } = require('../controllers/emailservice');
 const { Worker } = require("worker_threads");
-const jobQueue = require("../routes/jobQueue");
+const jobQueue = require("../routes/jobsecondQueue");
 
 const connectedUsers = {};
 
@@ -1619,7 +1619,7 @@ const allSeen = async (senderId, recipientId) => {
   }
 };
 // Start worker thread
-const worker = new Worker("./routes/notificationProcessor.js");
+const worker = new Worker("./routes/notificationsecondProcessor.js");
 jobQueue.processJobs((job) => new Promise((resolve) => {
     worker.postMessage(job);
     worker.once("message", resolve);
