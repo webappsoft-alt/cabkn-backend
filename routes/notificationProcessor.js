@@ -33,8 +33,13 @@ admin.initializeApp({
 if (!isMainThread) {
     parentPort.on("message", async (job) => {
         console.log(`Worker processing: ${JSON.stringify(job.data.title)}`);
+        console.log("adasdasda",job.data.fcmTokens.length)
+
+        const uniqueStrings = [...new Set(job.data.fcmTokens.filter(item => typeof item === 'string'))];
+
+        console.log("adasdasda",uniqueStrings.length)
+
         for (let fcmtoken of job.data.fcmTokens) {
-          console.log("=====",fcmtoken)
           // try {
           //   const message = {
           //     data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
