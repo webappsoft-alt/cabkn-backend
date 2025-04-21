@@ -1927,8 +1927,8 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
   
   res.send({ success: true, 
     graph:newGraph,
-    totalEarnings:totalwebEarnings+Number(totalEarnings),
-    totalCommision:totalEarnings,
+    totalEarnings:(totalwebEarnings+Number(totalEarnings)).toFixed(2),
+    totalCommision:(totalEarnings).toFixed(2),
     topRider,
     customer:{
       totalUsers,
@@ -1945,8 +1945,8 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
       growth: growthOrder.toFixed(2),
       status: growthOrder >= 0 ? 'positive' : 'negative'
     },
-    todayEarning:todaywebEarnings+Number(todayCommision),
-    todayCommision:todayCommision,
+    todayEarning:(todaywebEarnings + Number(todayCommision)).toFixed(2),
+    todayCommision:(todayCommision).toFixed(2),
    });
 });
 

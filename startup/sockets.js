@@ -22,11 +22,15 @@ const jobQueue = require("../routes/jobsecondQueue");
 const connectedUsers = {};
 
 module.exports = function (server,app) {
-
   const io = require("socket.io")(server, {
-    cors: {
-      origin: "*",
-    },
+    cors: { origin: '*' },
+    pingTimeout: 60000, 
+    pingInterval: 25000, 
+    transports: ['websocket', 'polling'],
+    allowUpgrades: true,
+    perMessageDeflate: {
+      threshold: 1024 
+    }
   });
   
   app.set('socketio', io);
@@ -297,7 +301,7 @@ module.exports = function (server,app) {
  
        const newRequest = new Order({
          user: senderId,
-         price,
+         price:Number(price).toFixed(2),
          start_location:{
            type:"Point",
            coordinates: [Number(start_lng),Number(start_lat)],
@@ -314,7 +318,7 @@ module.exports = function (server,app) {
          liability,
          ridertype,
          pincode,
-         adminprice:Number(price) * 0.20,
+         adminprice:(Number(price) * 0.20).toFixed(2),
          paymentId : paymentId||"",
          payment_status : "completed",
          order_id:order_id||"",
