@@ -1641,6 +1641,8 @@ router.post('/rider/dashboard',auth, async (req, res) => {
   
   const totalUnPaidAmount=Number(totalEarningsRider) - (totalPaidAmount)
 
+  const adminPayout=await User.findOne({type:'admin'}).select("payoutDate").lean()
+
   res.send({ 
     success: true,
     totaldistance, 
@@ -1654,7 +1656,8 @@ router.post('/rider/dashboard',auth, async (req, res) => {
     totalCashAmountOrderCount,
     totalRemainigAmount,
     totaladminDepositAmount,
-    totaladminWithdrawlAmount
+    totaladminWithdrawlAmount,
+    adminPayout:adminPayout.payoutDate
   });
 });
 

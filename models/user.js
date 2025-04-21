@@ -124,6 +124,11 @@ const userSchema = new mongoose.Schema({
   },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Like'}],
   vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle'},
+  payoutDate:{
+    type: Date,
+    default: Date.now,
+    index: true
+  },
   createdAt: {
     type: Date,
     default: Date.now,

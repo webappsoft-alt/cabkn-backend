@@ -53,6 +53,16 @@ cron.schedule('0 0 * * *', async () => {
     timezone: "America/New_York" // Set your preferred timezone, e.g., "America/New_York"
 });
 
+const updateDate = async() => {
+  const currentDate = new Date();
+  await User.findOneAndUpdate({type:'admin'},{$set:{payoutDate:currentDate}})
+};
+
+// Schedule the job to run every 7 days
+cron.schedule('0 0 */7 * *', () => {
+  updateDate()
+});
+
 
 // Serve the HTML page
 app.get('/delete/users', (req, res) => {
