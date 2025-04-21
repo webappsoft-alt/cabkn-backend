@@ -53,11 +53,16 @@ cron.schedule('0 0 * * *', async () => {
     timezone: "America/New_York" // Set your preferred timezone, e.g., "America/New_York"
 });
 
-const updateDate = async() => {
+const updateDate = async () => {
   const currentDate = new Date();
-  await User.findOneAndUpdate({type:'admin'},{$set:{payoutDate:currentDate}})
-};
+  const futureDate = new Date(currentDate);
+  futureDate.setDate(futureDate.getDate() + 7);
 
+  await User.findOneAndUpdate(
+    { type: 'admin' },
+    { $set: { payoutDate: futureDate } }
+  );
+};
 // Schedule the job to run every 7 days
 cron.schedule('0 0 */7 * *', () => {
   updateDate()
