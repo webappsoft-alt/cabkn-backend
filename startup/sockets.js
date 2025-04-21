@@ -37,17 +37,19 @@ module.exports = function (server,app) {
 
   io.on('connection', (socket) => {
 
-    // Handle user authentication
-    socket.on('authenticate', (token) => {
+    socket.on('authenticate', async(token) => {
       try {
         const decoded = jwt.verify(token, config.get('jwtPrivateKey'))
         const userId = decoded._id;
 
-        connectedUsers[userId] = socket.id;
+        if (!connectedUsers[userId]) {
+          connectedUsers[userId] = new Set();
+        }
+    
+        connectedUsers[userId].add(socket.id);
 
         // Notify the client about successful authentication
         socket.emit('authenticated', userId);
-        console.log("authenticated======>>>>>",connectedUsers)
 
         // Join user to their unique room (socket.io room)
         socket.join(userId);
@@ -61,8 +63,8 @@ module.exports = function (server,app) {
     // Handle private messages
     socket.on('send-message', async ({ recipientId, messageText,name},callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
 
         const conversation = await Conversation.findOne({
@@ -94,7 +96,9 @@ module.exports = function (server,app) {
 
         const savedMessage = await newMessage.save();
 
-        io.to(recipientId).emit('recieved-message', savedMessage);
+        connectedUsers[recipientId]?.forEach(socketId => {
+          io.to(socketId).emit('recieved-message', savedMessage);
+        });
         
         const otherUser = await User.findById(recipientId).select("fcmtoken type").lean()
         
@@ -118,8 +122,8 @@ module.exports = function (server,app) {
 
     socket.on('send-group-message', async ({ conversationId, messageText,user}) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
 
         const conversation = await Conversation.findById(conversationId);
@@ -136,7 +140,9 @@ module.exports = function (server,app) {
                 
 
         for (let userid of conversation.participants) {
-          io.to(userid.toString()).emit('send-group-message', {...savedMessage.toJSON(),sender:user});
+          connectedUsers[userid.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('send-group-message', {...savedMessage.toJSON(),sender:user});
+          });
 
           if (userid.toString() === senderId) continue;
 
@@ -165,16 +171,20 @@ module.exports = function (server,app) {
 
     // Handle disconnection
     socket.on('seen-msg', async ({ recipientId }) => {
-      const senderId = Object.keys(connectedUsers).find(
-        (key) => connectedUsers[key] === socket.id
+      const senderId = Object.keys(connectedUsers).find(userId =>
+        connectedUsers[userId].has(socket.id)
       );
       // Remove user from connected users on disconnection
       await allSeen(senderId, recipientId)
-      io.to(recipientId).emit('seen-msg', { seen: true, recipientId });
+      connectedUsers[recipientId]?.forEach(socketId => {
+        io.to(socketId).emit('seen-msg',  { seen: true, recipientId });
+      });
     });
 
     socket.on('location-sent', async (data,callback) => {
-      const senderId = Object.keys(connectedUsers).find((key) => connectedUsers[key] === socket.id);
+      const senderId = Object.keys(connectedUsers).find(userId =>
+        connectedUsers[userId].has(socket.id)
+      );
 
       if (!senderId) {
         return callback({
@@ -186,7 +196,9 @@ module.exports = function (server,app) {
       const {lat,lng,to_id,order} = data
       // await updateUserLocation(senderId,longitude,latitude,address,fcmToken);
   
-      io.to(to_id).emit('location-recieved', { lat,lng,to_id,order,senderId });
+      connectedUsers[to_id]?.forEach(socketId => {
+        io.to(socketId).emit('location-recieved', { lat,lng,to_id,order,senderId });
+      });
       callback(data)
     });
 
@@ -224,9 +236,9 @@ module.exports = function (server,app) {
         color,
         size
       } = data;
-       const senderId = Object.keys(connectedUsers).find(
-         (key) => connectedUsers[key] === socket.id
-       );
+       const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
+        );
 
        if (!senderId) {
         return callback({
@@ -356,7 +368,9 @@ module.exports = function (server,app) {
        callback({request,success:true, title: 'Request sent',message:"You have successfully sent a request to all nearby users!"});
         
        for (let user of userIds) {
-         io.to(user.toString()).emit('recieve-request-rider', {request,userType:request.user.type,success:true, title: 'New Request',message:"You have received a new request."});
+        connectedUsers[user.toString()]?.forEach(socketId => {
+          io.to(socketId).emit('recieve-request-rider', {request,userType:request.user.type,success:true, title: 'New Request',message:"You have received a new request."});
+        });
        }
  
        // Ensure all values in data are strings
@@ -414,8 +428,8 @@ module.exports = function (server,app) {
 
     socket.on('delete-request-customer', async ({ requestId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -479,9 +493,11 @@ module.exports = function (server,app) {
           .lean();
     
         for (let user of userIds) {
-          io.to(user._id.toString()).emit('filter-request-rider', {
-            request: requestId,
-            success: true,
+          connectedUsers[user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('filter-request-rider', {
+              request: requestId,
+              success: true,
+            });
           });
         }
     
@@ -507,8 +523,8 @@ module.exports = function (server,app) {
 
     socket.on('update-request-rider', async ({ requestId, status }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -613,11 +629,13 @@ module.exports = function (server,app) {
           //   request: requestId,
           // });
 
-          io.to(order.user._id.toString()).emit('update-request-customer', {
-            success: true,
-            title: 'Offer Accepted',
-            type:order.bookingtype,
-            message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+          connectedUsers[order.user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('update-request-customer',  {
+              success: true,
+              title: 'Offer Accepted',
+              type:order.bookingtype,
+              message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+            });
           });
         
           // Notify other riders to filter out the request
@@ -655,8 +673,8 @@ module.exports = function (server,app) {
 
     socket.on('send-alert-rider', async ({ orderId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -699,11 +717,13 @@ module.exports = function (server,app) {
             usertype:order?.user?.type
           });
 
-          io.to(order.user._id.toString()).emit('receive-alert-customer', {
-            success: true,
-            order,
-            title: "Order update",
-            message: `${user?.name} has arrived your destination.`,
+          connectedUsers[order.user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('receive-alert-customer',  {
+              success: true,
+              order,
+              title: "Order update",
+              message: `${user?.name} has arrived your destination.`,
+            });
           });
     
           return callback({
@@ -727,8 +747,8 @@ module.exports = function (server,app) {
 
     socket.on('reminder-alert-rider', async ({ orderId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -800,8 +820,8 @@ module.exports = function (server,app) {
 
     socket.on('send-payment-alert-rider', async ({ orderId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -841,11 +861,13 @@ module.exports = function (server,app) {
             usertype:order?.user?.type
           });
 
-          io.to(order.user._id.toString()).emit('receive-payment-alert-customer', {
-            success: true,
-            order,
-            title: "Order update",
-            message: `${order.to_id?.name} has requested you to pay his order payment.`,
+          connectedUsers[order.user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('receive-payment-alert-customer', {
+              success: true,
+              order,
+              title: "Order update",
+              message: `${order.to_id?.name} has requested you to pay his order payment.`,
+            });
           });
     
           return callback({
@@ -865,8 +887,8 @@ module.exports = function (server,app) {
 
     socket.on('update-request-customer', async ({ requestId, status, orderId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -994,13 +1016,14 @@ module.exports = function (server,app) {
           //   request: requestId,
           // });
 
-          io.to(request.user._id.toString()).emit('update-request-rider', {
-            success: true,
-            title: 'Offer Accepted',
-            type:order.bookingtype,
-            message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+          connectedUsers[request.user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('update-request-rider', {
+              success: true,
+              title: 'Offer Accepted',
+              type:order.bookingtype,
+              message: order.bookingtype=='live'?`Your offer has been accepted by ${order?.user?.name} and your order has been started.`:`Your offer has been accepted by ${order?.user?.name} and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+            });
           });
-        
           // Notify other riders to filter out the request
           const userIds = await User.find({
             type: "rider",
@@ -1034,8 +1057,8 @@ module.exports = function (server,app) {
 
     socket.on('update-order-admin', async ({ to_id, orderId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -1112,11 +1135,13 @@ module.exports = function (server,app) {
           //   request: requestId,
           // });
 
-          io.to(to_user._id.toString()).emit('update-request-rider', {
-            success: true,
-            title: 'Offer Accepted',
-            type:order.bookingtype,
-            message: order.bookingtype=='live'? `You have been assigned by admin to a ride and your ride has been started.`:`You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+          connectedUsers[to_user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('update-request-rider',{
+              success: true,
+              title: 'Offer Accepted',
+              type:order.bookingtype,
+              message: order.bookingtype=='live'? `You have been assigned by admin to a ride and your ride has been started.`:`You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+            });
           });
         
           // Notify other riders to filter out the request
@@ -1129,9 +1154,11 @@ module.exports = function (server,app) {
             .lean();
     
           for (let user of userIds) {
-            io.to(user._id.toString()).emit('filter-request-rider', {
-              request: orderId,
-              success: true,
+            connectedUsers[user._id.toString()]?.forEach(socketId => {
+              io.to(socketId).emit('filter-request-rider', {
+                request: orderId,
+                success: true,
+              });
             });
           }
     
@@ -1152,8 +1179,8 @@ module.exports = function (server,app) {
 
     socket.on('pick-rider', async ({ orderId }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -1196,11 +1223,13 @@ module.exports = function (server,app) {
             usertype:order.user?.type
           });
 
-          io.to(order.user._id.toString()).emit('pick-customer', {
-            success: true,
-            order,
-            title: "Ride update",
-            message: `${user?.name} has started your ride.`,
+          connectedUsers[order.user._id.toString()]?.forEach(socketId => {
+            io.to(socketId).emit('pick-customer', {
+              success: true,
+              order,
+              title: "Ride update",
+              message: `${user?.name} has started your ride.`,
+            });
           });
     
           return callback({
@@ -1224,8 +1253,8 @@ module.exports = function (server,app) {
 
     socket.on('update-order-rider', async ({ orderId, status }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -1275,7 +1304,10 @@ module.exports = function (server,app) {
            
              user.amount=Number(user.amount) + Number(updatedOrder.price);
              await user.save()
-             io.to(user._id.toString()).emit('user_update', {success:true,user:user});
+
+             connectedUsers[user._id.toString()]?.forEach(socketId => {
+              io.to(socketId).emit('user_update', {success:true,user:user});
+            });
            
              const transaction=new Transaction({
                user:updatedOrder.user._id,
@@ -1354,8 +1386,8 @@ module.exports = function (server,app) {
     
     socket.on('tip-order-customer', async ({ orderId,amount }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -1413,13 +1445,15 @@ module.exports = function (server,app) {
           noti: false,
           usertype:updatedOrder.to_id?.type
         });
-        
-        io.to(updatedOrder.to_id._id.toString()).emit('tip-order-rider', {
+
+        connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(socketId => {
+          io.to(socketId).emit('tip-order-rider', {
             success: true,
             order: updatedOrder,
             title: 'Ride Update',
             message: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
           });
+        });
     
         // Callback success response
         return callback({
@@ -1438,8 +1472,8 @@ module.exports = function (server,app) {
     });
     socket.on('cancel-order-customer', async ({ orderId,reason }, callback) => {
       try {
-        const senderId = Object.keys(connectedUsers).find(
-          (key) => connectedUsers[key] === socket.id
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
         );
     
         if (!senderId) {
@@ -1489,7 +1523,9 @@ module.exports = function (server,app) {
             user.amount=Number(user.amount) + Number(Number(updatedOrder.price) - Number(updatedOrder.adminprice));
             await user.save()
 
-            io.to(user._id.toString()).emit('user_update', {success:true,user:user});
+            connectedUsers[user._id.toString()]?.forEach(socketId => {
+              io.to(socketId).emit('user_update',   {success:true,user:user});
+            });
           
             const transaction=new Transaction({
               user:senderId,
@@ -1529,12 +1565,14 @@ module.exports = function (server,app) {
         });
         const order=await Order.findOneAndUpdate({ _id: orderId, user: senderId },{status:status},{new:true}).populate("to_id").populate("user").populate("ridertype").populate("liability").lean();
         
-        io.to(updatedOrder.to_id._id.toString()).emit('cancel-order-rider', {
+        connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(socketId => {
+          io.to(socketId).emit('cancel-order-rider', {
             success: true,
             order: order,
             title: 'Ride Update',
             message: 'Your Ride has been cancelled.',
           });
+        });
     
         // Callback success response
         return callback({
@@ -1553,23 +1591,29 @@ module.exports = function (server,app) {
     });
 
     socket.on('seen-group-msg', async ({ conversationId }) => {
-      const senderId = Object.keys(connectedUsers).find(
-        (key) => connectedUsers[key] === socket.id
+      const senderId = Object.keys(connectedUsers).find(userId =>
+        connectedUsers[userId].has(socket.id)
       );
       // Remove user from connected users on disconnection
       await conversationAllseen(senderId, conversationId)
-      io.to(senderId).emit('seen-msg', { seen: true, conversationId });
+      connectedUsers[senderId]?.forEach(socketId => {
+        io.to(socketId).emit('seen-msg',  { seen: true, conversationId });
+      });
     });
 
+    // Handle user disconnection
     socket.on('disconnect', () => {
-      // Remove user from connected users on disconnection
-      const userId = Object.keys(connectedUsers).find(
-        (key) => connectedUsers[key] === socket.id
-      );
-      if (userId) {
-        delete connectedUsers[userId];
-        console.log(`User ${userId} disconnected`);
-        console.log("disconnect======>>>>>",connectedUsers)
+      for (const userId in connectedUsers) {
+        if (connectedUsers[userId].has(socket.id)) {
+          connectedUsers[userId].delete(socket.id);
+    
+          // Clean up if no more active sockets for user
+          if (connectedUsers[userId].size === 0) {
+            delete connectedUsers[userId];
+          }
+    
+          break;
+        }
       }
     });
 
