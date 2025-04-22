@@ -541,6 +541,7 @@ router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
 
   res.send({ success: true, message: "You have deposited amount successfully", user, transaction });
 });
+
 router.put("/withdrawl-admin-wallet-payment",[auth,admin], async (req, res) => {
   const { amount,otherId,reason } = req.body;
 
@@ -1923,6 +1924,7 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
   const totalwebEarnings=totalWebCategories * Number(108)
 
   const todayCommision=todayOrders.reduce((a,b)=>a+b.adminprice,0)
+  const todayRidesPrice=todayOrders.reduce((a,b)=>a+b.price,0)
 
   
   res.send({ success: true, 
@@ -1947,6 +1949,7 @@ router.get('/dashboard',[auth, admin],async (req, res) => {
     },
     todayEarning:(todaywebEarnings + Number(todayCommision)).toFixed(2),
     todayCommision:(todayCommision).toFixed(2),
+    todayRidesPrice:todayRidesPrice.toFixed(2)
    });
 });
 
