@@ -2333,7 +2333,7 @@ router.post('/send-notifications/:type', [auth, admin], async (req, res) => {
 
   const fcmTokens = [...new Set(users.map(item => item.fcmtoken).filter(item=>item!==undefined||item!==""))];
 
-  const data={fcmTokens:fcmTokens,title:title,description,image,weburl:weburl||""}
+  const data={fcmTokens:fcmTokens,title:title,description,image:image||"",weburl:weburl||""}
 
   jobQueue.addJob({ data });
 
