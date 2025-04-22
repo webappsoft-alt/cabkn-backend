@@ -37,14 +37,22 @@ if (!isMainThread) {
 
         for (let fcmtoken of uniqueStrings) {
           try {
+            
+            let notiBody={
+              title: job.data.title,
+              body: job.data.description,
+            }
+
+            if (job.data.image) {
+              notiBody={
+                ...notiBody,
+                imageUrl: job.data.image
+              }
+            }
             const message = {
               data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
               token: fcmtoken, // replace with the user's device token
-              notification: {
-                title: job.data.title,
-                body: job.data.description,
-                imageUrl: job.data.image
-              },
+              notification:notiBody,
               android: {
                 notification: {
                   sound: "default",
