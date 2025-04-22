@@ -46,8 +46,6 @@ if (!isMainThread) {
                 imageUrl: job.data.image
               }
             }
-            console.log("image====>>",notiBody)
-
             const message = {
               data:job.data?.data ? job.data?.data : job.data?.weburl?{weburl:job.data.weburl} : {}, 
               token: fcmtoken, // replace with the user's device token
