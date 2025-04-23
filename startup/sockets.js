@@ -338,7 +338,8 @@ module.exports = function (server,app) {
          quantity:quantity||0,
          paymentType:paymentType||"paid",
          color:color||"",
-         size:size||""
+         size:size||"",
+         paymentDone: paymentType=='cash' ? true : false
        });
 
        if (couponId) {

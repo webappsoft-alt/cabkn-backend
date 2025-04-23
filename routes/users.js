@@ -1636,13 +1636,13 @@ router.post('/rider/dashboard',auth, async (req, res) => {
   const totaladminDepositAmount=transaction.reduce((a,b)=>a+b.amount,0)
   const totaladminWithdrawlAmount=withdrawltransaction.reduce((a,b)=>a+b.amount,0)
 
-  const totalEarningsRider=Number(totalEarnings) + (totaladminDepositAmount)
+  const totalEarningsRider = Number(totalEarnings) + (totaladminDepositAmount)
 
-  const totalPaidAmount= totalAmountReceived + totaladminWithdrawlAmount+totalCashPaidEarnings
+  const totalPaidAmount = totalAmountReceived + totaladminWithdrawlAmount + totalCashPaidEarnings
   
-  const totalUnPaidAmount=Number(totalEarningsRider) - (totalPaidAmount)
+  const totalUnPaidAmount = Number(totalEarningsRider) - (totalPaidAmount)
 
-  const adminPayout=await User.findOne({type:'admin'}).select("payoutDate").lean()
+  const adminPayout = await User.findOne({type:'admin'}).select("payoutDate").lean()
 
   res.send({ 
     success: true,
