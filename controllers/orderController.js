@@ -104,10 +104,10 @@ exports.getAllEmployeeApplication = async (req, res) => {
     query.paymentType = req.body.paymentType;
   }
   
-  if (req.body.paymentDone) {
+  if (req.body.paymentDone == false || req.body.paymentDone=="false" || req.body.paymentDone == true || req.body.paymentDone == "true") {
     query.paymentDone = req.body.paymentDone;
   }
-  if (req.body?.adminPayment==true||req.body?.adminPayment==false) {
+  if (req.body.adminPayment == false || req.body.adminPayment=="false" || req.body.adminPayment == true || req.body.adminPayment == "true") {
     query.adminPayment = req.body.adminPayment;
   }
   if (req.body.refunded) {
@@ -123,6 +123,11 @@ exports.getAllEmployeeApplication = async (req, res) => {
   }else{
     query.status = status;
   }
+
+  // if ((req.body.paymentDone==false||req.body.paymentDone=="false")&&(req.body.adminPayment==false||req.body.adminPayment=="false")) {
+  //   query.paymentDone=false;
+  //   query.adminPayment=false;
+  // }
 
   const pageSize = 10;
   const skip = Math.max(0, (lastId - 1)) * pageSize;
