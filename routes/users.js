@@ -495,26 +495,39 @@ router.put("/convert-point", auth, async (req, res) => {
 });
 
 router.put("/order-wallet-payment",auth, async (req, res) => {
-  const { amount } = req.body;
-
-  const user = await User.findById(req.user._id);
-
-  if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+  try {
+    const { amount } = req.body;
   
-  if (Number(user.amount) < Number(amount)) return res.status(400).send({success: false,message: "You don't have enough amount in wallet. Please add amount in your wallet to complete your booking.",user});
+    const user = await User.findById(req.user._id);
+    console.log("===>>>>>",amount)
+  
+    if (!user) return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+    
+    console.log("user===>>>>>",user.amount)
 
-  user.amount=Number(user.amount) - Number(amount);
-  await user.save()
+    if (Number(user.amount) < Number(amount)) return res.status(400).send({success: false,message: "You don't have enough amount in wallet. Please add amount in your wallet to complete your booking.",user});
+  
+    user.amount=Number(user.amount) - Number(amount);
+    await user.save()
+    console.log("useranother===>>>>>",user.amount)
 
-  const transaction = new Transaction({
-    user:req.user._id,
-    amount,
-    type:'purchase'
-  })
+  
+    const transaction = new Transaction({
+      user:req.user._id,
+      amount,
+      type:'purchase'
+    })
 
-  await transaction.save()
+    console.log("transaction===>>>>>",transaction)
 
-  res.send({ success: true, message: "User payed successfully", user, transaction });
+  
+    await transaction.save()
+  
+    res.send({ success: true, message: "User payed successfully", user, transaction });
+    
+  } catch (error) {
+    return res.status(400).send({success: false,message: "The User with the given ID was not found."});
+  }
 });
 
 router.put("/add-admin-wallet-payment",[auth,admin], async (req, res) => {
