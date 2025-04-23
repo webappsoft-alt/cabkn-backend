@@ -110,7 +110,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
   if (req.body.adminPayment == false || req.body.adminPayment=="false" || req.body.adminPayment == true || req.body.adminPayment == "true") {
     query.adminPayment = req.body.adminPayment;
   }
-  if (req.body.refunded) {
+  if (req.body.refunded == false || req.body.refunded=="false" || req.body.refunded == true || req.body.refunded == "true") {
     query.refunded = req.body.refunded;
   }
 
