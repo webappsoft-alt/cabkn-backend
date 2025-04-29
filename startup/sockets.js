@@ -1320,7 +1320,11 @@ module.exports = function (server,app) {
              await transaction.save();
          }
         }else{
-          await sendCompleteOrderEmail(updatedOrder.user.email,updatedOrder.order_id,updatedOrder.user.name,updatedOrder.start_address,updatedOrder.end_address,updatedOrder.to_id.name,updatedOrder.vehicle?.license||updatedOrder.vehicle?.name||"",updatedOrder.price,updatedOrder.price)
+          let reviewLink=""
+          if (updatedOrder.service) {
+            reviewLink="https://cabkn.com/popular/"+updatedOrder.service+"?review=reviewmd"
+          }
+          await sendCompleteOrderEmail(updatedOrder.user.email,updatedOrder.order_id,updatedOrder.user.name,updatedOrder.start_address,updatedOrder.end_address,updatedOrder.to_id.name,updatedOrder.vehicle?.license||updatedOrder.vehicle?.name||"",updatedOrder.price,updatedOrder.price,reviewLink)
           await Order.findOneAndUpdate({ _id: orderId,},{ dropTime: Date.now() })
           const transaction=new Transaction({
             user:updatedOrder.user._id,

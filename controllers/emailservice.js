@@ -245,7 +245,7 @@ exports.deleteUserEmail = async (email, deleteLink) => {
 }
 
 
-exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRESS,DROPOFF_ADDRESS,DRIVER_NAME,VEHICLE_REGISTRATION,Subtotal,TOTAL_AMOUNT) => {
+exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRESS,DROPOFF_ADDRESS,DRIVER_NAME,VEHICLE_REGISTRATION,Subtotal,TOTAL_AMOUNT,review_link="") => {
   // Create a Nodemailer transporter object
   const transporter = nodemailer.createTransport({
        host: 'smtp.office365.com', // SMTP server address for Outlook
@@ -341,6 +341,22 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
             line-height: 1.5;
             color: #ffffff;
         }
+        .review-button {
+            display: inline-block;
+            background-color: #0EBE3C;
+            color: white;
+            padding: 12px 25px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .review-button:hover {
+            background-color: #0ca835;
+        }
     </style>
 </head>
 <body>
@@ -391,7 +407,14 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
                 <p><strong>Total Amount:</strong> <span style="font-size: 20px; font-weight: bold;">${TOTAL_AMOUNT}</span></p>
             </div>
         </div>
-        
+
+      <!-- Conditional Review Button Section -->
+        ${review_link ?
+          `<div style="text-align: center; margin-top: 25px;">
+            <a href="${review_link}" class="review-button">Leave a Review</a>
+          </div>` : `<div></div>`
+        }
+          
         <div class="footer">&copy; 2025 CabKN. All rights reserved.</div>
     </div>
 </body>
