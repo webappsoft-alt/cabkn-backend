@@ -10,17 +10,17 @@ exports.sendEmail = async (email, code) => {
           port: 587, // SMTP port
           secure: false, // Set to true for port 465, false for others
           auth: {
-            user: 'admin@beyouid.com', // Your Outlook email
-            pass: "MimisLLC79!" // Your Outlook email password or app password
+            user: 'Support@cabkn.com', // Your Outlook email
+            pass: process.env.EMAIL_PASSWORD // Your Outlook email password or app password
           }
      });
 
      // Email data
      const mailOptions = {
-          from: 'admin@beyouid.com',
+          from: 'Support@cabkn.com',
           to: email, // Replace with the recipient's email address
-          subject: 'BeyouID app Verification',
-          text: 'Your BeyouID app verification code is ' + code,
+          subject: 'Cabkn app Verification',
+          text: 'Your Cabkn app verification code is ' + code,
      };
 
      // Send the email
