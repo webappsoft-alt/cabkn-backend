@@ -1388,6 +1388,124 @@ module.exports = function (server,app) {
         });
       }
     });
+
+    socket.on('admin-cancel-order', async ({ orderId,reason }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find(userId =>
+          connectedUsers[userId].has(socket.id)
+        );
+    
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: 'Authentication Error',
+            message: 'Sender ID not found.',
+          });
+        }
+    
+        const status = 'cancelled';    
+        // Find and update the order
+        const updatedOrder = await Order.findOneAndUpdate(
+          { _id: orderId, status: {$in:["accepted","order-start"]}},
+          { status: status,completed_date:Date.now() },
+          { new: true }
+        ).populate("to_id user ridertype liability vehicle").lean();
+    
+        if (!updatedOrder) {
+          return callback({
+            success: false,
+            title: 'Ride Update',
+            message: 'Ride not found or cannot be cancelled as it is not started yet.',
+          });
+        }
+        const user = await User.findById(updatedOrder.user._id);
+        const addresses = await LoyalityPoint.findOne({}).lean();
+
+         if (updatedOrder.paymentType=='paid'&&reason=='client') {
+             if (!user) {
+               return callback({
+                 success: false,
+                 title: 'Ride Delete',
+                 message: "The User with the given ID was not found.",
+               });
+             }
+
+             await Order.findOneAndUpdate({ _id: orderId },{refunded:true},{new:true})
+           
+             user.amount=Number(user.amount) + Number(updatedOrder.price);
+             await user.save()
+
+             connectedUsers[user._id.toString()]?.forEach(socketId => {
+              io.to(socketId).emit('user_update', {success:true,user:user});
+            });
+           
+             const transaction=new Transaction({
+               user:updatedOrder.user._id,
+               amount:Number(updatedOrder.price),
+               type:'refunded',
+               order:orderId
+             });
+           
+             await transaction.save();
+         }
+      
+        if (updatedOrder.bookingtype=='live') {
+          await User.findByIdAndUpdate(senderId,{ isRiding : false },{new:true})
+        }
+    
+        // Notify the customer about the update
+        await sendNotification({
+          user: senderId,
+          to_id: updatedOrder.user._id.toString(),
+          description: `Your Ride has been cancelled by admin`+reason=='client'?"and order amount has been refunded by admin to your account":"",
+          type: "order",
+          title: "Ride Update",
+          fcmtoken: updatedOrder.user.fcmtoken,
+          order: orderId,
+          noti: false,
+          usertype:"customer"
+        });
+        await sendNotification({
+          user: senderId,
+          to_id: updatedOrder.to_id._id.toString(),
+          description: `Your Ride has been cancelled by admin`+reason=='client'?" and order amount has been refunded by admin to customer account":`and you have successfully earned order amount.`,
+          type: "order",
+          title: "Ride Update",
+          fcmtoken: updatedOrder.to_id.fcmtoken,
+          order: orderId,
+          noti: false,
+          usertype:"rider"
+        });
+    
+        io.to(updatedOrder.user._id.toString()).emit('admin-cancel-order-customer', {
+          success: true,
+          order: updatedOrder,
+          title: 'Ride Update',
+          message: 'Your Ride has been cancelled by admin.',
+        });
+
+        io.to(updatedOrder.to_id._id.toString()).emit('admin-cancel-order-rider', {
+          success: true,
+          order: updatedOrder,
+          title: 'Ride Update',
+          message: 'Your Ride has been cancelled by admin.',
+        });
+    
+        // Callback success response
+        return callback({
+          success: true,
+          order: updatedOrder,
+          title: 'Ride Updated',
+          message: `The Ride has been ${status} successfully.`,
+        });
+      } catch (error) {
+        return callback({
+          success: false,
+          title: 'Error',
+          message: error.message,
+        });
+      }
+    });
     
     socket.on('tip-order-customer', async ({ orderId,amount }, callback) => {
       try {
@@ -1475,6 +1593,7 @@ module.exports = function (server,app) {
         });
       }
     });
+
     socket.on('cancel-order-customer', async ({ orderId,reason }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(userId =>
