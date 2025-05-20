@@ -439,7 +439,7 @@ exports.sendCompleteOrderEmail = async (email,order_id,customerName,PICKUP_ADDRE
   });
 }
 
-exports.cancelOrderCustomer = async ( order_id, userName, userEmail, startLocation, endLocation, price, distance, rideDate, reason ) => {
+exports.cancelOrderCustomer = async ( order_id, userName, userEmail, startLocation, endLocation, price, distance, rideDate, reason,email="Mrmarlegrant@gmail.com" ) => {
   // Create a Nodemailer transporter object
   const transporter = nodemailer.createTransport({
        host: 'smtp.office365.com', // SMTP server address for Outlook
@@ -469,7 +469,7 @@ exports.cancelOrderCustomer = async ( order_id, userName, userEmail, startLocati
   // Email data
   const mailOptions = {
        from: 'Support@cabkn.com',
-       to: "Mrmarlegrant@gmail.com", // Replace with the recipient's email address
+       to: email, // Replace with the recipient's email address
        subject: `Ride Cancelled: Order #${order_id}`,
        html: htmlContent,
   };

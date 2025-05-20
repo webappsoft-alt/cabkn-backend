@@ -1489,7 +1489,8 @@ module.exports = function (server,app) {
           updatedOrder.price, 
           updatedOrder.distance, 
           moment(updatedOrder.schedule_date).format('MM/DD/YYYY'), 
-          `Admin cancellation.${reasonText}`
+          `Admin cancellation.${reasonText}`,
+          updatedOrder?.user?.email, 
         );
         
         // Send email to rider
@@ -1502,7 +1503,8 @@ module.exports = function (server,app) {
           updatedOrder.price, 
           updatedOrder.distance, 
           moment(updatedOrder.schedule_date).format('MM/DD/YYYY'), 
-          `Admin cancellation.${reasonText}`
+          `Admin cancellation.${reasonText}`,
+          updatedOrder?.to_id?.email, 
         );
     
         io.to(updatedOrder.user._id.toString()).emit('admin-cancel-order-customer', {
