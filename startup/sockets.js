@@ -1461,7 +1461,7 @@ module.exports = function (server,app) {
           title: "Ride Update",
           fcmtoken: updatedOrder.user.fcmtoken,
           order: orderId,
-          noti: false,
+          noti: true,
           usertype:"customer"
         });
         await sendNotification({
@@ -1472,7 +1472,7 @@ module.exports = function (server,app) {
           title: "Ride Update",
           fcmtoken: updatedOrder.to_id.fcmtoken,
           order: orderId,
-          noti: false,
+          noti: true,
           usertype:"rider"
         });
 
