@@ -1389,7 +1389,7 @@ module.exports = function (server,app) {
       }
     });
 
-    socket.on('admin-cancel-order', async ({ orderId,reason }, callback) => {
+    socket.on('admin-cancel-order', async ({ orderId,reason,adminReason }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find(userId =>
           connectedUsers[userId].has(socket.id)
@@ -1419,7 +1419,6 @@ module.exports = function (server,app) {
           });
         }
         const user = await User.findById(updatedOrder.user._id);
-        const addresses = await LoyalityPoint.findOne({}).lean();
 
          if (updatedOrder.paymentType=='paid'&&reason=='client') {
              if (!user) {
@@ -1476,19 +1475,48 @@ module.exports = function (server,app) {
           noti: false,
           usertype:"rider"
         });
+
+        // Send cancellation emails to both users with admin reason
+        const reasonText = adminReason ? ` Reason: ${adminReason}` : '';
+        
+        // Send email to customer
+        await cancelOrderCustomer(
+          updatedOrder.order_id, 
+          updatedOrder?.user?.name, 
+          updatedOrder?.user?.email, 
+          updatedOrder.start_address, 
+          updatedOrder.end_address, 
+          updatedOrder.price, 
+          updatedOrder.distance, 
+          moment(updatedOrder.schedule_date).format('MM/DD/YYYY'), 
+          `Admin cancellation.${reasonText}`
+        );
+        
+        // Send email to rider
+        await cancelOrderCustomer(
+          updatedOrder.order_id, 
+          updatedOrder?.to_id?.name, 
+          updatedOrder?.to_id?.email, 
+          updatedOrder.start_address, 
+          updatedOrder.end_address, 
+          updatedOrder.price, 
+          updatedOrder.distance, 
+          moment(updatedOrder.schedule_date).format('MM/DD/YYYY'), 
+          `Admin cancellation.${reasonText}`
+        );
     
         io.to(updatedOrder.user._id.toString()).emit('admin-cancel-order-customer', {
           success: true,
           order: updatedOrder,
           title: 'Ride Update',
-          message: 'Your Ride has been cancelled by admin.',
+          message: 'Your Ride has been cancelled by admin.' + (adminReason ? ` Reason: ${adminReason}` : ''),
         });
 
         io.to(updatedOrder.to_id._id.toString()).emit('admin-cancel-order-rider', {
           success: true,
           order: updatedOrder,
           title: 'Ride Update',
-          message: 'Your Ride has been cancelled by admin.',
+          message: 'Your Ride has been cancelled by admin.' + (adminReason ? ` Reason: ${adminReason}` : ''),
         });
     
         // Callback success response
