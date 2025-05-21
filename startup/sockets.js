@@ -1458,7 +1458,7 @@ module.exports = function (server,app) {
         await sendNotification({
           user: senderId,
           to_id: updatedOrder.user._id.toString(),
-          description: `Your Ride has been cancelled by admin`+ (reason=='client'?"and order amount has been refunded by admin to your account":"."),
+          description: "Your Ride has been cancelled by admin"+ (reason=='client'?"and order amount has been refunded by admin to your account":"."),
           type: "order",
           title: "Ride Update",
           fcmtoken: updatedOrder.user?.fcmtoken||"",
@@ -1468,7 +1468,7 @@ module.exports = function (server,app) {
         await sendNotification({
           user: senderId,
           to_id: updatedOrder.to_id._id.toString(),
-          description: `Your Ride has been cancelled by admin`+ (reason=='client'?" and order amount has been refunded by admin to customer account":`and you have successfully earned order amount.`),
+          description: "Your Ride has been cancelled by admin"+ (reason=='client'?" and order amount has been refunded by admin to customer account":"and you have successfully earned order amount."),
           type: "order",
           title: "Ride Update",
           fcmtoken: updatedOrder.to_id?.fcmtoken||"",
