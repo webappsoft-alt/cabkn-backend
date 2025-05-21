@@ -1406,7 +1406,7 @@ module.exports = function (server,app) {
         const status = 'cancelled';    
         // Find and update the order
         const updatedOrder = await Order.findOneAndUpdate(
-          { _id: orderId, status: {$in:["accepted","order-start"]}},
+          { _id: orderId },
           { status: status,completed_date:Date.now() },
           { new: true }
         ).populate("to_id user ridertype liability vehicle").lean();
@@ -1461,7 +1461,6 @@ module.exports = function (server,app) {
           title: "Ride Update",
           fcmtoken: updatedOrder.user.fcmtoken,
           order: orderId,
-          noti: true,
           usertype:"customer"
         });
         await sendNotification({
@@ -1472,7 +1471,6 @@ module.exports = function (server,app) {
           title: "Ride Update",
           fcmtoken: updatedOrder.to_id.fcmtoken,
           order: orderId,
-          noti: true,
           usertype:"rider"
         });
 
