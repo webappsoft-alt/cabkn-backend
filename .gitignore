@@ -6,3 +6,4 @@ App.js
 *.log
 logfile.log
 uncaughtExceptions.log
+data.tx
