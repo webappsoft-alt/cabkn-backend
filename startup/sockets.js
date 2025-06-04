@@ -288,8 +288,6 @@ module.exports = function (server, app) {
           color,
           size,
         } = data;
-
-        // Get sender ID from connected users
         const senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
@@ -302,39 +300,49 @@ module.exports = function (server, app) {
           });
         }
 
-        // Build base query for finding available riders/admins
-        let query = {
+        // const findOrder=await Order.findOne({user:senderId,status:"pending"}).lean()
+
+        // if (findOrder) {
+        //   return callback({
+        //     success: false,
+        //     title: 'Request Error',
+        //     message: 'You have already created an request.',
+        //     request:findOrder
+        //   });
+        // }
+
+        let query = {};
+        if (type === "parcel") {
+          query = { ride_type: { $in: ["parcel", "both"] } };
+        } else {
+          query = { ride_type: { $in: ["ride", "both"] } };
+        }
+        query = {
           $or: [{ type: "rider" }, { type: "admin" }],
           status: "online",
+          ...query,
           isVehicle: true,
           isRiding: false,
         };
 
-        // Add ride type filter
-        if (type === "parcel") {
-          query.ride_type = { $in: ["parcel", "both"] };
-        } else {
-          query.ride_type = { $in: ["ride", "both"] };
-        }
-
-        // Override query if favorite user is specified
         if (favUserId) {
-          query = { _id: favUserId };
+          query = {
+            _id: favUserId,
+          };
         }
 
-        // Find eligible users (riders and admins) with their types
-        let users = await User.find(query)
-          .select("_id name fcmtoken type")
-          .lean();
+        let userIds = await User.find(query).select("name fcmtoken").lean();
+        //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
+        console.log("userIds====>>", userIds.map((item) => item.type));
 
-        // Handle subcategory logic if applicable
         if (subcatId) {
           const subCat = await WebSubCategories.findById(subcatId);
-          if (!subCat) {
+
+          if (subCat == null) {
             return callback({
               success: false,
               title: "Request Error",
-              message: "No subcategory found in that area.",
+              message: "No subCatId found in that area.",
             });
           }
           if (Number(subCat.travelers) - Number(travelers) < 0) {
@@ -345,17 +353,32 @@ module.exports = function (server, app) {
             });
           }
           subCat.travelers = Number(subCat.travelers) - Number(travelers);
+
           await subCat.save();
         }
 
-        // Prepare FCM tokens and user IDs
-        const fcmTokens = users
-          .map((user) => user.fcmtoken)
-          .filter((token) => token && token.trim() !== "");
+        //  if (userIds.length == 0 ) {
+        //     return callback({
+        //       success: false,
+        //       title: 'Request Error',
+        //       message: "No users found in that area.",
+        //     });
+        //  }
+        const fcmTokens = [
+          ...new Set(
+            userIds
+              .map((item) => item.fcmtoken)
+              .filter((item) => item !== undefined || item !== "")
+          ),
+        ];
+        userIds = [
+          ...new Set(
+            userIds
+              .map((item) => item._id)
+              .filter((item) => item !== undefined || item !== "")
+          ),
+        ];
 
-        const userIds = users.map((user) => user._id.toString());
-
-        // Create new request
         const newRequest = new Order({
           user: senderId,
           price: Number(price).toFixed(2),
@@ -385,108 +408,105 @@ module.exports = function (server, app) {
           color: color || "",
           size: size || "",
           paymentDone: paymentType == "cash" ? true : false,
-          adminNotified: false, // Track admin notification status
         });
 
-        // Apply coupon if specified
         if (couponId) {
           await Coupon.findByIdAndUpdate(couponId, {
             $addToSet: { used_by: senderId },
-          });
+          }).lean();
           newRequest.coupon = couponId;
         }
 
-        // Handle scheduled bookings
         if (bookingtype == "schedule") {
           newRequest.schedule_date = schedule_date;
           newRequest.schedule_time = schedule_time;
         }
+        if (distance) {
+          newRequest.distance = distance;
+        }
+        if (note) {
+          newRequest.note = note;
+        }
+        if (stops) {
+          newRequest.stops = stops;
+        }
+        if (service) {
+          newRequest.service = service;
+        }
 
-        // Add additional optional fields
-        if (distance) newRequest.distance = distance;
-        if (note) newRequest.note = note;
-        if (stops) newRequest.stops = stops;
-        if (service) newRequest.service = service;
-
-        // Save the request
         await newRequest.save();
         const request = await Order.findById(newRequest._id).populate(
           "user ridertype service liability"
         );
-
-        // Send success response to customer
         callback({
           request,
           success: true,
           title: "Request sent",
-          message: "You have successfully sent a request!",
+          message: "You have successfully sent a request to all nearby users!",
         });
 
-        // Notify all eligible users (riders and admins)
-        for (const userId of userIds) {
-          const userType = users.find((u) => u._id.toString() === userId)?.type;
-
-          connectedUsers[userId]?.forEach((socketId) => {
+        for (let user of userIds) {
+          connectedUsers[user.toString()]?.forEach((socketId) => {
             io.to(socketId).emit("recieve-request-rider", {
               request,
-              userType: userType || "rider", // Default to rider if type not found
+              userType: request.user.type,
               success: true,
               title: "New Request",
               message: "You have received a new request.",
-              isAdmin: userType === "admin", // Explicit flag for admin users
             });
           });
         }
 
-        // Prepare notification data
+        // Ensure all values in data are strings
         const messageData = {
           notiId: "request",
           messageType: "request",
           userType: request.user.type,
           ...Object.fromEntries(
-            Object.entries(request.toObject()).map(([key, value]) => [
-              key,
-              value !== null && value !== undefined ? String(value) : "",
-            ])
-          ),
+            Object.entries(request).map(([key, value]) => [key, String(value)])
+          ), // Ensure all fields in newUpdateFields are strings
         };
 
-        // Send push notifications if we have tokens
-        if (fcmTokens.length > 0) {
-          const valueData = {
-            fcmTokens: fcmTokens,
-            title: "CabKN: New Request",
-            description: "You have received a new request.",
-            image: "",
-            weburl: "",
-            data: messageData,
-          };
+        const valueData = {
+          fcmTokens: fcmTokens,
+          title: "'CabKN: New Request'",
+          description: "You have received a new request.",
+          image: "",
+          weburl: "",
+          data: messageData || {},
+        };
 
-          // Add to job queue for processing
-          jobQueue.addJob({ data: valueData });
+        jobQueue.addJob({ data: valueData });
 
-          // Special admin notification if no riders available
-          const hasRiders = users.some((user) => user.type === "rider");
-          if (!hasRiders) {
-            const adminValueData = {
-              ...valueData,
-              title: "URGENT: No Riders Available",
-              description:
-                "Admin action required - no riders available for this request",
-              data: {
-                ...messageData,
-                isAdminAlert: true,
-                urgent: true,
-              },
-            };
-            jobQueue.addJob({ data: adminValueData });
-
-            // Update request to mark admin notification
-            await Order.findByIdAndUpdate(request._id, { adminNotified: true });
-          }
-        }
+        // Create an array of message objects for each token
+        //  const messages = fcmTokens.map(token => ({
+        //    token: token,
+        //    data: messageData || {},
+        //    notification: {
+        //        title: 'CabKN: New Request',
+        //        body: 'You have received a new request.',
+        //    },
+        //    android: {
+        //     notification: {
+        //        sound: 'ride', // Exclude the file extension
+        //        defaultSound:false,
+        //        channelId:"sound_ride",
+        //        priority:"high"
+        //     },
+        //     },
+        //     apns: {
+        //         payload: {
+        //             aps: {
+        //                 sound: 'ride.mp3',
+        //             },
+        //         },
+        //     },
+        //  }));
+        //  try {
+        //   await admin.messaging().sendEach(messages)
+        // } catch (error) {}
       } catch (error) {
-        console.error("Request error:", error);
+        console.log("error====>>", error);
         callback({
           success: false,
           title: "Request Error",
