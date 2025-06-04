@@ -318,7 +318,7 @@ module.exports = function (server, app) {
           query = { ride_type: { $in: ["ride", "both"] } };
         }
         query = {
-          $or: [{ type: "rider" }, { type: "admin" }],
+          $or: [{ type: "admin" }, { type: "ride" }],
           status: "online",
           ...query,
           isVehicle: true,
