@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Transaction = require("../models/Transaction");
 const { User } = require("../models/user");
 const Category = require("../models/WebSubCategories");
@@ -472,15 +473,13 @@ exports.deleteCatrgoires = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 exports.getRecommendedCategories = async (req, res) => {
   try {
-    // const _id = req.body.id || "0"; // User ID from params
-    const searchQuery = req.body.search || ""; // Optional search term
-    const limit = Math.min(parseInt(req.body.limit) || 10, 10); // Max 10 results
-    const location = req.body.location || {}; // Location-based search
-    // Step 1: Get user's location if ID is provided
+    const searchQuery = req.body.search || "";
+    const limit = Math.min(parseInt(req.body.limit) || 10, 10);
+    const location = req.body.location || {};
 
+    // Step 1: Get user's location if provided
     let userLocation = null;
     const { lat, lng } = location;
     if (lat && lng) {
@@ -489,120 +488,75 @@ exports.getRecommendedCategories = async (req, res) => {
         lng: parseFloat(lng),
       };
     }
-    // if (_id !== "0") {
-    //   const user = await User.findById(_id)
-    //     .select("location.lat location.lng")
-    //     .lean();
-    //   if (user && user.location) {
-    //     userLocation = {
-    //       lat: parseFloat(user.location.lat),
-    //       lng: parseFloat(user.location.lng),
-    //     };
-    //   }
-    // }
 
     // Step 2: Build the base query conditions
-    const baseConditions = { status: "active" };
+    const baseConditions = {
+      status: "active",
+      upload_status: "active",
+    };
 
-    // Step 3: Build the appropriate query based on location availability
-    let categories, totalCount;
-
-    if (userLocation) {
-      // Location-based search with aggregation pipeline
-      const geoNearStage = {
-        $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: [userLocation.lng, userLocation.lat],
-          },
-          distanceField: "distance",
-          maxDistance: 30000, // 30km in meters
-          spherical: true,
-          query: { status: "active" },
-        },
-      };
-
-      // Add text search if provided
-      if (searchQuery) {
-        // console.log("Search query provided:", searchQuery);
-        geoNearStage.$geoNear.query.$or = [
-          { "name.title": { $regex: searchQuery, $options: "i" } },
-          { description: { $regex: searchQuery, $options: "i" } },
-        ];
-      }
-
-      const aggregationPipeline = [
-        geoNearStage,
-        { $sort: { distance: 1 } }, // Sort by nearest first
-        { $limit: limit },
-        {
-          $lookup: {
-            from: "categories",
-            localField: "category",
-            foreignField: "_id",
-            as: "category",
-          },
-        },
-        { $unwind: "$category" },
+    // Step 3: Build the search query
+    const findQuery = { ...baseConditions };
+    if (searchQuery) {
+      findQuery.$or = [
+        { "name.title": { $regex: searchQuery, $options: "i" } },
+        { about: { $regex: searchQuery, $options: "i" } },
+        { address: { $regex: searchQuery, $options: "i" } },
       ];
-
-      [categories, totalCount] = await Promise.all([
-        Category.aggregate(aggregationPipeline),
-        Category.countDocuments({
-          ...baseConditions,
-          ...(searchQuery && {
-            $or: [
-              { name: { $regex: searchQuery, $options: "i" } },
-              { description: { $regex: searchQuery, $options: "i" } },
-            ],
-          }),
-          location: {
-            $near: {
-              $geometry: {
-                type: "Point",
-                coordinates: [userLocation.lng, userLocation.lat],
-              },
-              $maxDistance: 30000,
-            },
-          },
-        }),
-      ]);
-    } else {
-      // Regular text search without location
-      const findQuery = { ...baseConditions };
-
-      if (searchQuery) {
-        findQuery.$or = [
-          { "name.title": { $regex: searchQuery, $options: "i" } },
-          { description: { $regex: searchQuery, $options: "i" } },
-        ];
-      }
-
-      [categories, totalCount] = await Promise.all([
-        Category.find(findQuery)
-          .sort({ createdAt: -1 })
-          .limit(limit)
-          .populate("category")
-          .lean(),
-        Category.countDocuments(findQuery),
-      ]);
     }
 
-    // Step 4: Format the response
+    // Step 4: Fetch all potential categories
+    let categories = await mongoose
+      .model("WebSubCategories")
+      .find(findQuery)
+      .populate("category")
+      .lean();
+
+    // Step 5: Filter by distance if location is provided
+    if (userLocation) {
+      categories = categories.filter((cat) => {
+        if (!cat.lat || !cat.lng) return false;
+
+        const catLat = parseFloat(cat.lat);
+        const catLng = parseFloat(cat.lng);
+
+        // Calculate distance using Haversine formula
+        const distance = getDistanceFromLatLonInKm(
+          userLocation.lat,
+          userLocation.lng,
+          catLat,
+          catLng
+        );
+
+        cat.distance = distance; // Add distance to the category object
+        return distance <= 30; // Filter within 30km
+      });
+
+      // Sort by distance
+      categories.sort((a, b) => a.distance - b.distance);
+    } else {
+      // Default sort by creation date if no location
+      categories.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    // Apply limit after filtering
+    categories = categories.slice(0, limit);
+
+    // Step 6: Format the response
     const response = {
       success: true,
       data: {
         categories: categories.map((cat) => ({
           ...cat,
           distance: cat.distance
-            ? parseFloat((cat.distance / 1000).toFixed(2))
+            ? parseFloat(cat.distance.toFixed(2))
             : undefined,
         })),
         pagination: {
-          totalItems: totalCount,
+          totalItems: categories.length,
           itemsPerPage: categories.length,
           maxDistance: userLocation ? "30km" : undefined,
-          hasMore: totalCount > categories.length,
+          hasMore: false, // Since we're filtering client-side, we can't know if there are more
         },
       },
       usingLocation: userLocation !== null,
@@ -630,3 +584,22 @@ exports.getRecommendedCategories = async (req, res) => {
     });
   }
 };
+
+// Helper function to calculate distance between two coordinates in km
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) *
+      Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
