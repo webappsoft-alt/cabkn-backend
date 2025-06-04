@@ -318,7 +318,7 @@ module.exports = function (server, app) {
           query = { ride_type: { $in: ["ride", "both"] } };
         }
         query = {
-          $or: [{ type: "admin" }, { type: "ride" }],
+          type: "rider",
           status: "online",
           ...query,
           isVehicle: true,
@@ -331,10 +331,15 @@ module.exports = function (server, app) {
           };
         }
 
-        let userIds = await User.find(query).select("name type fcmtoken").lean();
+        let userIds = await User.find(query)
+          .select("name type fcmtoken")
+          .lean();
         //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
-        console.log("userIds====>>", userIds.map((item) =>({ _id: item._id, type: item.type})));
 
+        let adminId = await User.find({ type: "admin" })
+          .select("name type fcmtoken")
+          .lean();
+        console.log(adminId);
         if (subcatId) {
           const subCat = await WebSubCategories.findById(subcatId);
 
