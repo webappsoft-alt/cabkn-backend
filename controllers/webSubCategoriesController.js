@@ -475,10 +475,10 @@ exports.deleteCatrgoires = async (req, res) => {
 
 exports.getRecommendedCategories = async (req, res) => {
   try {
-    const _id = req.query.id || "0"; // User ID from params
-    const searchQuery = req.query.search || ""; // Optional search term
-    const limit = Math.min(parseInt(req.query.limit) || 10, 10); // Max 10 results
-    const location = req.query.location || {}; // Location-based search
+    // const _id = req.body.id || "0"; // User ID from params
+    const searchQuery = req.body.search || ""; // Optional search term
+    const limit = Math.min(parseInt(req.body.limit) || 10, 10); // Max 10 results
+    const location = req.body.location || {}; // Location-based search
     // Step 1: Get user's location if ID is provided
 
     let userLocation = null;
