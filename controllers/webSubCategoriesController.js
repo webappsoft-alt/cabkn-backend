@@ -476,24 +476,34 @@ exports.deleteCatrgoires = async (req, res) => {
 exports.getRecommendedCategories = async (req, res) => {
   try {
     const _id = req.query.id || "0"; // User ID from params
-    const searchQuery = req.query.search || ''; // Optional search term
+    const searchQuery = req.query.search || ""; // Optional search term
     const limit = Math.min(parseInt(req.query.limit) || 10, 10); // Max 10 results
-
+    const location = req.query.location || {}; // Location-based search
     // Step 1: Get user's location if ID is provided
+
     let userLocation = null;
-    if (_id !== "0") {
-      const user = await User.findById(_id).select('location.lat location.lng').lean();
-      if (user && user.location) {
-        userLocation = {
-          lat: parseFloat(user.location.lat),
-          lng: parseFloat(user.location.lng)
-        };
-      }
+    const { lat, lng } = location;
+    if (lat && lng) {
+      userLocation = {
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+      };
     }
+    // if (_id !== "0") {
+    //   const user = await User.findById(_id)
+    //     .select("location.lat location.lng")
+    //     .lean();
+    //   if (user && user.location) {
+    //     userLocation = {
+    //       lat: parseFloat(user.location.lat),
+    //       lng: parseFloat(user.location.lng),
+    //     };
+    //   }
+    // }
 
     // Step 2: Build the base query conditions
     const baseConditions = { status: "active" };
-    
+
     // Step 3: Build the appropriate query based on location availability
     let categories, totalCount;
 
@@ -503,21 +513,21 @@ exports.getRecommendedCategories = async (req, res) => {
         $geoNear: {
           near: {
             type: "Point",
-            coordinates: [userLocation.lng, userLocation.lat]
+            coordinates: [userLocation.lng, userLocation.lat],
           },
           distanceField: "distance",
           maxDistance: 30000, // 30km in meters
           spherical: true,
-          query: { status: "active" }
-        }
+          query: { status: "active" },
+        },
       };
 
       // Add text search if provided
       if (searchQuery) {
         // console.log("Search query provided:", searchQuery);
         geoNearStage.$geoNear.query.$or = [
-          { "name.title": { $regex: searchQuery, $options: 'i' } },
-          { description: { $regex: searchQuery, $options: 'i' } }
+          { "name.title": { $regex: searchQuery, $options: "i" } },
+          { description: { $regex: searchQuery, $options: "i" } },
         ];
       }
 
@@ -530,10 +540,10 @@ exports.getRecommendedCategories = async (req, res) => {
             from: "categories",
             localField: "category",
             foreignField: "_id",
-            as: "category"
-          }
+            as: "category",
+          },
         },
-        { $unwind: "$category" }
+        { $unwind: "$category" },
       ];
 
       [categories, totalCount] = await Promise.all([
@@ -542,39 +552,39 @@ exports.getRecommendedCategories = async (req, res) => {
           ...baseConditions,
           ...(searchQuery && {
             $or: [
-              { name: { $regex: searchQuery, $options: 'i' } },
-              { description: { $regex: searchQuery, $options: 'i' } }
-            ]
+              { name: { $regex: searchQuery, $options: "i" } },
+              { description: { $regex: searchQuery, $options: "i" } },
+            ],
           }),
           location: {
             $near: {
               $geometry: {
                 type: "Point",
-                coordinates: [userLocation.lng, userLocation.lat]
+                coordinates: [userLocation.lng, userLocation.lat],
               },
-              $maxDistance: 30000
-            }
-          }
-        })
+              $maxDistance: 30000,
+            },
+          },
+        }),
       ]);
     } else {
       // Regular text search without location
       const findQuery = { ...baseConditions };
-      
+
       if (searchQuery) {
         findQuery.$or = [
-          { "name.title": { $regex: searchQuery, $options: 'i' } },
-          { description: { $regex: searchQuery, $options: 'i' } }
+          { "name.title": { $regex: searchQuery, $options: "i" } },
+          { description: { $regex: searchQuery, $options: "i" } },
         ];
       }
-      
+
       [categories, totalCount] = await Promise.all([
         Category.find(findQuery)
           .sort({ createdAt: -1 })
           .limit(limit)
           .populate("category")
           .lean(),
-        Category.countDocuments(findQuery)
+        Category.countDocuments(findQuery),
       ]);
     }
 
@@ -582,19 +592,21 @@ exports.getRecommendedCategories = async (req, res) => {
     const response = {
       success: true,
       data: {
-        categories: categories.map(cat => ({
+        categories: categories.map((cat) => ({
           ...cat,
-          distance: cat.distance ? parseFloat((cat.distance / 1000).toFixed(2)) : undefined
+          distance: cat.distance
+            ? parseFloat((cat.distance / 1000).toFixed(2))
+            : undefined,
         })),
         pagination: {
           totalItems: totalCount,
           itemsPerPage: categories.length,
           maxDistance: userLocation ? "30km" : undefined,
-          hasMore: totalCount > categories.length
-        }
+          hasMore: totalCount > categories.length,
+        },
       },
       usingLocation: userLocation !== null,
-      searchQuery: searchQuery || undefined
+      searchQuery: searchQuery || undefined,
     };
 
     if (categories.length === 0) {
@@ -604,17 +616,17 @@ exports.getRecommendedCategories = async (req, res) => {
           ? `No "${searchQuery}" found within 30km`
           : `No "${searchQuery}" found`
         : userLocation
-          ? "No recommended categories found within 30km"
-          : "No recommended categories found";
+        ? "No recommended categories found within 30km"
+        : "No recommended categories found";
     }
 
     res.status(200).json(response);
   } catch (error) {
-    console.error('Error in getRecommendedCategories:', error);
-    res.status(500).json({ 
+    console.error("Error in getRecommendedCategories:", error);
+    res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
