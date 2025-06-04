@@ -331,9 +331,9 @@ module.exports = function (server, app) {
           };
         }
 
-        let userIds = await User.find(query).select("name fcmtoken").lean();
+        let userIds = await User.find(query).select("name type fcmtoken").lean();
         //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
-        console.log("userIds====>>", userIds.map((item) =>{ item._id, item.type}));
+        console.log("userIds====>>", userIds.map((item) =>({ _id: item._id, type: item.type})));
 
         if (subcatId) {
           const subCat = await WebSubCategories.findById(subcatId);
