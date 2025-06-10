@@ -171,5 +171,5 @@ const orderSchema = new mongoose.Schema({
 // // Explicitly define geospatial indexes
 // orderSchema.index({ start_location: '2dsphere' });
 // orderSchema.index({ end_location: '2dsphere' });
-
+orderSchema.index({ schedule_date: -1 }); 
 module.exports = mongoose.model('Order', orderSchema);
