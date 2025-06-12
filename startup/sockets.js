@@ -1922,7 +1922,6 @@ module.exports = function (server, app) {
 
           const status = "cancelled";
 
-          // Find and update the order
           const updatedOrder = await Order.findOne({
             _id: orderId,
             user: senderId,
@@ -1951,6 +1950,12 @@ module.exports = function (server, app) {
             });
           }
 
+          const updateData = {
+            status: status,
+            cancelled_time: Date.now(),
+            completed_date: null,
+          };
+
           if (["accepted"].includes(updatedOrder.status)) {
             const user = await User.findById(senderId);
 
@@ -1962,22 +1967,12 @@ module.exports = function (server, app) {
               });
             }
 
-            await Order.findOneAndUpdate(
-              { _id: orderId, user: senderId },
-              {
-                status: status,
-                refunded: true,
-                completed_date: Date.now(),
-              },
-              { new: true }
-            );
+            updateData.refunded = true;
+            updateData.completed_date = Date.now(); // will be overwritten below as null — no conflict
 
-            if (updatedOrder.paymentType == "paid") {
-              user.amount =
-                Number(user.amount) +
-                Number(
-                  Number(updatedOrder.price) - Number(updatedOrder.adminprice)
-                );
+            if (updatedOrder.paymentType === "paid") {
+              user.amount +=
+                Number(updatedOrder.price) - Number(updatedOrder.adminprice);
               await user.save();
 
               connectedUsers[user._id.toString()]?.forEach((socketId) => {
@@ -1989,26 +1984,19 @@ module.exports = function (server, app) {
 
               const transaction = new Transaction({
                 user: senderId,
-                amount: Number(
-                  Number(updatedOrder.price) - Number(updatedOrder.adminprice)
-                ),
+                amount:
+                  Number(updatedOrder.price) - Number(updatedOrder.adminprice),
                 type: "refunded",
                 order: orderId,
               });
 
               await transaction.save();
             }
+          } else if (["order-start"].includes(updatedOrder.status)) {
+            updateData.refunded = false;
           }
 
-          if (["order-start"].includes(updatedOrder.status)) {
-            await Order.findOneAndUpdate(
-              { _id: orderId, user: senderId },
-              { status: status, refunded: false },
-              { new: true }
-            );
-          }
-
-          if (updatedOrder.bookingtype == "live") {
+          if (updatedOrder.bookingtype === "live") {
             if (updatedOrder.to_id._id) {
               await User.findByIdAndUpdate(
                 updatedOrder.to_id._id,
@@ -2030,7 +2018,6 @@ module.exports = function (server, app) {
             reason
           );
 
-          // Notify the customer about the update
           await sendNotification({
             user: senderId,
             to_id: updatedOrder.to_id._id.toString(),
@@ -2042,13 +2029,10 @@ module.exports = function (server, app) {
             noti: false,
             usertype: updatedOrder.to_id?.type,
           });
+
           const order = await Order.findOneAndUpdate(
             { _id: orderId, user: senderId },
-            {
-              status: status,
-              cancelled_time: Date.now(),
-              completed_date: null,
-            },
+            updateData,
             { new: true }
           )
             .populate("to_id")
@@ -2068,7 +2052,6 @@ module.exports = function (server, app) {
             }
           );
 
-          // Callback success response
           return callback({
             success: true,
             order: order,
