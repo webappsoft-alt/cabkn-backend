@@ -1967,8 +1967,7 @@ module.exports = function (server, app) {
               {
                 status: status,
                 refunded: true,
-                cancelled_time: Date.now(),
-                completed_date: null,
+                completed_date: Date.now(),
               },
               { new: true }
             );
@@ -2045,7 +2044,11 @@ module.exports = function (server, app) {
           });
           const order = await Order.findOneAndUpdate(
             { _id: orderId, user: senderId },
-            { status: status },
+            {
+              status: status,
+              cancelled_time: Date.now(),
+              completed_date: null,
+            },
             { new: true }
           )
             .populate("to_id")
