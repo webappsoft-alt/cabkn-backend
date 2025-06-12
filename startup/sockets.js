@@ -131,7 +131,7 @@ module.exports = function (server, app) {
             const admins = await User.find({ type: "admin" })
               .select("_id fcmtoken")
               .lean();
-
+            console.log("Admins found:", admins);
             // Send notifications to all admins
             for (const admin of admins) {
               await sendNotification({
@@ -336,10 +336,10 @@ module.exports = function (server, app) {
           .lean();
         //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
 
-        let adminId = await User.find({ type: "admin" })
+        let adminIds = await User.find({ type: "admin" })
           .select("name type fcmtoken")
           .lean();
-        console.log(adminId);
+        // console.log(adminId);
         if (subcatId) {
           const subCat = await WebSubCategories.findById(subcatId);
 
@@ -460,6 +460,23 @@ module.exports = function (server, app) {
               message: "You have received a new request.",
             });
           });
+        }
+        for (let admin of adminIds) {
+          const adminId = admin._id.toString();
+          const sockets = connectedUsers[adminId];
+          if (sockets && sockets.size > 0) {
+            sockets.forEach((socketId) => {
+              io.to(socketId).emit("recieve-request-rider", {
+                request,
+                userType: request.user.type,
+                success: true,
+                title: "New Request",
+                message: "You have received a new request.",
+              });
+            });
+          } else {
+            console.log(`Admin ${adminId} not connected`);
+          }
         }
 
         // Ensure all values in data are strings

@@ -459,46 +459,54 @@ exports.AdminRides = async (req, res) => {
           as: "to_id",
         },
       },
-      // {
-      //   $lookup: {
-      //     from: "ratings",
-      //     localField: "customer_rating",
-      //     foreignField: "_id",
-      //     as: "customer_rating",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "ratings",
-      //     localField: "driver_rating",
-      //     foreignField: "_id",
-      //     as: "driver_rating",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "vehicles",
-      //     localField: "vehicle",
-      //     foreignField: "_id",
-      //     as: "vehicle",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "coupons",
-      //     localField: "coupon",
-      //     foreignField: "_id",
-      //     as: "coupon",
-      //   },
-      // },
-      // {
-      //   $lookup: {
-      //     from: "servicessubcategories",
-      //     localField: "service",
-      //     foreignField: "_id",
-      //     as: "service",
-      //   },
-      // },
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "customer_rating",
+          foreignField: "_id",
+          as: "customer_rating",
+        },
+      },
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "driver_rating",
+          foreignField: "_id",
+          as: "driver_rating",
+        },
+      },
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicle",
+          foreignField: "_id",
+          as: "vehicle",
+        },
+      },
+      {
+        $lookup: {
+          from: "coupons",
+          localField: "coupon",
+          foreignField: "_id",
+          as: "coupon",
+        },
+      },
+      {
+        $lookup: {
+          from: "servicessubcategories",
+          localField: "service",
+          foreignField: "_id",
+          as: "service",
+        },
+      },
+      {
+        $lookup: {
+          from: "users", // Assuming "accepted_by" refers to a user
+          localField: "accepted_by",
+          foreignField: "_id",
+          as: "accepted_by",
+        },
+      },
     ]).exec();
 
     for (let post of applications) {
