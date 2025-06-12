@@ -1,32 +1,38 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
   order_id: String,
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
+    ref: "user",
     required: true,
   },
   to_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
+    ref: "user",
   },
   service: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServicesSubCategories',
+    ref: "ServicesSubCategories",
   },
-  userIds: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
-  }],
-  rejected_by: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
-  }],
-  accepted_by: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
-  }],
+  userIds: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
+  ],
+  rejected_by: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
+  ],
+  accepted_by: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
+  ],
   price: {
     type: Number,
     default: 0,
@@ -46,7 +52,7 @@ const orderSchema = new mongoose.Schema({
   start_location: {
     type: {
       type: String,
-      enum: ['Point'],
+      enum: ["Point"],
       required: true,
     },
     coordinates: [Number],
@@ -56,17 +62,17 @@ const orderSchema = new mongoose.Schema({
   schedule_date: {
     type: Date,
     default: Date.now,
-    index: true
+    index: true,
   },
   schedule_time: {
     type: Date,
     default: Date.now,
-    index: true
+    index: true,
   },
   end_location: {
     type: {
       type: String,
-      enum: ['Point'],
+      enum: ["Point"],
       required: true,
     },
     coordinates: [Number],
@@ -80,90 +86,95 @@ const orderSchema = new mongoose.Schema({
   },
   customer_rating: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Rating',
+    ref: "Rating",
   },
   liability: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Liabilties',
+    ref: "Liabilties",
   },
   ridertype: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'RideType',
+    ref: "RideType",
   },
   coupon: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Coupon',
+    ref: "Coupon",
   },
   vehicle: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle',
+    ref: "Vehicle",
   },
   driver_rating: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Rating',
+    ref: "Rating",
   },
   paymentDone: {
     type: Boolean,
-    default: false
+    default: false,
   },
   creditDone: {
     type: Boolean,
-    default: false
+    default: false,
   },
   adminPayment: {
     type: Boolean,
-    default: false
+    default: false,
   },
   note: String,
   color: String,
   size: String,
   passengerCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   quantity: {
     type: Number,
-    default: 0
+    default: 0,
   },
-  payment: [{
-    amount: Number,
-    date: Date
-  }],
+  payment: [
+    {
+      amount: Number,
+      date: Date,
+    },
+  ],
   status: {
     type: String,
-    default: 'pending',
-    enum: ['pending', 'accepted', "order-start", "completed", 'cancelled']
+    default: "pending",
+    enum: ["pending", "accepted", "order-start", "completed", "cancelled"],
   },
   payment_status: {
     type: String,
-    default: 'pending',
-    enum: ['pending', 'completed', "received"]
+    default: "pending",
+    enum: ["pending", "completed", "received"],
   },
   type: {
     type: String,
-    default: 'parcel',
-    enum: ['parcel', 'driver']
+    default: "parcel",
+    enum: ["parcel", "driver"],
   },
   bookingtype: {
     type: String,
-    default: 'live',
-    enum: ['live', 'schedule']
+    default: "live",
+    enum: ["live", "schedule"],
   },
   paymentType: {
     type: String,
-    default: 'cash',
-    enum: ['cash', 'paid', 'wallet']
+    default: "cash",
+    enum: ["cash", "paid", "wallet"],
   },
   createdAt: {
     type: Date,
     default: Date.now,
-    index: true
+    index: true,
   },
-  completed_date:Date,
+  completed_date: Date,
   pickTime: {
     type: Date,
   },
   dropTime: {
+    type: Date,
+  },
+  cancelled_time: {
     type: Date,
   },
 });
@@ -171,5 +182,5 @@ const orderSchema = new mongoose.Schema({
 // // Explicitly define geospatial indexes
 // orderSchema.index({ start_location: '2dsphere' });
 // orderSchema.index({ end_location: '2dsphere' });
-orderSchema.index({ schedule_date: -1 }); 
-module.exports = mongoose.model('Order', orderSchema);
+orderSchema.index({ schedule_date: -1 });
+module.exports = mongoose.model("Order", orderSchema);

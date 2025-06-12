@@ -1964,7 +1964,12 @@ module.exports = function (server, app) {
 
             await Order.findOneAndUpdate(
               { _id: orderId, user: senderId },
-              { status: status, refunded: true, completed_date: Date.now() },
+              {
+                status: status,
+                refunded: true,
+                cancelled_time: Date.now(),
+                completed_date: null,
+              },
               { new: true }
             );
 
