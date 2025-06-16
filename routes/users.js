@@ -990,6 +990,7 @@ router.put("/update-location", auth, async (req, res) => {
   console.log("Location Checking successfully", location);
 
   const adminUser = await User.findOne({ type: "admin" }).select("type");
+  console.log("Admin User", adminUser);
   const io = req.app.get("socketio");
   for (let order of orders) {
     io.to(order.user.toString()).emit("location-update", {
