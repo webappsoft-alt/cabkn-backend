@@ -131,7 +131,6 @@ module.exports = function (server, app) {
             const admins = await User.find({ type: "admin" })
               .select("_id fcmtoken")
               .lean();
-            console.log("Admins found:", admins);
             // Send notifications to all admins
             for (const admin of admins) {
               await sendNotification({
