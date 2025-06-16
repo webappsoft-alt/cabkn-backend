@@ -126,7 +126,7 @@ module.exports = function (server, app) {
           });
 
           // If sender is customer, also notify admins
-          if (isCustomer) {
+          if (isCustomer && recipient.type !== "admin") {
             // Find all admin users
             const admins = await User.find({ type: "admin" })
               .select("_id fcmtoken")
