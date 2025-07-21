@@ -9,3 +9,6 @@ uncaughtExceptions.log
 data.tx
 
 *.test.js
+
+.vscode/
+.DS_Store

@@ -257,6 +257,7 @@ module.exports = function (server, app) {
     socket.on("send-request-customer", async (data, callback) => {
       try {
         const {
+          riderId,
           start_lat,
           start_lng,
           start_address,
@@ -330,10 +331,41 @@ module.exports = function (server, app) {
           };
         }
 
-        let userIds = await User.find(query)
-          .select("name type fcmtoken")
-          .lean();
-        //  const users = await getUsersInRadius(start_lng, start_lat, 5, address)
+        let userIds = [];
+        let fcmTokens = [];
+        
+        // If riderId is provided, only send to that specific rider
+        if (riderId) {
+          const rider = await User.findOne({ _id: riderId })
+            .select("name type fcmtoken")
+            .lean();
+          if (rider) {
+            userIds = [rider._id];
+            if (rider.fcmtoken) {
+              fcmTokens = [rider.fcmtoken];
+            }
+          }
+        } else {
+          // Original logic when no riderId is provided
+          userIds = await User.find(query)
+            .select("name type fcmtoken")
+            .lean();
+          
+          fcmTokens = [
+            ...new Set(
+              userIds
+                .map((item) => item.fcmtoken)
+                .filter((item) => item !== undefined || item !== "")
+            ),
+          ];
+          userIds = [
+            ...new Set(
+              userIds
+                .map((item) => item._id)
+                .filter((item) => item !== undefined || item !== "")
+            ),
+          ];
+        }
 
         let adminIds = await User.find({ type: "admin" })
           .select("name type fcmtoken")
@@ -360,28 +392,6 @@ module.exports = function (server, app) {
 
           await subCat.save();
         }
-
-        //  if (userIds.length == 0 ) {
-        //     return callback({
-        //       success: false,
-        //       title: 'Request Error',
-        //       message: "No users found in that area.",
-        //     });
-        //  }
-        const fcmTokens = [
-          ...new Set(
-            userIds
-              .map((item) => item.fcmtoken)
-              .filter((item) => item !== undefined || item !== "")
-          ),
-        ];
-        userIds = [
-          ...new Set(
-            userIds
-              .map((item) => item._id)
-              .filter((item) => item !== undefined || item !== "")
-          ),
-        ];
 
         const newRequest = new Order({
           user: senderId,
@@ -485,7 +495,7 @@ module.exports = function (server, app) {
           userType: request.user.type,
           ...Object.fromEntries(
             Object.entries(request).map(([key, value]) => [key, String(value)])
-          ), // Ensure all fields in newUpdateFields are strings
+          ),
         };
 
         const valueData = {
@@ -498,34 +508,6 @@ module.exports = function (server, app) {
         };
 
         jobQueue.addJob({ data: valueData });
-
-        // Create an array of message objects for each token
-        //  const messages = fcmTokens.map(token => ({
-        //    token: token,
-        //    data: messageData || {},
-        //    notification: {
-        //        title: 'CabKN: New Request',
-        //        body: 'You have received a new request.',
-        //    },
-        //    android: {
-        //     notification: {
-        //        sound: 'ride', // Exclude the file extension
-        //        defaultSound:false,
-        //        channelId:"sound_ride",
-        //        priority:"high"
-        //     },
-        //     },
-        //     apns: {
-        //         payload: {
-        //             aps: {
-        //                 sound: 'ride.mp3',
-        //             },
-        //         },
-        //     },
-        //  }));
-        //  try {
-        //   await admin.messaging().sendEach(messages)
-        // } catch (error) {}
       } catch (error) {
         console.log("error====>>", error);
         callback({
