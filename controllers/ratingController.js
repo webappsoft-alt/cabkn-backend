@@ -429,3 +429,39 @@ exports.getUserRatings = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+exports.deleteSubCatRating = async (req, res) => {
+  try {
+    const { ratingId } = req.params;
+    const userId = req.user._id;
+
+    const rating = await SubWebCatRating.findById(ratingId);
+    if (!rating) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Rating not found" });
+    }
+    if (rating.user.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+    await SubWebCatRating.deleteOne({ _id: ratingId });
+    const webSubCategory = await WebSubCategories.findById(
+      rating.webSubCategory
+    );
+    if (webSubCategory) {
+      webSubCategory.totalReviews -= 1;
+      webSubCategory.avgRating = calculateAverage(
+        webSubCategory.avgRating || 0,
+        -rating.rating
+      );
+      await webSubCategory.save();
+    }
+    res.status(200).json({
+      success: true,
+      message: "Sub-category rating deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting sub-category rating:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
