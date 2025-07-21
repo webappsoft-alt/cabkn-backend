@@ -198,7 +198,7 @@ exports.getSubCatRatings = async (req, res) => {
     if (rating.length > 0) {
       res.status(200).json({
         success: true,
-        ratings: rating,
+        ratings: anonymizedRatings, // Use the anonymized ratings here
         totalLength: totalLength,
         totalsRating: {
           1: rating1,
