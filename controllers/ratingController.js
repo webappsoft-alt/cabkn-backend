@@ -432,10 +432,11 @@ exports.getUserRatings = async (req, res) => {
 
 exports.deleteSubCatRating = async (req, res) => {
   try {
-    const { ratingId } = req.params;
+    const ratingId = req.params.id;
     const userId = req.user._id;
-
+    console.log("Deleting rating with ID:", ratingId);
     const rating = await SubWebCatRating.findById(ratingId);
+    console.log("Rating to delete:", rating);
     if (!rating) {
       return res
         .status(404)
