@@ -12,5 +12,5 @@ router.get(
   ratingController.getserviceSubCatRatings
 );
 router.get("/all/:userId/:id?", ratingController.getUserRatings);
-router.delete("websubcat/:id", auth, ratingController.deleteSubCatRating);
+router.delete("/websubcat/:id", auth, ratingController.deleteSubCatRating);
 module.exports = router;
