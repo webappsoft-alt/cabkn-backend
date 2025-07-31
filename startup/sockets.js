@@ -266,6 +266,8 @@ module.exports = function (server, app) {
           end_address,
           price,
           type,
+          title,
+          image,
           bookingtype,
           schedule_date,
           schedule_time,
@@ -311,6 +313,30 @@ module.exports = function (server, app) {
         //   });
         // }
 
+        if (type === "parcel") {
+          if (!title && !image) {
+            return callback({
+              success: false,
+              title: "Parcel Error",
+              message: "Both title and image are required.",
+            });
+          }
+          if (!title) {
+            return callback({
+              success: false,
+              title: "Parcel Error",
+              message: "Title is required.",
+            });
+          }
+          if (!image) {
+            return callback({
+              success: false,
+              title: "Parcel Error",
+              message: "Image is required.",
+            });
+          }
+        }
+
         let query = {};
         if (type === "parcel") {
           query = { ride_type: { $in: ["parcel", "both"] } };
@@ -333,7 +359,7 @@ module.exports = function (server, app) {
 
         let userIds = [];
         let fcmTokens = [];
-        
+
         // If riderId is provided, only send to that specific rider
         if (riderId) {
           const rider = await User.findOne({ _id: riderId })
@@ -347,10 +373,8 @@ module.exports = function (server, app) {
           }
         } else {
           // Original logic when no riderId is provided
-          userIds = await User.find(query)
-            .select("name type fcmtoken")
-            .lean();
-          
+          userIds = await User.find(query).select("name type fcmtoken").lean();
+
           fcmTokens = [
             ...new Set(
               userIds
@@ -404,6 +428,8 @@ module.exports = function (server, app) {
             type: "Point",
             coordinates: [Number(end_lng), Number(end_lat)],
           },
+            title,
+            image,
           start_address,
           end_address,
           type,
