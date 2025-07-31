@@ -428,8 +428,8 @@ module.exports = function (server, app) {
             type: "Point",
             coordinates: [Number(end_lng), Number(end_lat)],
           },
-            title,
-            image,
+          title,
+          image,
           start_address,
           end_address,
           type,
@@ -1233,134 +1233,158 @@ module.exports = function (server, app) {
       }
     );
 
-    socket.on("update-order-admin", async ({ to_id, orderId }, callback) => {
-      try {
-        const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
-        );
+    socket.on(
+      "update-order-admin",
+      async ({ to_id, orderId, to_ids = [] }, callback) => {
+        try {
+          const senderId = Object.keys(connectedUsers).find((userId) =>
+            connectedUsers[userId].has(socket.id)
+          );
 
-        if (!senderId) {
-          return callback({
-            success: false,
-            title: "Authentication Error",
-            message: "Sender ID not found.",
-          });
-        }
+          if (!senderId) {
+            return callback({
+              success: false,
+              title: "Authentication Error",
+              message: "Sender ID not found.",
+            });
+          }
 
-        const order = await Order.findById(orderId)
-          .populate("user")
-          .populate("ridertype")
-          .populate("liability");
+          const order = await Order.findById(orderId)
+            .populate("user")
+            .populate("ridertype")
+            .populate("liability");
 
-        if (!order) {
-          return callback({
-            success: false,
-            title: "Order Update",
-            message: "Invalid order ID.",
-          });
-        }
+          if (!order) {
+            return callback({
+              success: false,
+              title: "Order Update",
+              message: "Invalid order ID.",
+            });
+          }
 
-        if (order.status !== "pending") {
-          return callback({
-            success: false,
-            title: "Order Update",
-            message: "Order has already been assigned to someone else.",
-          });
-        }
+          if (order.status !== "pending") {
+            return callback({
+              success: false,
+              title: "Order Update",
+              message: "Order has already been assigned to someone else.",
+            });
+          }
+    
+            if (to_ids) {
+              // If to_ids is an array, loop through each recipient
+              const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
 
-        const to_user = await User.findById(to_id).lean();
+              for (const to_id of recipients) {
+                const to_user = await User.findById(to_id).lean();
 
-        if (!to_user) {
-          return callback({
-            success: false,
-            title: "Request Error",
-            message:
-              "You are already in a ride. Please complete this before starting another one.",
-          });
-        }
+                if (to_user && connectedUsers[to_id.toString()]) {
+                  connectedUsers[to_id.toString()].forEach((socketId) => {
+                    io.to(socketId).emit("recieve-request-rider", {
+                      to_user,
+                      userType: to_user.type, // Removed .user since to_user is already the user doc
+                      success: true,
+                      title: "New Request",
+                      message: "You have received a new request.",
+                    });
+                  });
+                }
+              }
+            }
+          
+          const to_user = await User.findById(to_id).lean();
 
-        // Update the order status
-        order.status = "accepted";
-        order.vehicle = to_user.vehicle;
+          if (!to_user) {
+            return callback({
+              success: false,
+              title: "Request Error",
+              message:
+                "You are already in a ride. Please complete this before starting another one.",
+            });
+          }
 
-        order.to_id = to_user._id;
-        await order.save();
+          // Update the order status
+          order.status = "accepted";
+          order.vehicle = to_user.vehicle;
 
-        // if (order.bookingtype=='live') {
-        //   await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
-        // }
+          order.to_id = to_user._id;
+          await order.save();
 
-        const date = new Date(order.schedule_date);
+          // if (order.bookingtype=='live') {
+          //   await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
+          // }
 
-        // Send notifications
-        await sendNotification({
-          user: senderId,
-          to_id: to_user?._id.toString(),
-          description:
-            order.bookingtype == "live"
-              ? `You have been assigned by admin to a ride and your ride has been started.`
-              : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
-          type: "order",
-          title: "Offer Accepted",
-          fcmtoken: to_user?.fcmtoken,
-          order: orderId,
-          usertype: to_user?.type,
-        });
+          const date = new Date(order.schedule_date);
 
-        // await sendNotification({
-        //   user: request.user?._id.toString(),
-        //   to_id: senderId,
-        //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
-        //   type: "order",
-        //   title: "Offer Accepted",
-        //   fcmtoken: order?.user?.fcmtoken,
-        //   order: orderId,
-        //   request: requestId,
-        // });
-
-        connectedUsers[to_user._id.toString()]?.forEach((socketId) => {
-          io.to(socketId).emit("update-request-rider", {
-            success: true,
-            title: "Offer Accepted",
-            type: order.bookingtype,
-            message:
+          // Send notifications
+          await sendNotification({
+            user: senderId,
+            to_id: to_user?._id.toString(),
+            description:
               order.bookingtype == "live"
                 ? `You have been assigned by admin to a ride and your ride has been started.`
                 : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+            type: "order",
+            title: "Offer Accepted",
+            fcmtoken: to_user?.fcmtoken,
+            order: orderId,
+            usertype: to_user?.type,
           });
-        });
 
-        // Notify other riders to filter out the request
-        const userIds = await User.find({
-          type: "rider",
-          status: { $in: ["online", "offline"] },
-          _id: { $ne: to_user._id.toString() },
-        })
-          .select("fcmtoken")
-          .lean();
+          // await sendNotification({
+          //   user: request.user?._id.toString(),
+          //   to_id: senderId,
+          //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
+          //   type: "order",
+          //   title: "Offer Accepted",
+          //   fcmtoken: order?.user?.fcmtoken,
+          //   order: orderId,
+          //   request: requestId,
+          // });
 
-        for (let user of userIds) {
-          connectedUsers[user._id.toString()]?.forEach((socketId) => {
-            io.to(socketId).emit("filter-request-rider", {
-              request: orderId,
+          connectedUsers[to_user._id.toString()]?.forEach((socketId) => {
+            io.to(socketId).emit("update-request-rider", {
               success: true,
+              title: "Offer Accepted",
+              type: order.bookingtype,
+              message:
+                order.bookingtype == "live"
+                  ? `You have been assigned by admin to a ride and your ride has been started.`
+                  : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
             });
           });
-        }
 
-        return callback({
-          success: true,
-          title: "Offer Accepted",
-          message: "The ride has been started and notifications sent.",
-        });
-      } catch (error) {
-        return callback({
-          success: false,
-          title: "Error",
-          message: error.message,
-        });
+          // Notify other riders to filter out the request
+          const userIds = await User.find({
+            type: "rider",
+            status: { $in: ["online", "offline"] },
+            _id: { $ne: to_user._id.toString() },
+          })
+            .select("fcmtoken")
+            .lean();
+
+          for (let user of userIds) {
+            connectedUsers[user._id.toString()]?.forEach((socketId) => {
+              io.to(socketId).emit("filter-request-rider", {
+                request: orderId,
+                success: true,
+              });
+            });
+          }
+
+          return callback({
+            success: true,
+            title: "Offer Accepted",
+            message: "The ride has been started and notifications sent.",
+          });
+        } catch (error) {
+          return callback({
+            success: false,
+            title: "Error",
+            message: error.message,
+          });
+        }
       }
-    });
+    );
 
     socket.on("pick-rider", async ({ orderId }, callback) => {
       try {
