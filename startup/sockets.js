@@ -257,6 +257,7 @@ module.exports = function (server, app) {
     socket.on("send-request-customer", async (data, callback) => {
       try {
         const {
+          to_ids,
           riderId,
           start_lat,
           start_lng,
@@ -293,6 +294,7 @@ module.exports = function (server, app) {
         const senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
+        console.log("Hit socket");
 
         if (!senderId) {
           return callback({
@@ -485,22 +487,87 @@ module.exports = function (server, app) {
           message: "You have successfully sent a request to all nearby users!",
         });
 
-        for (let user of userIds) {
-          connectedUsers[user.toString()]?.forEach((socketId) => {
-            io.to(socketId).emit("recieve-request-rider", {
-              request,
-              userType: request.user.type,
-              success: true,
-              title: "New Request",
-              message: "You have received a new request.",
-            });
-          });
-        }
-        for (let admin of adminIds) {
-          const adminId = admin._id.toString();
-          const sockets = connectedUsers[adminId];
-          if (sockets && sockets.size > 0) {
-            sockets.forEach((socketId) => {
+        if (to_ids) {
+          // If to_ids is an array, loop through each recipient
+          const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
+          const users = await User.find({
+            _id: { $in: recipients },
+          }).lean();
+          fcmTokens = [
+            ...new Set(
+              users
+                .map((item) => item.fcmtoken)
+                .filter((item) => item !== undefined || item !== "")
+            ),
+          ];
+          console.log(recipients, fcmTokens);
+
+          for (const to_id of recipients) {
+            const to_user = await User.findById(to_id).lean();
+            console.log(to_user);
+            if (to_user && connectedUsers[to_id.toString()]) {
+              connectedUsers[to_id.toString()].forEach((socketId) => {
+                io.to(socketId).emit("recieve-request-rider", {
+                  to_user,
+                  userType: to_user.type,
+                  success: true,
+                  title: "New Request",
+                  message: "You have received a new request.",
+                });
+              });
+            }
+          }
+
+          // Admin notifications (same in both branches)
+          for (let admin of adminIds) {
+            const adminId = admin._id.toString();
+            const sockets = connectedUsers[adminId];
+            if (sockets && sockets.size > 0) {
+              sockets.forEach((socketId) => {
+                io.to(socketId).emit("recieve-request-rider", {
+                  request,
+                  userType: request.user.type,
+                  success: true,
+                  title: "New Request",
+                  message: "You have received a new request.",
+                });
+              });
+            } else {
+              console.log(`Admin ${adminId} not connected`);
+            }
+          }
+
+          // FCM notification logic (same in both branches)
+          const messageData = {
+            notiId: "request",
+            messageType: "request",
+            userType:
+              recipients.length > 0
+                ? (await User.findById(recipients[0]).lean()).type
+                : request.user.type,
+            ...Object.fromEntries(
+              Object.entries(request).map(([key, value]) => [
+                key,
+                String(value),
+              ])
+            ),
+          };
+
+          const valueData = {
+            fcmTokens: fcmTokens,
+            title: "'CabKN: New Request'",
+            description: "You have received a new request.",
+            image: "",
+            weburl: "",
+            data: messageData || {},
+          };
+
+          jobQueue.addJob({ data: valueData });
+        } else {
+          // Broadcast to all users (userIds) when no specific to_ids provided
+          for (let user of userIds) {
+            console.log(user);
+            connectedUsers[user.toString()]?.forEach((socketId) => {
               io.to(socketId).emit("recieve-request-rider", {
                 request,
                 userType: request.user.type,
@@ -509,31 +576,51 @@ module.exports = function (server, app) {
                 message: "You have received a new request.",
               });
             });
-          } else {
-            console.log(`Admin ${adminId} not connected`);
           }
+
+          // Admin notifications (same as above)
+          for (let admin of adminIds) {
+            const adminId = admin._id.toString();
+            const sockets = connectedUsers[adminId];
+            if (sockets && sockets.size > 0) {
+              sockets.forEach((socketId) => {
+                io.to(socketId).emit("recieve-request-rider", {
+                  request,
+                  userType: request.user.type,
+                  success: true,
+                  title: "New Request",
+                  message: "You have received a new request.",
+                });
+              });
+            } else {
+              console.log(`Admin ${adminId} not connected`);
+            }
+          }
+
+          // FCM notification logic (same as above)
+          const messageData = {
+            notiId: "request",
+            messageType: "request",
+            userType: request.user.type,
+            ...Object.fromEntries(
+              Object.entries(request).map(([key, value]) => [
+                key,
+                String(value),
+              ])
+            ),
+          };
+
+          const valueData = {
+            fcmTokens: fcmTokens,
+            title: "'CabKN: New Request'",
+            description: "You have received a new request.",
+            image: "",
+            weburl: "",
+            data: messageData || {},
+          };
+
+          jobQueue.addJob({ data: valueData });
         }
-
-        // Ensure all values in data are strings
-        const messageData = {
-          notiId: "request",
-          messageType: "request",
-          userType: request.user.type,
-          ...Object.fromEntries(
-            Object.entries(request).map(([key, value]) => [key, String(value)])
-          ),
-        };
-
-        const valueData = {
-          fcmTokens: fcmTokens,
-          title: "'CabKN: New Request'",
-          description: "You have received a new request.",
-          image: "",
-          weburl: "",
-          data: messageData || {},
-        };
-
-        jobQueue.addJob({ data: valueData });
       } catch (error) {
         console.log("error====>>", error);
         callback({
@@ -1233,158 +1320,134 @@ module.exports = function (server, app) {
       }
     );
 
-    socket.on(
-      "update-order-admin",
-      async ({ to_id, orderId, to_ids = [] }, callback) => {
-        try {
-          const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
-          );
+    socket.on("update-order-admin", async ({ to_id, orderId }, callback) => {
+      try {
+        const senderId = Object.keys(connectedUsers).find((userId) =>
+          connectedUsers[userId].has(socket.id)
+        );
 
-          if (!senderId) {
-            return callback({
-              success: false,
-              title: "Authentication Error",
-              message: "Sender ID not found.",
-            });
-          }
+        if (!senderId) {
+          return callback({
+            success: false,
+            title: "Authentication Error",
+            message: "Sender ID not found.",
+          });
+        }
 
-          const order = await Order.findById(orderId)
-            .populate("user")
-            .populate("ridertype")
-            .populate("liability");
+        const order = await Order.findById(orderId)
+          .populate("user")
+          .populate("ridertype")
+          .populate("liability");
 
-          if (!order) {
-            return callback({
-              success: false,
-              title: "Order Update",
-              message: "Invalid order ID.",
-            });
-          }
+        if (!order) {
+          return callback({
+            success: false,
+            title: "Order Update",
+            message: "Invalid order ID.",
+          });
+        }
 
-          if (order.status !== "pending") {
-            return callback({
-              success: false,
-              title: "Order Update",
-              message: "Order has already been assigned to someone else.",
-            });
-          }
-    
-            if (to_ids) {
-              // If to_ids is an array, loop through each recipient
-              const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
+        if (order.status !== "pending") {
+          return callback({
+            success: false,
+            title: "Order Update",
+            message: "Order has already been assigned to someone else.",
+          });
+        }
 
-              for (const to_id of recipients) {
-                const to_user = await User.findById(to_id).lean();
+        const to_user = await User.findById(to_id).lean();
 
-                if (to_user && connectedUsers[to_id.toString()]) {
-                  connectedUsers[to_id.toString()].forEach((socketId) => {
-                    io.to(socketId).emit("recieve-request-rider", {
-                      to_user,
-                      userType: to_user.type, // Removed .user since to_user is already the user doc
-                      success: true,
-                      title: "New Request",
-                      message: "You have received a new request.",
-                    });
-                  });
-                }
-              }
-            }
-          
-          const to_user = await User.findById(to_id).lean();
+        if (!to_user) {
+          return callback({
+            success: false,
+            title: "Request Error",
+            message:
+              "You are already in a ride. Please complete this before starting another one.",
+          });
+        }
 
-          if (!to_user) {
-            return callback({
-              success: false,
-              title: "Request Error",
-              message:
-                "You are already in a ride. Please complete this before starting another one.",
-            });
-          }
+        // Update the order status
+        order.status = "accepted";
+        order.vehicle = to_user.vehicle;
 
-          // Update the order status
-          order.status = "accepted";
-          order.vehicle = to_user.vehicle;
+        order.to_id = to_user._id;
+        await order.save();
 
-          order.to_id = to_user._id;
-          await order.save();
+        // if (order.bookingtype=='live') {
+        //   await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
+        // }
 
-          // if (order.bookingtype=='live') {
-          //   await User.findByIdAndUpdate(request.user._id,{ isRiding : true },{new:true})
-          // }
+        const date = new Date(order.schedule_date);
 
-          const date = new Date(order.schedule_date);
+        // Send notifications
+        await sendNotification({
+          user: senderId,
+          to_id: to_user?._id.toString(),
+          description:
+            order.bookingtype == "live"
+              ? `You have been assigned by admin to a ride and your ride has been started.`
+              : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+          type: "order",
+          title: "Offer Accepted",
+          fcmtoken: to_user?.fcmtoken,
+          order: orderId,
+          usertype: to_user?.type,
+        });
 
-          // Send notifications
-          await sendNotification({
-            user: senderId,
-            to_id: to_user?._id.toString(),
-            description:
+        // await sendNotification({
+        //   user: request.user?._id.toString(),
+        //   to_id: senderId,
+        //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
+        //   type: "order",
+        //   title: "Offer Accepted",
+        //   fcmtoken: order?.user?.fcmtoken,
+        //   order: orderId,
+        //   request: requestId,
+        // });
+
+        connectedUsers[to_user._id.toString()]?.forEach((socketId) => {
+          io.to(socketId).emit("update-request-rider", {
+            success: true,
+            title: "Offer Accepted",
+            type: order.bookingtype,
+            message:
               order.bookingtype == "live"
                 ? `You have been assigned by admin to a ride and your ride has been started.`
                 : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
-            type: "order",
-            title: "Offer Accepted",
-            fcmtoken: to_user?.fcmtoken,
-            order: orderId,
-            usertype: to_user?.type,
           });
+        });
 
-          // await sendNotification({
-          //   user: request.user?._id.toString(),
-          //   to_id: senderId,
-          //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
-          //   type: "order",
-          //   title: "Offer Accepted",
-          //   fcmtoken: order?.user?.fcmtoken,
-          //   order: orderId,
-          //   request: requestId,
-          // });
+        // Notify other riders to filter out the request
+        const userIds = await User.find({
+          type: "rider",
+          status: { $in: ["online", "offline"] },
+          _id: { $ne: to_user._id.toString() },
+        })
+          .select("fcmtoken")
+          .lean();
 
-          connectedUsers[to_user._id.toString()]?.forEach((socketId) => {
-            io.to(socketId).emit("update-request-rider", {
+        for (let user of userIds) {
+          connectedUsers[user._id.toString()]?.forEach((socketId) => {
+            io.to(socketId).emit("filter-request-rider", {
+              request: orderId,
               success: true,
-              title: "Offer Accepted",
-              type: order.bookingtype,
-              message:
-                order.bookingtype == "live"
-                  ? `You have been assigned by admin to a ride and your ride has been started.`
-                  : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
             });
-          });
-
-          // Notify other riders to filter out the request
-          const userIds = await User.find({
-            type: "rider",
-            status: { $in: ["online", "offline"] },
-            _id: { $ne: to_user._id.toString() },
-          })
-            .select("fcmtoken")
-            .lean();
-
-          for (let user of userIds) {
-            connectedUsers[user._id.toString()]?.forEach((socketId) => {
-              io.to(socketId).emit("filter-request-rider", {
-                request: orderId,
-                success: true,
-              });
-            });
-          }
-
-          return callback({
-            success: true,
-            title: "Offer Accepted",
-            message: "The ride has been started and notifications sent.",
-          });
-        } catch (error) {
-          return callback({
-            success: false,
-            title: "Error",
-            message: error.message,
           });
         }
+
+        return callback({
+          success: true,
+          title: "Offer Accepted",
+          message: "The ride has been started and notifications sent.",
+        });
+      } catch (error) {
+        return callback({
+          success: false,
+          title: "Error",
+          message: error.message,
+        });
       }
-    );
+    });
 
     socket.on("pick-rider", async ({ orderId }, callback) => {
       try {
