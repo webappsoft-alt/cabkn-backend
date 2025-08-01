@@ -504,17 +504,27 @@ module.exports = function (server, app) {
 
           for (const to_id of recipients) {
             const to_user = await User.findById(to_id).lean();
-            console.log(to_user);
-            if (to_user && connectedUsers[to_id.toString()]) {
-              connectedUsers[to_id.toString()].forEach((socketId) => {
-                io.to(socketId).emit("recieve-request-rider", {
-                  to_user,
-                  userType: to_user.type,
-                  success: true,
-                  title: "New Request",
-                  message: "You have received a new request.",
+
+            if (to_user) {
+              console.log("Sending to user:", to_user._id);
+
+              // Send socket notification if user is connected
+              if (connectedUsers[to_id.toString()]) {
+                connectedUsers[to_id.toString()].forEach((socketId) => {
+                  console.log("Emitting to socket:", socketId);
+                  io.to(socketId).emit("recieve-request-rider", {
+                    to_user,
+                    userType: to_user.type,
+                    success: true,
+                    title: "New Request",
+                    message: "You have received a new request.",
+                  });
                 });
-              });
+              } else {
+                console.log(`User ${to_id} is not currently connected`);
+              }
+            } else {
+              console.log(`User ${to_id} not found`);
             }
           }
 
