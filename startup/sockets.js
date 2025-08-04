@@ -849,7 +849,7 @@ module.exports = function (server, app) {
               to_id: order.user._id,
               description:
                 order.bookingtype == "live"
-                  ? `Your request has been accepted by ${user?.name}`
+                  ? `Your ride has been accepted, and your driver is on the way.`
                   : `Your request has been accepted by ${
                       user?.name
                     } and your ride has been scheduled for ${date.toLocaleDateString()}.`,
