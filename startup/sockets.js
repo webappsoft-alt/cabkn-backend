@@ -576,9 +576,16 @@ module.exports = function (server, app) {
 
           jobQueue.addJob({ data: valueData });
         } else {
+          fcmTokens = [
+            ...new Set(
+              [...adminIds]
+                .map((item) => item.fcmtoken)
+                .filter((token) => token && token !== "")
+            ),
+          ];
           // Broadcast to all users (userIds) when no specific to_ids provided
           for (let user of userIds) {
-            console.log(user);
+            // console.log(user);
             connectedUsers[user.toString()]?.forEach((socketId) => {
               io.to(socketId).emit("recieve-request-rider", {
                 request,
