@@ -953,7 +953,7 @@ router.get("/admin-transactions/:otherId/:id", auth, async (req, res) => {
 
 router.put("/update-location", auth, async (req, res) => {
   const { location } = req.body;
-  console.log("Location Take successfully", location);
+  // console.log("Location Take successfully", location);
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
@@ -990,7 +990,7 @@ router.put("/update-location", auth, async (req, res) => {
   console.log("Location Checking successfully", location);
 
   const adminUser = await User.findOne({ type: "admin" }).select("type");
-  console.log("Admin User", adminUser);
+  // console.log("Admin User", adminUser);
   const io = req.app.get("socketio");
   for (let order of orders) {
     io.to(order.user.toString()).emit("location-update", {
@@ -1003,7 +1003,7 @@ router.put("/update-location", auth, async (req, res) => {
       user: user._id,
     });
   }
-  console.log("Location updated successfully", location);
+  // console.log("Location updated successfully", location);
   res.send({ success: true, message: "User updated successfully", user });
 });
 
