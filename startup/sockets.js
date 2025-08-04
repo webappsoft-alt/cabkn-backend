@@ -519,7 +519,7 @@ module.exports = function (server, app) {
                     userType: to_user.type,
                     success: true,
                     title: "New Request",
-                    message: "You have received a new request.",
+                     message: `New request has been created by ${sender.name}`,
                   });
                 });
               } else {
