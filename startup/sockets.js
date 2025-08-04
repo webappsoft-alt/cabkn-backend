@@ -295,7 +295,7 @@ module.exports = function (server, app) {
           connectedUsers[userId].has(socket.id)
         );
         console.log("Hit socket");
-
+        const sender = await User.findById(senderId);
         if (!senderId) {
           return callback({
             success: false,
@@ -541,7 +541,7 @@ module.exports = function (server, app) {
                   userType: request.user.type,
                   success: true,
                   title: "New Request",
-                  message: "You have received a new request.",
+                  message: `New request has been created by ${sender.name}`,
                 });
               });
             } else {
@@ -608,7 +608,7 @@ module.exports = function (server, app) {
                   userType: request.user.type,
                   success: true,
                   title: "New Request",
-                  message: "You have received a new request.",
+                  message: `New request has been created by ${sender.name}`,
                 });
               });
             } else {
@@ -849,12 +849,12 @@ module.exports = function (server, app) {
               to_id: order.user._id,
               description:
                 order.bookingtype == "live"
-                  ? `Your request has been Accepted by ${user?.name}`
-                  : `Your request has been Accepted by ${
+                  ? `Your request has been accepted by ${user?.name}`
+                  : `Your request has been accepted by ${
                       user?.name
                     } and your ride has been scheduled for ${date.toLocaleDateString()}.`,
               type: "order",
-              title: "Ride accepted",
+              title: "Ride Accepted",
               fcmtoken: order?.user?.fcmtoken,
               order: requestId,
               usertype: order?.user?.type,
