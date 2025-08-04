@@ -987,7 +987,7 @@ router.put("/update-location", auth, async (req, res) => {
   })
     .select("user")
     .lean();
-  console.log("Location Checking successfully", location);
+  // console.log("Location Checking successfully", location);
 
   const adminUser = await User.findOne({ type: "admin" }).select("type");
   // console.log("Admin User", adminUser);
