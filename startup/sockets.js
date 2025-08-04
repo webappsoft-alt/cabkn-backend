@@ -493,13 +493,15 @@ module.exports = function (server, app) {
           const users = await User.find({
             _id: { $in: recipients },
           }).lean();
+
           fcmTokens = [
             ...new Set(
-              users
+              [...users, ...adminIds]
                 .map((item) => item.fcmtoken)
-                .filter((item) => item !== undefined || item !== "")
+                .filter((token) => token && token !== "")
             ),
           ];
+
           console.log(recipients, fcmTokens);
 
           for (const to_id of recipients) {
