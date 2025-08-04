@@ -35,7 +35,7 @@ exports.sendNotification = async ({
 
           await notification.save();
 
-          const recipient = await User.findOne({ _id: user }).select('-password -fcmtoken -code -likes').lean()
+          const recipient = await User.findOne({ _id: user }).select('-password fcmtoken -code -likes').lean()
 
           const newUpdateFields = Object.fromEntries(
             Object.entries({
