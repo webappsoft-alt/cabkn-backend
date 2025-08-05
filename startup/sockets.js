@@ -849,7 +849,7 @@ module.exports = function (server, app) {
                 (admin) => console.log(admin),
                 sendNotification({
                   user: senderId, // Who triggered the rejection
-                  to_id: admin._id, // Current admin's ID
+                  to_id: admin._id.toString(), // Current admin's ID
                   description: `User ${
                     user?.name || "Unknown"
                   }'s request has been rejected.`,
@@ -910,7 +910,7 @@ module.exports = function (server, app) {
                 (admin) => console.log(admin),
                 sendNotification({
                   user: senderId, // Who triggered the rejection
-                  to_id: admin._id, // Current admin's ID
+                  to_id: admin._id.toString(), // Current admin's ID
                   description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
                   type: "order", // Special type for admin alerts
                   title: "Request Rejected",
