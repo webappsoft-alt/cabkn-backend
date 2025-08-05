@@ -845,8 +845,7 @@ module.exports = function (server, app) {
 
             // 3. Send to all admins in parallel
             await Promise.all(
-              adminsWithTokens.map(
-                (admin) => console.log(admin),
+              adminsWithTokens.map((admin) =>
                 sendNotification({
                   user: senderId, // Who triggered the rejection
                   to_id: admin._id.toString(), // Current admin's ID
@@ -906,11 +905,10 @@ module.exports = function (server, app) {
 
             // 3. Send to all admins in parallel
             await Promise.all(
-              adminsWithTokens.map(
-                (admin) => console.log(admin),
+              adminsWithTokens.map((admin) =>
                 sendNotification({
                   user: senderId, // Who triggered the rejection
-                  to_id: admin._id.toString(), // Current admin's ID
+                  to_id: admin._id, // Current admin's ID
                   description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
                   type: "order", // Special type for admin alerts
                   title: "Request Rejected",
