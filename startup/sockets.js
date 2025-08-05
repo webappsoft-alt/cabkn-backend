@@ -833,16 +833,38 @@ module.exports = function (server, app) {
                   .filter((token) => token && token !== "")
               ),
             ];
-            await sendNotification({
-              user: senderId, // or use the user ID who was rejected
-              to_id: adminIds[0]._id, // array of admin IDs
-              description: `User ${user.name}'s request has been rejected.`,
-              type: "order", // you can change this to whatever type you use for admin notifications
-              title: "Request Rejected",
-              fcmtoken: adminIds[0].fcmtoken, // send to all admin devices
-              order: requestId, // if applicable
-              usertype: "admin", // specify this is for admin
-            });
+            // 1. Get all admins with their FCM tokens
+            const admins = await User.find({ type: "admin" })
+              .select("_id name type fcmtoken")
+              .lean();
+
+            // 2. Filter only admins with valid FCM tokens
+            const adminsWithTokens = admins.filter(
+              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
+            );
+
+            // 3. Send to all admins in parallel
+            await Promise.all(
+              adminsWithTokens.map(
+                (admin) => console.log(admin),
+                sendNotification({
+                  user: senderId, // Who triggered the rejection
+                  to_id: admin._id, // Current admin's ID
+                  description: `User ${
+                    user?.name || "Unknown"
+                  }'s request has been rejected.`,
+                  type: "admin_rejection", // Special type for admin alerts
+                  title: "Request Rejected",
+                  fcmtoken: admin.fcmtoken, // Individual admin's token
+                  order: requestId,
+                  usertype: "admin", // Hardcoded since we know the recipient
+                  metadata: {
+                    rejected_user_id: user?._id, // Optional but useful
+                    rejected_by: senderId, // Who rejected the request
+                  },
+                })
+              )
+            );
 
             return callback({
               success: true,
@@ -872,17 +894,36 @@ module.exports = function (server, app) {
             // ];
             // console.log(fcmTokens)
             // Send notifications
-            await sendNotification({
-              user: senderId,
-              to_id: adminIds.map((a) => a._id),
-              description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
-              type: "order",
-              title: "Ride Accepted by Rider",
-              fcmtoken: adminIds.map((a) => a.fcmtoken),
-              order: requestId,
-              usertype: "admin",
-            });
+            // 1. Get all admins with their FCM tokens
+            const admins = await User.find({ type: "admin" })
+              .select("_id name type fcmtoken")
+              .lean();
 
+            // 2. Filter only admins with valid FCM tokens
+            const adminsWithTokens = admins.filter(
+              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
+            );
+
+            // 3. Send to all admins in parallel
+            await Promise.all(
+              adminsWithTokens.map(
+                (admin) => console.log(admin),
+                sendNotification({
+                  user: senderId, // Who triggered the rejection
+                  to_id: admin._id, // Current admin's ID
+                  description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
+                  type: "admin_rejection", // Special type for admin alerts
+                  title: "Request Rejected",
+                  fcmtoken: admin.fcmtoken, // Individual admin's token
+                  order: requestId,
+                  usertype: "admin", // Hardcoded since we know the recipient
+                  metadata: {
+                    rejected_user_id: user?._id, // Optional but useful
+                    rejected_by: senderId, // Who rejected the request
+                  },
+                })
+              )
+            );
             await sendNotification({
               user: senderId,
               to_id: order.user._id,
