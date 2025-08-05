@@ -502,13 +502,13 @@ module.exports = function (server, app) {
             ),
           ];
 
-          console.log(recipients, fcmTokens);
+          // console.log(recipients, fcmTokens);
 
           for (const to_id of recipients) {
             const to_user = await User.findById(to_id).lean();
 
             if (to_user) {
-              console.log("Sending to user:", to_user._id);
+              // console.log("Sending to user:", to_user._id);
 
               // Send socket notification if user is connected
               if (connectedUsers[to_id.toString()]) {
@@ -519,7 +519,7 @@ module.exports = function (server, app) {
                     userType: to_user.type,
                     success: true,
                     title: "New Request",
-                     message: `New request has been created by ${sender.name}`,
+                    message: `New request has been created by ${sender.name}`,
                   });
                 });
               } else {
@@ -803,6 +803,10 @@ module.exports = function (server, app) {
               message: "This request has already been booked.",
             });
           }
+          let fcmTokens = [];
+          let adminIds = await User.find({ type: "admin" })
+            .select("name type fcmtoken")
+            .lean();
 
           if (status === "rejected") {
             const findorder = await Order.findOne({
@@ -821,6 +825,23 @@ module.exports = function (server, app) {
             // Update order as rejected by this rider
             await Order.findByIdAndUpdate(requestId, {
               $addToSet: { rejected_by: senderId },
+            });
+            fcmTokens = [
+              ...new Set(
+                [...adminIds]
+                  .map((item) => item.fcmtoken)
+                  .filter((token) => token && token !== "")
+              ),
+            ];
+            await sendNotification({
+              user: senderId, // or use the user ID who was rejected
+              to_id: adminIds.map((admin) => admin._id), // array of admin IDs
+              description: `User ${user.name}'s request has been rejected.`,
+              type: "order", // you can change this to whatever type you use for admin notifications
+              title: "Request Rejected",
+              fcmtoken: fcmTokens, // send to all admin devices
+              order: requestId, // if applicable
+              usertype: "admin", // specify this is for admin
             });
 
             return callback({
@@ -842,8 +863,24 @@ module.exports = function (server, app) {
             await order.save();
 
             const date = new Date(order.schedule_date);
-
+            fcmTokens = [
+              ...new Set(
+                [...adminIds]
+                  .map((item) => item.fcmtoken)
+                  .filter((token) => token && token !== "")
+              ),
+            ];
             // Send notifications
+            await sendNotification({
+              user: senderId,
+              to_id: adminIds.map((a) => a._id),
+              description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
+              type: "order",
+              title: "Ride Accepted by Rider",
+              fcmtoken: fcmTokens,
+              order: requestId,
+              usertype: "admin",
+            });
             await sendNotification({
               user: senderId,
               to_id: order.user._id,
