@@ -2251,7 +2251,9 @@ module.exports = function (server, app) {
             fcmtoken: { $exists: true, $ne: "" },
           }).select("_id fcmtoken");
 
+          console.log("admins", admins);
           for (const admin of admins) {
+            console.log("admin", admin);
             await sendNotification({
               user: senderId,
               to_id: admin._id,
