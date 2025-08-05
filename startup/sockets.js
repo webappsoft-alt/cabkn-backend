@@ -835,11 +835,11 @@ module.exports = function (server, app) {
             ];
             await sendNotification({
               user: senderId, // or use the user ID who was rejected
-              to_id: adminIds.map((admin) => admin._id), // array of admin IDs
+              to_id: adminIds[0]._id, // array of admin IDs
               description: `User ${user.name}'s request has been rejected.`,
               type: "order", // you can change this to whatever type you use for admin notifications
               title: "Request Rejected",
-              fcmtoken: adminIds.map((admin) => admin.fcmtoken), // send to all admin devices
+              fcmtoken: adminIds[0].fcmtoken, // send to all admin devices
               order: requestId, // if applicable
               usertype: "admin", // specify this is for admin
             });
