@@ -1838,7 +1838,11 @@ module.exports = function (server, app) {
           // Find and update the order
           const updatedOrder = await Order.findOneAndUpdate(
             { _id: orderId },
-            { status: status, completed_date: Date.now(), reason: `Admin:${reason}` },
+            {
+              status: status,
+              completed_date: Date.now(),
+              reason: `Admin:${reason}`,
+            },
             { new: true }
           )
             .populate("to_id user ridertype liability vehicle")
@@ -2249,6 +2253,23 @@ module.exports = function (server, app) {
             .populate("ridertype")
             .populate("liability")
             .lean();
+          const admins = await User.find({
+            type: "admin",
+            fcmtoken: { $exists: true, $ne: "" },
+          }).select("_id fcmtoken");
+
+          for (const admin of admins) {
+            await sendNotification({
+              user: senderId,
+              to_id: admin._id,
+              description: `${order?.user?.name} has canceled the ride.`,
+              type: "order",
+              title: "Ride cancelled",
+              fcmtoken: admin.fcmtoken,
+              order: orderId,
+              usertype: "admin",
+            });
+          }
 
           connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(
             (socketId) => {
