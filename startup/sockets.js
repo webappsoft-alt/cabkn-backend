@@ -839,7 +839,7 @@ module.exports = function (server, app) {
               description: `User ${user.name}'s request has been rejected.`,
               type: "order", // you can change this to whatever type you use for admin notifications
               title: "Request Rejected",
-              fcmtoken: fcmTokens, // send to all admin devices
+              fcmtoken: adminIds.map((admin) => admin.fcmtoken), // send to all admin devices
               order: requestId, // if applicable
               usertype: "admin", // specify this is for admin
             });
@@ -863,13 +863,14 @@ module.exports = function (server, app) {
             await order.save();
 
             const date = new Date(order.schedule_date);
-            fcmTokens = [
-              ...new Set(
-                [...adminIds]
-                  .map((item) => item.fcmtoken)
-                  .filter((token) => token && token !== "")
-              ),
-            ];
+            // fcmTokens = [
+            //   ...new Set(
+            //     [...adminIds]
+            //       .map((item) => item.fcmtoken)
+            //       .filter((token) => token && token !== "")
+            //   ),
+            // ];
+            // console.log(fcmTokens)
             // Send notifications
             await sendNotification({
               user: senderId,
@@ -877,10 +878,11 @@ module.exports = function (server, app) {
               description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
               type: "order",
               title: "Ride Accepted by Rider",
-              fcmtoken: fcmTokens,
+              fcmtoken: adminIds.map((a) => a.fcmtoken),
               order: requestId,
               usertype: "admin",
             });
+
             await sendNotification({
               user: senderId,
               to_id: order.user._id,
