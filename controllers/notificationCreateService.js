@@ -31,9 +31,9 @@ exports.sendNotification = async ({
     );
     console.log("user", user, "to_id", to_id);
     const notification = new Notification(updateFields);
-    console.log("hit");
+    console.log("hit", notification);
     await notification.save();
-    console.log("hit");
+    console.log("hit hit after save", notification);
 
     const recipient = await User.findOne({ _id: user })
       .select("-password -fcmtoken -code -likes")
