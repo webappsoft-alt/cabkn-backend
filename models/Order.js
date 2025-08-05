@@ -174,9 +174,12 @@ const orderSchema = new mongoose.Schema({
   dropTime: {
     type: Date,
   },
+  reason: String,
   cancelled_time: {
     type: Date,
-  },title:String,image:String
+  },
+  title: String,
+  image: String,
 });
 
 // // Explicitly define geospatial indexes

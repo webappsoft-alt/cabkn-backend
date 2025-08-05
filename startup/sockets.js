@@ -911,7 +911,7 @@ module.exports = function (server, app) {
                   to_id: admin._id, // Current admin's ID
                   description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
                   type: "order", // Special type for admin alerts
-                  title: "Request Rejected",
+                  title: "Request Accepted",
                   fcmtoken: admin.fcmtoken, // Individual admin's token
                   order: requestId,
                   usertype: "admin", // Hardcoded since we know the recipient
@@ -1624,193 +1624,9 @@ module.exports = function (server, app) {
       }
     });
 
-    socket.on("update-order-rider", async ({ orderId, status }, callback) => {
-      try {
-        const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
-        );
-
-        if (!senderId) {
-          return callback({
-            success: false,
-            title: "Authentication Error",
-            message: "Sender ID not found.",
-          });
-        }
-
-        const validStatuses = ["completed", "cancelled"];
-        if (!validStatuses.includes(status)) {
-          return callback({
-            success: false,
-            title: "Ride Update",
-            message: "Status is invalid.",
-          });
-        }
-
-        // Find and update the order
-        const updatedOrder = await Order.findOneAndUpdate(
-          {
-            _id: orderId,
-            status: { $in: ["accepted", "order-start"] },
-            to_id: senderId,
-          },
-          { status: status, completed_date: Date.now() },
-          { new: true }
-        )
-          .populate("to_id")
-          .populate("user")
-          .populate("ridertype")
-          .populate("liability")
-          .populate("vehicle")
-          .lean();
-
-        if (!updatedOrder) {
-          return callback({
-            success: false,
-            title: "Ride Update",
-            message: "Ride not found or cannot be updated.",
-          });
-        }
-        const user = await User.findById(updatedOrder.user._id);
-        const addresses = await LoyalityPoint.findOne({}).lean();
-
-        if (status === "cancelled") {
-          await Order.findOneAndUpdate(
-            { _id: orderId, to_id: senderId },
-            { refunded: true }
-          );
-          if (updatedOrder.paymentType == "paid") {
-            if (!user) {
-              return callback({
-                success: false,
-                title: "Ride Delete",
-                message: "The User with the given ID was not found.",
-              });
-            }
-
-            user.amount = Number(user.amount) + Number(updatedOrder.price);
-            await user.save();
-
-            connectedUsers[user._id.toString()]?.forEach((socketId) => {
-              io.to(socketId).emit("user_update", {
-                success: true,
-                user: user,
-              });
-            });
-
-            const transaction = new Transaction({
-              user: updatedOrder.user._id,
-              amount: Number(updatedOrder.price),
-              type: "refunded",
-              order: orderId,
-            });
-
-            await transaction.save();
-          }
-        } else {
-          let reviewLink = "";
-          if (updatedOrder.service) {
-            reviewLink =
-              "https://cabkn.com/popular/" +
-              updatedOrder.service +
-              "?review=reviewmd";
-          }
-          await sendCompleteOrderEmail(
-            updatedOrder.user.email,
-            updatedOrder.order_id,
-            updatedOrder.user.name,
-            updatedOrder.start_address,
-            updatedOrder.end_address,
-            updatedOrder.to_id.name,
-            updatedOrder.vehicle?.license || updatedOrder.vehicle?.name || "",
-            updatedOrder.price,
-            updatedOrder.price,
-            reviewLink
-          );
-          await Order.findOneAndUpdate(
-            { _id: orderId },
-            { dropTime: Date.now() }
-          );
-          const transaction = new Transaction({
-            user: updatedOrder.user._id,
-            amount: addresses?.points_per_ride || 10,
-            type: "points",
-            order: orderId,
-          });
-
-          await transaction.save();
-
-          user.points =
-            Number(user.points) + (addresses?.points_per_ride || 10);
-          await user.save();
-        }
-        if (updatedOrder.bookingtype == "live") {
-          await User.findByIdAndUpdate(
-            senderId,
-            { isRiding: false },
-            { new: true }
-          );
-        }
-
-        // Notify the customer about the update
-        await sendNotification({
-          user: senderId,
-          to_id: updatedOrder.user._id.toString(),
-          description: `Your Ride has been ${status} by ${
-            updatedOrder?.to_id?.name
-          } and you have successfully earned ${
-            addresses?.points_per_ride || 10
-          } points for this ride.`,
-          type: "order",
-          title: "Ride Update",
-          fcmtoken: updatedOrder.user.fcmtoken,
-          order: orderId,
-          noti: false,
-          usertype: updatedOrder.user?.type,
-        });
-
-        // Emit relevant messages based on the order status
-        if (status === "cancelled") {
-          io.to(updatedOrder.user._id.toString()).emit(
-            "cancel-order-customer",
-            {
-              success: true,
-              order: updatedOrder,
-              title: "Ride Update",
-              message: "Your Ride has been cancelled.",
-            }
-          );
-        } else {
-          io.to(updatedOrder.user._id.toString()).emit(
-            "update-order-customer",
-            {
-              success: true,
-              order: updatedOrder,
-              title: "Ride Update",
-              message: `Your Ride have been successfully ${status}.`,
-            }
-          );
-        }
-
-        // Callback success response
-        return callback({
-          success: true,
-          order: updatedOrder,
-          title: "Ride Updated",
-          message: `The Ride has been ${status} successfully.`,
-        });
-      } catch (error) {
-        return callback({
-          success: false,
-          title: "Error",
-          message: error.message,
-        });
-      }
-    });
-
     socket.on(
-      "admin-cancel-order",
-      async ({ orderId, reason, adminReason }, callback) => {
+      "update-order-rider",
+      async ({ orderId, status, reason }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
             connectedUsers[userId].has(socket.id)
@@ -1824,11 +1640,205 @@ module.exports = function (server, app) {
             });
           }
 
+          const validStatuses = ["completed", "cancelled"];
+          if (!validStatuses.includes(status)) {
+            return callback({
+              success: false,
+              title: "Ride Update",
+              message: "Status is invalid.",
+            });
+          }
+
+          // Find and update the order
+          const updatedOrder = await Order.findOneAndUpdate(
+            {
+              _id: orderId,
+              status: { $in: ["accepted", "order-start"] },
+              to_id: senderId,
+            },
+            { status: status, completed_date: Date.now() },
+            { new: true }
+          )
+            .populate("to_id")
+            .populate("user")
+            .populate("ridertype")
+            .populate("liability")
+            .populate("vehicle")
+            .lean();
+
+          if (!updatedOrder) {
+            return callback({
+              success: false,
+              title: "Ride Update",
+              message: "Ride not found or cannot be updated.",
+            });
+          }
+          const user = await User.findById(updatedOrder.user._id);
+          const addresses = await LoyalityPoint.findOne({}).lean();
+
+          if (status === "cancelled") {
+            await Order.findOneAndUpdate(
+              { _id: orderId, to_id: senderId },
+              { refunded: true, reason: `Rider:${reason}` },
+              { new: true }
+            );
+            if (updatedOrder.paymentType == "paid") {
+              if (!user) {
+                return callback({
+                  success: false,
+                  title: "Ride Delete",
+                  message: "The User with the given ID was not found.",
+                });
+              }
+
+              user.amount = Number(user.amount) + Number(updatedOrder.price);
+              await user.save();
+
+              connectedUsers[user._id.toString()]?.forEach((socketId) => {
+                io.to(socketId).emit("user_update", {
+                  success: true,
+                  user: user,
+                });
+              });
+
+              const transaction = new Transaction({
+                user: updatedOrder.user._id,
+                amount: Number(updatedOrder.price),
+                type: "refunded",
+                order: orderId,
+              });
+
+              await transaction.save();
+            }
+          } else {
+            let reviewLink = "";
+            if (updatedOrder.service) {
+              reviewLink =
+                "https://cabkn.com/popular/" +
+                updatedOrder.service +
+                "?review=reviewmd";
+            }
+            await sendCompleteOrderEmail(
+              updatedOrder.user.email,
+              updatedOrder.order_id,
+              updatedOrder.user.name,
+              updatedOrder.start_address,
+              updatedOrder.end_address,
+              updatedOrder.to_id.name,
+              updatedOrder.vehicle?.license || updatedOrder.vehicle?.name || "",
+              updatedOrder.price,
+              updatedOrder.price,
+              reviewLink
+            );
+            await Order.findOneAndUpdate(
+              { _id: orderId },
+              { dropTime: Date.now() }
+            );
+            const transaction = new Transaction({
+              user: updatedOrder.user._id,
+              amount: addresses?.points_per_ride || 10,
+              type: "points",
+              order: orderId,
+            });
+
+            await transaction.save();
+
+            user.points =
+              Number(user.points) + (addresses?.points_per_ride || 10);
+            await user.save();
+          }
+          if (updatedOrder.bookingtype == "live") {
+            await User.findByIdAndUpdate(
+              senderId,
+              { isRiding: false },
+              { new: true }
+            );
+          }
+
+          // Notify the customer about the update
+          await sendNotification({
+            user: senderId,
+            to_id: updatedOrder.user._id.toString(),
+            description: `Your Ride has been ${status} by ${
+              updatedOrder?.to_id?.name
+            } and you have successfully earned ${
+              addresses?.points_per_ride || 10
+            } points for this ride.`,
+            type: "order",
+            title: "Ride Update",
+            fcmtoken: updatedOrder.user.fcmtoken,
+            order: orderId,
+            noti: false,
+            usertype: updatedOrder.user?.type,
+          });
+
+          // Emit relevant messages based on the order status
+          if (status === "cancelled") {
+            io.to(updatedOrder.user._id.toString()).emit(
+              "cancel-order-customer",
+              {
+                success: true,
+                order: updatedOrder,
+                title: "Ride Update",
+                message: "Your Ride has been cancelled.",
+              }
+            );
+          } else {
+            io.to(updatedOrder.user._id.toString()).emit(
+              "update-order-customer",
+              {
+                success: true,
+                order: updatedOrder,
+                title: "Ride Update",
+                message: `Your Ride have been successfully ${status}.`,
+              }
+            );
+          }
+
+          // Callback success response
+          return callback({
+            success: true,
+            order: updatedOrder,
+            title: "Ride Updated",
+            message: `The Ride has been ${status} successfully.`,
+          });
+        } catch (error) {
+          return callback({
+            success: false,
+            title: "Error",
+            message: error.message,
+          });
+        }
+      }
+    );
+
+    socket.on(
+      "admin-cancel-order",
+      async ({ orderId, reason, adminReason }, callback) => {
+        try {
+          const senderId = Object.keys(connectedUsers).find((userId) =>
+            connectedUsers[userId].has(socket.id)
+          );
+          if (!reason) {
+            return callback({
+              success: false,
+              title: "Reason Requird 'reason'",
+              message: "Reason Requird 'reason'.",
+            });
+          }
+          if (!senderId) {
+            return callback({
+              success: false,
+              title: "Authentication Error",
+              message: "Sender ID not found.",
+            });
+          }
+
           const status = "cancelled";
           // Find and update the order
           const updatedOrder = await Order.findOneAndUpdate(
             { _id: orderId },
-            { status: status, completed_date: Date.now() },
+            { status: status, completed_date: Date.now(), reason: `Admin:${reason}` },
             { new: true }
           )
             .populate("to_id user ridertype liability vehicle")
@@ -2231,7 +2241,7 @@ module.exports = function (server, app) {
           });
           const order = await Order.findOneAndUpdate(
             { _id: orderId, user: senderId },
-            { status: status },
+            { status: status, reason: `Customer:${reason}` },
             { new: true }
           )
             .populate("to_id")
