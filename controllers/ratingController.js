@@ -106,9 +106,9 @@ exports.websubcreateRating = async (req, res) => {
 
     await ratings.save();
     await events.save();
-    // const findratings = await SubWebCatRating.findById(ratings._id).populate(
-    //   "user"
-    // );
+    const findratings = await SubWebCatRating.findById(ratings._id).populate(
+      "user"
+    );
     // if (findratings.user._id == "677394d74a710d115c455f91") {
     //   findratings.user.name = "anonymous";
     //   findratings.user.email = "aanonymous@anonymous.com";
