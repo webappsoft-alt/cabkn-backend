@@ -1711,25 +1711,7 @@ module.exports = function (server, app) {
 
               await transaction.save();
 
-              const admins = await User.find({
-                type: "admin",
-                fcmtoken: { $exists: true, $ne: "" },
-              }).select("_id fcmtoken");
-
-              console.log("admins", admins);
-              for (const admin of admins) {
-                console.log("admin", admin);
-                await sendNotification({
-                  user: senderId,
-                  to_id: admin._id,
-                  description: `${updatedOrder?.user?.name} has canceled the ride.`,
-                  type: "order",
-                  title: "Ride cancelled",
-                  fcmtoken: admin.fcmtoken,
-                  order: orderId,
-                  usertype: "admin",
-                });
-              }
+              
             }
           } else {
             let reviewLink = "";
@@ -1775,6 +1757,25 @@ module.exports = function (server, app) {
               { new: true }
             );
           }
+          const admins = await User.find({
+                type: "admin",
+                fcmtoken: { $exists: true, $ne: "" },
+              }).select("_id fcmtoken");
+
+              console.log("admins", admins);
+              for (const admin of admins) {
+                console.log("admin", admin);
+                await sendNotification({
+                  user: senderId,
+                  to_id: admin._id,
+                  description: `${updatedOrder?.user?.name} has canceled the ride.`,
+                  type: "order",
+                  title: "Ride cancelled",
+                  fcmtoken: admin.fcmtoken,
+                  order: orderId,
+                  usertype: "admin",
+                });
+              }
 
           // Notify the customer about the update
           await sendNotification({
