@@ -853,7 +853,7 @@ module.exports = function (server, app) {
                   description: `User ${
                     user?.name || "Unknown"
                   }'s request has been rejected.`,
-                  type: "admin_rejection", // Special type for admin alerts
+                  type: "order", // Special type for admin alerts
                   title: "Request Rejected",
                   fcmtoken: admin.fcmtoken, // Individual admin's token
                   order: requestId,
@@ -912,7 +912,7 @@ module.exports = function (server, app) {
                   user: senderId, // Who triggered the rejection
                   to_id: admin._id, // Current admin's ID
                   description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
-                  type: "admin_rejection", // Special type for admin alerts
+                  type: "order", // Special type for admin alerts
                   title: "Request Rejected",
                   fcmtoken: admin.fcmtoken, // Individual admin's token
                   order: requestId,
