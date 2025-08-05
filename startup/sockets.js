@@ -2230,7 +2230,23 @@ module.exports = function (server, app) {
             moment(updatedOrder.schedule_date).format("MM/DD/YYYY"),
             reason
           );
+          const admins = await User.find({
+            type: "admin",
+            fcmtoken: { $exists: true, $ne: "" },
+          }).select("_id fcmtoken");
 
+          for (const admin of admins) {
+            await sendNotification({
+              user: senderId,
+              to_id: admin._id,
+              description: `${order?.user?.name} has canceled the ride.`,
+              type: "order",
+              title: "Ride cancelled",
+              fcmtoken: admin.fcmtoken,
+              order: orderId,
+              usertype: "admin",
+            });
+          }
           // Notify the customer about the update
           await sendNotification({
             user: senderId,
@@ -2253,23 +2269,6 @@ module.exports = function (server, app) {
             .populate("ridertype")
             .populate("liability")
             .lean();
-          const admins = await User.find({
-            type: "admin",
-            fcmtoken: { $exists: true, $ne: "" },
-          }).select("_id fcmtoken");
-
-          for (const admin of admins) {
-            await sendNotification({
-              user: senderId,
-              to_id: admin._id,
-              description: `${order?.user?.name} has canceled the ride.`,
-              type: "order",
-              title: "Ride cancelled",
-              fcmtoken: admin.fcmtoken,
-              order: orderId,
-              usertype: "admin",
-            });
-          }
 
           connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(
             (socketId) => {

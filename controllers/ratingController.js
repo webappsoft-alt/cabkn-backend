@@ -81,7 +81,7 @@ exports.createRating = async (req, res) => {
 
 exports.websubcreateRating = async (req, res) => {
   try {
-    const { webSubCategory, rating, review } = req.body;
+    const { webSubCategory, rating, review, image, name, date } = req.body;
     const userId = req.user._id;
 
     const ratings = new SubWebCatRating({
@@ -89,6 +89,9 @@ exports.websubcreateRating = async (req, res) => {
       webSubCategory,
       rating,
       review,
+      image,
+      name,
+      createdAt: date,
     });
 
     const events = await WebSubCategories.findById(webSubCategory);
@@ -103,18 +106,18 @@ exports.websubcreateRating = async (req, res) => {
 
     await ratings.save();
     await events.save();
-    const findratings = await SubWebCatRating.findById(ratings._id).populate(
-      "user"
-    );
-    if (findratings.user._id == "677394d74a710d115c455f91") {
-      findratings.user.name = "anonymous";
-      findratings.user.email = "aanonymous@anonymous.com";
-      return res.status(201).json({
-        success: true,
-        message: "Rating created successfully",
-        ratings: findratings,
-      });
-    }
+    // const findratings = await SubWebCatRating.findById(ratings._id).populate(
+    //   "user"
+    // );
+    // if (findratings.user._id == "677394d74a710d115c455f91") {
+    //   findratings.user.name = "anonymous";
+    //   findratings.user.email = "aanonymous@anonymous.com";
+    //   return res.status(201).json({
+    //     success: true,
+    //     message: "Rating created successfully",
+    //     ratings: findratings,
+    //   });
+    // }
     res.status(201).json({
       success: true,
       message: "Rating created successfully",
