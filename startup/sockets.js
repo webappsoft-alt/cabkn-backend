@@ -1905,7 +1905,23 @@ module.exports = function (server, app) {
             updatedOrder.user._id.toString(),
             updatedOrder.to_id._id.toString()
           );
+const admins = await User.find({
+            type: "admin",
+            fcmtoken: { $exists: true, $ne: "" },
+          }).select("_id fcmtoken");
 
+          for (const admin of admins) {
+            await sendNotification({
+              user: senderId,
+              to_id: admin._id,
+              description: `${order?.user?.name} has canceled the ride.`,
+              type: "order",
+              title: "Ride cancelled",
+              fcmtoken: admin.fcmtoken,
+              order: orderId,
+              usertype: "admin",
+            });
+          }
           // Notify the customer about the update
           await sendNotification({
             user: senderId,
