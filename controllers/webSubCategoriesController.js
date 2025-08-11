@@ -193,7 +193,7 @@ exports.getAllCategories = async (req, res) => {
   }
 
   query.status = "active"; // Apply active status filter
-  console.log("Final Query:", query);
+
   try {
     const categories = await Category.find(query)
       .populate("category")
@@ -234,9 +234,20 @@ exports.getAllCustomerCategories = async (req, res) => {
     return res.status(400).json({ error: "Invalid last_id" });
   }
 
-  const pageSize = 10;
+  // Extract location if provided (new addition)
+  const { lat, lng } = req.query;
+  let userLocation = null;
+  if (lat && lng) {
+    userLocation = {
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+    };
+  }
 
+  const pageSize = 10;
   const skip = Math.max(0, lastId - 1) * pageSize;
+
+  // Existing category filtering logic
   if (req.params.category) {
     query.$or = [
       { category: req.params.category },
@@ -244,6 +255,7 @@ exports.getAllCustomerCategories = async (req, res) => {
     ];
   }
 
+  // Existing catId filtering logic
   const { catId, otherId } = req.query;
   if (catId) {
     query.$and = [
@@ -256,29 +268,59 @@ exports.getAllCustomerCategories = async (req, res) => {
     ];
   }
 
+  // Status and upload_status logic (unchanged)
   query.status = "active";
   if (otherId) {
     query.user = otherId;
   } else {
     query.upload_status = "active";
   }
+
+  // Updated search logic (fixes name.title issue)
   if (req.query.search) {
     const searchQuery = req.query.search;
     query.$or = [
-      { name: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
-      { title: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
-      { address: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
+      { "name.title": { $regex: searchQuery, $options: "i" } }, // Search inside name.title
+      { title: { $regex: searchQuery, $options: "i" } }, // Search in main title
+      { address: { $regex: searchQuery, $options: "i" } }, // Search in address
     ];
   }
+
   console.log("Query for categories:", query);
+
   try {
-    const categories = await Category.find(query)
+    // Fetch categories with pagination (unchanged)
+    let categories = await Category.find(query)
       .populate("category")
       .sort({ _id: -1 })
       .skip(skip)
       .limit(pageSize)
       .lean();
-    console.log("Categories:", categories);
+
+    // Apply location-based filtering (new addition)
+    if (userLocation) {
+      categories = categories.filter((cat) => {
+        if (!cat.lat || !cat.lng) return false;
+
+        const catLat = parseFloat(cat.lat);
+        const catLng = parseFloat(cat.lng);
+
+        // Calculate distance using Haversine formula
+        const distance = getDistanceFromLatLonInKm(
+          userLocation.lat,
+          userLocation.lng,
+          catLat,
+          catLng
+        );
+
+        cat.distance = distance; // Add distance to the category object
+        return distance <= 30; // Filter within 30km
+      });
+
+      // Sort by distance if location is provided
+      categories.sort((a, b) => a.distance - b.distance);
+    }
+
     const totalCount = await Category.countDocuments(query);
     const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -287,6 +329,7 @@ exports.getAllCustomerCategories = async (req, res) => {
         success: true,
         categories: categories,
         count: { totalPage: totalPages, currentPageSize: categories.length },
+        usingLocation: userLocation !== null, // Indicates if location was used
       });
     } else {
       res.status(200).json({
@@ -294,6 +337,7 @@ exports.getAllCustomerCategories = async (req, res) => {
         categories: [],
         message: "No more categories found",
         count: { totalPage: totalPages, currentPageSize: categories.length },
+        usingLocation: userLocation !== null,
       });
     }
   } catch (error) {
