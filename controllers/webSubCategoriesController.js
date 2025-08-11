@@ -267,6 +267,7 @@ exports.getAllCustomerCategories = async (req, res) => {
       { address: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
     ];
   }
+  console.log("Query for categories:", query);
   try {
     const categories = await Category.find(query)
       .populate("category")
@@ -274,7 +275,7 @@ exports.getAllCustomerCategories = async (req, res) => {
       .skip(skip)
       .limit(pageSize)
       .lean();
-
+    console.log("Categories:", categories);
     const totalCount = await Category.countDocuments(query);
     const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -293,6 +294,7 @@ exports.getAllCustomerCategories = async (req, res) => {
       });
     }
   } catch (error) {
+    console.log("Error fetching categories:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
