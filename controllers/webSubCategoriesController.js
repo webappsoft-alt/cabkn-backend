@@ -182,18 +182,23 @@ exports.getAllCategories = async (req, res) => {
   }
 
   if (req.query.search) {
-    console.log("Search query:", req.query.search);
-    const searchQuery = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    // const searchQuery = req.query.search;
-    query.$or = [
-      { name: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
-      { title: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
-      { address: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
+    const searchQuery = req.query.search;
+    query.$and = [
+      {
+        $or: [
+          { name: { $regex: searchQuery, $options: "i" } },
+          { title: { $regex: searchQuery, $options: "i" } },
+          { address: { $regex: searchQuery, $options: "i" } },
+        ],
+      },
+      // { status: "active" }, // Ensure status is applied
     ];
   }
 
   query.status = "active";
   console.log("Query for categories:", query);
+  console.log(Category.schema.obj);
+
   try {
     const categories = await Category.find(query)
       .populate("category")
