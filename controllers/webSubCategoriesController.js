@@ -236,6 +236,7 @@ exports.getAllCustomerCategories = async (req, res) => {
 
   // Extract location if provided (new addition)
   const { lat, lng } = req.query;
+  console.log("Latitude:", lat, "Longitude:", lng);
   let userLocation = null;
   if (lat && lng) {
     userLocation = {
