@@ -180,25 +180,20 @@ exports.getAllCategories = async (req, res) => {
   } else {
     query.upload_status = "active";
   }
-
   if (req.query.search) {
     const searchQuery = req.query.search;
     query.$and = [
       {
         $or: [
-          { name: { $regex: searchQuery, $options: "i" } },
-          { title: { $regex: searchQuery, $options: "i" } },
-          { address: { $regex: searchQuery, $options: "i" } },
+          { title: { $regex: searchQuery, $options: "i" } }, // Search in title
+          { address: { $regex: searchQuery, $options: "i" } }, // Search in address
         ],
       },
-      // { status: "active" }, // Ensure status is applied
     ];
   }
 
-  query.status = "active";
-  console.log("Query for categories:", query);
-  console.log(Category.schema.obj);
-
+  query.status = "active"; // Apply active status filter
+  console.log("Final Query:", query);
   try {
     const categories = await Category.find(query)
       .populate("category")
