@@ -1764,11 +1764,11 @@ module.exports = function (server, app) {
 
               console.log("admins", admins);
               for (const admin of admins) {
-                console.log("admin", admin);
+                // console.log("admin", admin);
                 await sendNotification({
                   user: senderId,
                   to_id: admin._id,
-                  description: `${updatedOrder?.user?.name} has canceled the ride.`,
+                  description: `${updatedOrder?.to_id?.name} has canceled the ride.`,
                   type: "order",
                   title: "Ride cancelled",
                   fcmtoken: admin.fcmtoken,
