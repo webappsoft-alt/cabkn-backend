@@ -182,7 +182,9 @@ exports.getAllCategories = async (req, res) => {
   }
 
   if (req.query.search) {
-    const searchQuery = req.query.search;
+    console.log("Search query:", req.query.search);
+    const searchQuery = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // const searchQuery = req.query.search;
     query.$or = [
       { name: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
       { title: { $regex: searchQuery, $options: "i" } }, // Case-insensitive search
