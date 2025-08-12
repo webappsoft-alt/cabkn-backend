@@ -257,6 +257,7 @@ module.exports = function (server, app) {
     socket.on("send-request-customer", async (data, callback) => {
       try {
         const {
+          cart_items,
           to_ids,
           riderId,
           start_lat,
@@ -431,6 +432,7 @@ module.exports = function (server, app) {
             coordinates: [Number(end_lng), Number(end_lat)],
           },
           title,
+          cart_items,
           image,
           start_address,
           end_address,
