@@ -295,7 +295,7 @@ module.exports = function (server, app) {
         const senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
-        console.log("Hit socket");
+        console.log("Hit socket", cart_items);
         const sender = await User.findById(senderId);
         if (!senderId) {
           return callback({
