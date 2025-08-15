@@ -180,7 +180,8 @@ const orderSchema = new mongoose.Schema({
   },
   title: String,
   image: String,
-  cart_items:String,
+  cart_items: String,
+  isShop: Boolean,
 });
 
 // // Explicitly define geospatial indexes

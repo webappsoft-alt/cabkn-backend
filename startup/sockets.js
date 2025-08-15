@@ -258,6 +258,7 @@ module.exports = function (server, app) {
       try {
         const {
           cart_items,
+          isShop,
           to_ids,
           riderId,
           start_lat,
@@ -433,6 +434,7 @@ module.exports = function (server, app) {
           },
           title,
           cart_items,
+          isShop,
           image,
           start_address,
           end_address,
@@ -1712,8 +1714,6 @@ module.exports = function (server, app) {
               });
 
               await transaction.save();
-
-              
             }
           } else {
             let reviewLink = "";
@@ -1760,24 +1760,24 @@ module.exports = function (server, app) {
             );
           }
           const admins = await User.find({
-                type: "admin",
-                fcmtoken: { $exists: true, $ne: "" },
-              }).select("_id fcmtoken");
+            type: "admin",
+            fcmtoken: { $exists: true, $ne: "" },
+          }).select("_id fcmtoken");
 
-              console.log("admins", admins);
-              for (const admin of admins) {
-                // console.log("admin", admin);
-                await sendNotification({
-                  user: senderId,
-                  to_id: admin._id,
-                  description: `${updatedOrder?.to_id?.name} has canceled the ride.`,
-                  type: "order",
-                  title: "Ride cancelled",
-                  fcmtoken: admin.fcmtoken,
-                  order: orderId,
-                  usertype: "admin",
-                });
-              }
+          console.log("admins", admins);
+          for (const admin of admins) {
+            // console.log("admin", admin);
+            await sendNotification({
+              user: senderId,
+              to_id: admin._id,
+              description: `${updatedOrder?.to_id?.name} has canceled the ride.`,
+              type: "order",
+              title: "Ride cancelled",
+              fcmtoken: admin.fcmtoken,
+              order: orderId,
+              usertype: "admin",
+            });
+          }
 
           // Notify the customer about the update
           await sendNotification({
