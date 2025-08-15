@@ -31,7 +31,7 @@ git push origin main
 
 # Deploy to VPS
 echo -e "${GREEN}Deploying to VPS...${NC}"
-ssh ${VPS_USER}@${VPS_HOST} << EOF
+ssh -v ${VPS_USER}@${VPS_HOST} << EOF
   echo "Starting deployment on VPS..."
   
   # Ensure required packages are installed
