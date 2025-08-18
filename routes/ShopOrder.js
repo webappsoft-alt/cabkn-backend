@@ -1,29 +1,63 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const ShopOrder = require("../models/shopOrders");
-
+const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 const router = express.Router();
-
+const product = require("../models/ServicesSubCategories");
 /**
  * CREATE Shop Order
  */
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
+  const user = req.user; // Assuming user is set in middleware
   try {
-    const { cart_items, user, location } = req.body;
+    console.log("Creating shop order for user:", user._id);
+    const { cart_items, payment_method, paymentId, total_price } = req.body;
 
-    if (!cart_items || !user || !location?.coordinates) {
+    if (!cart_items || !user) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+    for (const item of cart_items) {
+      if (!item._id || !item.quantity) {
+        return res.status(400).json({ message: "Invalid cart item format" });
+      }
+
+      console.log("Shop order Items:", item);
+      const productExists = await product.findById(item._id);
+      if (!productExists) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      console.log("Shop order Items:", item.cartQuantity);
+      if (item.cartQuantity <= 0) {
+        return res
+          .status(400)
+          .json({ message: "Quantity must be greater than zero" });
+      }
+      const x = await product.updateOne(
+        { _id: item._id },
+        { $inc: { quantity: -item.cartQuantity } }
+      );
+      console.log("Product quantity updated:", x);
+    }
+    // console.log("Shop order created successfully:", savedOrder._id);
 
     const shopOrder = new ShopOrder({
       cart_items,
       user,
-      location,
+      payment_method,
+      paymentId,
+      total_price,
+      // location,
     });
 
     const savedOrder = await shopOrder.save();
-    res.status(201).json({ success: true, data: savedOrder });
-
+    console.log("Shop order created successfully:", savedOrder._id);
+    res.status(201).json({
+      success: true,
+      message: "Order has been created successfully",
+      data: savedOrder,
+    });
   } catch (error) {
     console.error("Error creating shop order:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -41,7 +75,9 @@ router.get("/:status/:page?", async (req, res) => {
 
     const validStatuses = ["all", "pending", "way", "completed", "cancelled"];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid status" });
     }
 
     let query = {};
@@ -57,7 +93,7 @@ router.get("/:status/:page?", async (req, res) => {
       .limit(pageSize)
       .populate("user")
       .lean();
-
+    // console.log("Orders fetched:", orders.length);
     const totalCount = await ShopOrder.countDocuments(query);
     const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -70,7 +106,6 @@ router.get("/:status/:page?", async (req, res) => {
         currentPageSize: orders.length,
       },
     });
-
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -109,7 +144,6 @@ router.put("/:id", async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: updatedOrder });
-
   } catch (error) {
     console.error("Error updating order:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -125,7 +159,9 @@ router.delete("/:id", async (req, res) => {
     if (!deletedOrder) {
       return res.status(404).json({ message: "Order not found" });
     }
-    res.status(200).json({ success: true, message: "Order deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Order deleted successfully" });
   } catch (error) {
     console.error("Error deleting order:", error);
     res.status(500).json({ message: "Internal server error" });
