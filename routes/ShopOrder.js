@@ -4,14 +4,18 @@ const ShopOrder = require("../models/shopOrders");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 const router = express.Router();
+const { User } = require("../models/user");
+
 const product = require("../models/ServicesSubCategories");
+const {
+  sendNotification,
+} = require("../controllers/notificationCreateService");
 /**
  * CREATE Shop Order
  */
 router.post("/", auth, async (req, res) => {
-  const user = req.user; // Assuming user is set in middleware
+  const user = req.user._id; // Assuming user is set in middleware
   try {
-    console.log("Creating shop order for user:", user._id);
     const { cart_items, payment_method, paymentId, total_price } = req.body;
 
     if (!cart_items || !user) {
@@ -48,10 +52,25 @@ router.post("/", auth, async (req, res) => {
       payment_method,
       paymentId,
       total_price,
+      order_id: `ORD-${Date.now()}`, // Unique order ID
       // location,
     });
-
     const savedOrder = await shopOrder.save();
+    const admins = await User.find({ type: "admin" })
+      .select("_id fcmtoken")
+      .lean();
+    // Send notifications to all admins
+    for (const admin of admins) {
+      await sendNotification({
+        user: user,
+        to_id: admin._id,
+        description: `Shop order created successfully`,
+        type: "admin-message",
+        title: "Customer Message",
+        fcmtoken: admin.fcmtoken || "",
+        usertype: "admin",
+      });
+    }
     console.log("Shop order created successfully:", savedOrder._id);
     res.status(201).json({
       success: true,

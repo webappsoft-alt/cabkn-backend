@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const shopOrderSchema = new Schema({
+  order_id: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   cart_items: {
     type: [mongoose.Schema.Types.Mixed],
   },
