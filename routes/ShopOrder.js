@@ -48,7 +48,7 @@ router.post("/", auth, async (req, res) => {
         { _id: item._id },
         { $inc: { quantity: -item.cartQuantity } }
       );
-      console.log("Product quantity updated:", x);
+      // console.log("Product quantity updated:", x);
     }
     // console.log("Shop order created successfully:", savedOrder._id);
 
