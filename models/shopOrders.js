@@ -16,6 +16,7 @@ const shopOrderSchema = new Schema({
   },
   paymentId: String,
   total_price: String,
+  drop_location: String,
   status: {
     type: String,
     enum: ["pending", "way", "completed", "cancelled"],

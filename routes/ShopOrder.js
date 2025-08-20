@@ -16,7 +16,13 @@ const {
 router.post("/", auth, async (req, res) => {
   const user = req.user._id; // Assuming user is set in middleware
   try {
-    const { cart_items, payment_method, paymentId, total_price } = req.body;
+    const {
+      cart_items,
+      payment_method,
+      paymentId,
+      total_price,
+      drop_location,
+    } = req.body;
 
     if (!cart_items || !user) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -52,6 +58,7 @@ router.post("/", auth, async (req, res) => {
       payment_method,
       paymentId,
       total_price,
+      drop_location,
       order_id: `ORD-${Date.now()}`, // Unique order ID
       // location,
     });
