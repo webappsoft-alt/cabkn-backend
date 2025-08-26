@@ -1772,9 +1772,9 @@ module.exports = function (server, app) {
             await sendNotification({
               user: senderId,
               to_id: admin._id,
-              description: `${updatedOrder?.to_id?.name} has canceled the ride.`,
+              description: `${updatedOrder?.to_id?.name} has completed the ride.`,
               type: "order",
-              title: "Ride cancelled",
+              title: "Ride Completed",
               fcmtoken: admin.fcmtoken,
               order: orderId,
               usertype: "admin",
