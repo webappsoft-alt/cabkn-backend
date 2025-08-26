@@ -371,7 +371,9 @@ module.exports = function (server, app) {
             .lean();
           if (rider) {
             userIds = [rider._id];
+            console.log(userIds)
             if (rider.fcmtoken) {
+              console.log(rider.fcmtoken)
               fcmTokens = [rider.fcmtoken];
             }
           }
