@@ -296,7 +296,7 @@ module.exports = function (server, app) {
         const senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
-        console.log("Hit socket");
+        console.log("Hit socket", cart_items);
         const sender = await User.findById(senderId);
         if (!senderId) {
           return callback({
@@ -387,7 +387,6 @@ module.exports = function (server, app) {
                 .filter((item) => item !== undefined || item !== "")
             ),
           ];
-          // console.log("fcmTokens", fcmTokens);
           userIds = [
             ...new Set(
               userIds
@@ -486,7 +485,6 @@ module.exports = function (server, app) {
         const request = await Order.findById(newRequest._id).populate(
           "user ridertype service liability"
         );
-
         callback({
           request,
           success: true,
@@ -520,7 +518,7 @@ module.exports = function (server, app) {
               // Send socket notification if user is connected
               if (connectedUsers[to_id.toString()]) {
                 connectedUsers[to_id.toString()].forEach((socketId) => {
-                  // console.log("Emitting to socket:", socketId);
+                  console.log("Emitting to socket:", socketId);
                   io.to(socketId).emit("recieve-request-rider", {
                     to_user,
                     userType: to_user.type,
@@ -571,8 +569,7 @@ module.exports = function (server, app) {
               ])
             ),
           };
-          fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
-          console.log(fcmTokens);
+
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
@@ -584,7 +581,7 @@ module.exports = function (server, app) {
 
           jobQueue.addJob({ data: valueData });
         } else {
-          fcmTokens = [
+          adminTokens = [
             ...new Set(
               [...adminIds]
                 .map((item) => item.fcmtoken)
@@ -636,7 +633,6 @@ module.exports = function (server, app) {
               ])
             ),
           };
-          console.log("fcmTokens List", fcmTokens);
           fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
           console.log(fcmTokens);
           const valueData = {
