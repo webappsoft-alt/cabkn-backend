@@ -484,6 +484,7 @@ module.exports = function (server, app) {
         const request = await Order.findById(newRequest._id).populate(
           "user ridertype service liability"
         );
+
         callback({
           request,
           success: true,
@@ -589,7 +590,7 @@ module.exports = function (server, app) {
           ];
           // Broadcast to all users (userIds) when no specific to_ids provided
           for (let user of userIds) {
-            // console.log(user);
+            console.log(user);
             connectedUsers[user.toString()]?.forEach((socketId) => {
               io.to(socketId).emit("recieve-request-rider", {
                 request,
