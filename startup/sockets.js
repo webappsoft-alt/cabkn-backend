@@ -296,7 +296,7 @@ module.exports = function (server, app) {
         const senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
-        console.log("Hit socket", cart_items);
+        console.log("Hit socket");
         const sender = await User.findById(senderId);
         if (!senderId) {
           return callback({
@@ -386,7 +386,7 @@ module.exports = function (server, app) {
                 .filter((item) => item !== undefined || item !== "")
             ),
           ];
-          console.log("fcmTokens", fcmTokens);
+          // console.log("fcmTokens", fcmTokens);
           userIds = [
             ...new Set(
               userIds
@@ -519,7 +519,7 @@ module.exports = function (server, app) {
               // Send socket notification if user is connected
               if (connectedUsers[to_id.toString()]) {
                 connectedUsers[to_id.toString()].forEach((socketId) => {
-                  console.log("Emitting to socket:", socketId);
+                  // console.log("Emitting to socket:", socketId);
                   io.to(socketId).emit("recieve-request-rider", {
                     to_user,
                     userType: to_user.type,
@@ -591,7 +591,7 @@ module.exports = function (server, app) {
           ];
           // Broadcast to all users (userIds) when no specific to_ids provided
           for (let user of userIds) {
-            console.log(user);
+            // console.log(user);
             connectedUsers[user.toString()]?.forEach((socketId) => {
               io.to(socketId).emit("recieve-request-rider", {
                 request,
@@ -634,7 +634,7 @@ module.exports = function (server, app) {
               ])
             ),
           };
-
+          console.log("fcmTokens List",fcmTokens)
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
