@@ -293,10 +293,9 @@ module.exports = function (server, app) {
           color,
           size,
         } = data;
-        const senderId = "67fd06838f7a0c0b91c8636f";
-        // Object.keys(connectedUsers).find((userId) =>
-        //   connectedUsers[userId].has(socket.id)
-        // );
+        const senderId = Object.keys(connectedUsers).find((userId) =>
+          connectedUsers[userId].has(socket.id)
+        );
         console.log("Hit socket");
         const sender = await User.findById(senderId);
         if (!senderId) {
