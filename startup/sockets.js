@@ -364,6 +364,7 @@ module.exports = function (server, app) {
 
         let userIds = [];
         let fcmTokens = [];
+        let adminTokens = [];
 
         // If riderId is provided, only send to that specific rider
         if (riderId) {
@@ -501,7 +502,7 @@ module.exports = function (server, app) {
             _id: { $in: recipients },
           }).lean();
 
-          const adminTokens = [
+          adminTokens = [
             ...new Set(
               [...users, ...adminIds]
                 .map((item) => item.fcmtoken)
@@ -572,6 +573,7 @@ module.exports = function (server, app) {
             ),
           };
           fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
+          console.log(fcmTokens);
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
@@ -636,6 +638,8 @@ module.exports = function (server, app) {
             ),
           };
           console.log("fcmTokens List", fcmTokens);
+          fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
+          console.log(fcmTokens);
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
