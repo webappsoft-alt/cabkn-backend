@@ -293,9 +293,10 @@ module.exports = function (server, app) {
           color,
           size,
         } = data;
-        const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
-        );
+        const senderId = "67fd06838f7a0c0b91c8636f";
+        // Object.keys(connectedUsers).find((userId) =>
+        //   connectedUsers[userId].has(socket.id)
+        // );
         console.log("Hit socket");
         const sender = await User.findById(senderId);
         if (!senderId) {
@@ -500,7 +501,7 @@ module.exports = function (server, app) {
             _id: { $in: recipients },
           }).lean();
 
-          fcmTokens = [
+          const adminTokens = [
             ...new Set(
               [...users, ...adminIds]
                 .map((item) => item.fcmtoken)
@@ -570,7 +571,7 @@ module.exports = function (server, app) {
               ])
             ),
           };
-
+          fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
@@ -634,7 +635,7 @@ module.exports = function (server, app) {
               ])
             ),
           };
-          console.log("fcmTokens List",fcmTokens)
+          console.log("fcmTokens List", fcmTokens);
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
