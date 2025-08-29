@@ -454,9 +454,9 @@ router.put("/update-user", auth, async (req, res) => {
     police_record,
     insurance,
     account_info,
-    homeAddress,insurancetype
+    homeAddress,
+    insurancetype,
   } = req.body;
-
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
@@ -475,7 +475,8 @@ router.put("/update-user", auth, async (req, res) => {
       police_record,
       insurance,
       account_info,
-      homeAddress,insurancetype
+      homeAddress,
+      insurancetype,
     }).filter(([key, value]) => value !== undefined)
   );
 
@@ -1089,12 +1090,13 @@ router.delete("/:id", [auth, admin], async (req, res) => {
 });
 
 router.put("/update-user/:id", [auth, admin], async (req, res) => {
-  const { status } = req.body;
+  const { status, insurancetype } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
       status,
+      insurancetype,
     }).filter(([key, value]) => value !== undefined)
   );
 
