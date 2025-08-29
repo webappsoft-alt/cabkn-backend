@@ -763,7 +763,7 @@ module.exports = function (server, app) {
           const senderId = Object.keys(connectedUsers).find((userId) =>
             connectedUsers[userId].has(socket.id)
           );
-
+          console.log("Hit update-request-rider");
           if (!senderId) {
             return callback({
               success: false,
@@ -796,7 +796,7 @@ module.exports = function (server, app) {
             .populate("user")
             .populate("ridertype service")
             .populate("liability");
-
+          console.log("find order by Request Id", order);
           if (!order) {
             return callback({
               success: false,
@@ -891,7 +891,7 @@ module.exports = function (server, app) {
 
             order.to_id = senderId;
             await order.save();
-
+            console.log("check order After save ", order);
             const date = new Date(order.schedule_date);
             // fcmTokens = [
             //   ...new Set(
