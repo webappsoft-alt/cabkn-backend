@@ -72,7 +72,7 @@ module.exports = function (server, app) {
           const senderId = Object.keys(connectedUsers).find((userId) =>
             connectedUsers[userId].has(socket.id)
           );
-          console.log(recipientId);
+
           // Get sender details to check if they're a customer
           const sender = await User.findById(senderId).select("type").lean();
           const isCustomer = sender?.type === "customer";
@@ -109,12 +109,10 @@ module.exports = function (server, app) {
           connectedUsers[recipientId]?.forEach((socketId) => {
             io.to(socketId).emit("recieved-message", savedMessage);
           });
-          console.log(recipientId);
 
           const recipient = await User.findById(recipientId)
             .select("fcmtoken type")
             .lean();
-          console.log(recipient);
 
           // Send notification to recipient
           await sendNotification({
@@ -135,7 +133,6 @@ module.exports = function (server, app) {
               .lean();
             // Send notifications to all admins
             for (const admin of admins) {
-              console.log(admin);
               await sendNotification({
                 user: senderId,
                 to_id: admin._id,
