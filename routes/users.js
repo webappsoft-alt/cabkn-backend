@@ -454,7 +454,7 @@ router.put("/update-user", auth, async (req, res) => {
     police_record,
     insurance,
     account_info,
-    homeAddress,
+    homeAddress,insurancetype
   } = req.body;
 
   // Create an object to store the fields to be updated
@@ -475,7 +475,7 @@ router.put("/update-user", auth, async (req, res) => {
       police_record,
       insurance,
       account_info,
-      homeAddress,
+      homeAddress,insurancetype
     }).filter(([key, value]) => value !== undefined)
   );
 
