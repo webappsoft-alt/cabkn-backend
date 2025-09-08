@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 VPS_HOST="85.31.238.45"
 VPS_USER="root"
 REMOTE_DIR="/root/RiderAppBackend"  # Changed path to a more standard location
-PM2_APP_NAME="server2"
+PM2_APP_NAME="0"
 
 # Check if git status is clean
 if [[ -n $(git status -s) ]]; then
@@ -84,7 +84,7 @@ ssh -v ${VPS_USER}@${VPS_HOST} << EOF
   
   # Restart application
   echo "Restarting application..."
-  pm2 restart ${PM2_APP_NAME} || pm2 start index.js --name ${PM2_APP_NAME}
+  pm2 restart ${PM2_APP_NAME}
   
   echo "Deployment completed at \$(date)"
 EOF
