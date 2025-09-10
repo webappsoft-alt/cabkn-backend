@@ -799,7 +799,7 @@ module.exports = function (server, app) {
       };
 
       const valueData = {
-        fcmTokens: fcmTokens,
+        fcmTokens: adminTokens,
         title: "'CabKN: New Request'",
         description: "You have received a new request.",
         image: "",
