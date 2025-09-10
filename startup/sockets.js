@@ -744,13 +744,13 @@ module.exports = function (server, app) {
         const to_user = await User.findById(to_id).lean();
 
         if (to_user) {
-          // console.log("Sending to user:", to_user._id);
-
+          console.log("Sending to user:", to_user._id);
           // Send socket notification if user is connected
           if (connectedUsers[to_id.toString()]) {
             connectedUsers[to_id.toString()].forEach((socketId) => {
               console.log("Emitting to socket:", socketId);
               io.to(socketId).emit("recieve-request-rider", {
+                request,
                 to_user,
                 userType: to_user.type,
                 success: true,
@@ -988,7 +988,9 @@ module.exports = function (server, app) {
             };
 
             jobQueue.addJob({ data: valueData });
-            // await Order.findOneAndDelete(deletedOrder._id);
+            deletedOrder.satus = "cancelled";
+            await deletedOrder.save();
+            // await Order.findByIdAndDelete(deletedOrder._id);
           }
           let fcmTokens = [];
           let adminIds = await User.find({ type: "admin" })
