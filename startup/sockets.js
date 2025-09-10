@@ -994,6 +994,15 @@ module.exports = function (server, app) {
             deletedOrder.cancelled_time = new Date();
             deletedOrder.deleted = true;
             await deletedOrder.save();
+            connectedUsers[deletedOrder.user._id.toString()]?.forEach(
+              (socketId) => {
+                io.to(socketId).emit("user_update", {
+                  success: true,
+                  user: user,
+                  message: "Your Ride has been transferred to another Rider by Admin.",
+                });
+              }
+            );
             connectedUsers[deletedOrder.to_id._id.toString()]?.forEach(
               (socketId) => {
                 io.to(socketId).emit("cancel-order-rider", {
