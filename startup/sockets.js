@@ -947,7 +947,7 @@ module.exports = function (server, app) {
             .populate("user")
             .populate("ridertype service")
             .populate("liability");
-          console.log("find order by Request Id", order);
+
           if (!order) {
             return callback({
               success: false,
@@ -969,7 +969,8 @@ module.exports = function (server, app) {
               order_id: order.order_id,
               deleted: true,
             }).populate("accepted_by");
-
+            console.log("requestId", deletedOrder);
+            // console.log("find order by Request Id", order);
             let adminTokens = [
               ...new Set(
                 [...order.accepted_by]
