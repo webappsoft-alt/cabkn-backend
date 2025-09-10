@@ -296,7 +296,6 @@ module.exports = function (server, app) {
         const senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
-        console.log("Hit socket", cart_items);
         const sender = await User.findById(senderId);
         if (!senderId) {
           return callback({
@@ -654,6 +653,156 @@ module.exports = function (server, app) {
           message: error.message,
         });
       }
+    });
+
+    socket.on("resend-request-customer", async (data, callback) => {
+      const { requestId, to_ids } = data;
+      const order = await Order.findById(requestId);
+      const newRequest = new Order({
+        user: order.user,
+        price: Number(order.price).toFixed(2),
+        start_location: {
+          type: "Point",
+          coordinates: [Number(order.start_lng), Number(order.start_lat)],
+        },
+        end_location: {
+          type: "Point",
+          coordinates: [Number(order.end_lng), Number(order.end_lat)],
+        },
+        title: order.title,
+        cart_items: order.cart_items,
+        isShop: order.isShop,
+        image: order.image,
+        start_address: order.start_address,
+        end_address: order.end_address,
+        type: order.type,
+        userIds: userIds,
+        bookingtype: order.bookingtype,
+        liability: order.liability,
+        ridertype: order.ridertype,
+        pincode: order.pincode,
+        adminprice: (Number(order.price) * 0.2).toFixed(2),
+        paymentId: order.paymentId || "",
+        payment_status: "completed",
+        order_id: order.order_id || "",
+        passengerCount: order.passengerCount || 0,
+        quantity: order.quantity || 0,
+        paymentType: order.paymentType || "paid",
+        color: order.color || "",
+        size: order.size || "",
+        paymentDone: order.paymentType,
+      });
+
+
+      if (order.bookingtype == "schedule") {
+        newRequest.schedule_date = order.schedule_date;
+        newRequest.schedule_time = order.schedule_time;
+      }
+      if (order.distance) {
+        newRequest.distance = order.distance;
+      }
+      if (order.note) {
+        newRequest.note = order.note;
+      }
+      if (order.stops) {
+        newRequest.stops = order.stops;
+      }
+      if (service) {
+        newRequest.service = order.service;
+      }
+
+      await newRequest.save();
+      const request = await Order.findById(newRequest._id).populate(
+        "user ridertype service liability"
+      );
+      callback({
+        request,
+        success: true,
+        title: "Request sent",
+        message: "You have successfully sent a request to selected users!",
+      });
+      const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
+      const users = await User.find({
+        _id: { $in: recipients },
+      }).lean();
+      let adminTokens = [];
+
+      adminTokens = [
+        ...new Set(
+          [...users, ...adminIds]
+            .map((item) => item.fcmtoken)
+            .filter((token) => token && token !== "")
+        ),
+      ];
+
+      for (const to_id of recipients) {
+        const to_user = await User.findById(to_id).lean();
+
+        if (to_user) {
+          // console.log("Sending to user:", to_user._id);
+
+          // Send socket notification if user is connected
+          if (connectedUsers[to_id.toString()]) {
+            connectedUsers[to_id.toString()].forEach((socketId) => {
+              console.log("Emitting to socket:", socketId);
+              io.to(socketId).emit("recieve-request-rider", {
+                to_user,
+                userType: to_user.type,
+                success: true,
+                title: "New Request",
+                message: `New request has been created by ${sender.name}`,
+              });
+            });
+          } else {
+            console.log(`User ${to_id} is not currently connected`);
+          }
+        } else {
+          console.log(`User ${to_id} not found`);
+        }
+      }
+
+      // Admin notifications (same in both branches)
+      for (let admin of adminIds) {
+        const adminId = admin._id.toString();
+        const sockets = connectedUsers[adminId];
+        if (sockets && sockets.size > 0) {
+          sockets.forEach((socketId) => {
+            io.to(socketId).emit("recieve-request-rider", {
+              request,
+              userType: request.user.type,
+              success: true,
+              title: "New Request",
+              message: `New request has been created by ${sender.name}`,
+            });
+          });
+        } else {
+          console.log(`Admin ${adminId} not connected`);
+        }
+      }
+
+      // FCM notification logic (same in both branches)
+      const messageData = {
+        notiId: "request",
+        messageType: "request",
+        userType:
+          recipients.length > 0
+            ? (await User.findById(recipients[0]).lean()).type
+            : request.user.type,
+        ...Object.fromEntries(
+          Object.entries(request).map(([key, value]) => [key, String(value)])
+        ),
+      };
+
+      const valueData = {
+        fcmTokens: fcmTokens,
+        title: "'CabKN: New Request'",
+        description: "You have received a new request.",
+        image: "",
+        weburl: "",
+        data: messageData || {},
+      };
+
+      jobQueue.addJob({ data: valueData });
     });
 
     socket.on("delete-request-customer", async ({ requestId }, callback) => {
