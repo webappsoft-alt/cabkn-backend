@@ -656,159 +656,135 @@ module.exports = function (server, app) {
     });
 
     socket.on("resend-request-customer", async (data, callback) => {
-      const { requestId, to_ids } = data;
-      const order = await Order.findById(requestId);
-      order.deleted = true;
-      await order.save();
-      console.log("order", order);
-      let newRequest;
-      try {
-        newRequest = new Order({
-          user: order.user,
-          price: Number(order.price).toFixed(2),
-          start_location: order.start_location,
-          end_location: order.end_location,
-          title: order.title,
-          cart_items: order.cart_items,
-          isShop: order.isShop,
-          image: order.image,
-          start_address: order.start_address,
-          end_address: order.end_address,
-          type: order.type,
-          userIds: order.userIds,
-          bookingtype: order.bookingtype,
-          liability: order.liability,
-          ridertype: order.ridertype,
-          pincode: order.pincode,
-          adminprice: (Number(order.price) * 0.2).toFixed(2),
-          paymentId: order.paymentId || "",
-          payment_status: "completed",
-          order_id: order.order_id || "",
-          passengerCount: order.passengerCount || 0,
-          quantity: order.quantity || 0,
-          paymentType: order.paymentType || "paid",
-          color: order.color || "",
-          size: order.size || "",
-          paymentDone: order.paymentDone,
-          reassigning: true,
-        });
-      } catch (error) {
-        console.log("error====>>", error);
-      }
-
-      if (order.bookingtype == "schedule") {
-        newRequest.schedule_date = order.schedule_date;
-        newRequest.schedule_time = order.schedule_time;
-      }
-      if (order.distance) {
-        console.log("order.distance", order.distance);
-        newRequest.distance = order.distance;
-      }
-      if (order.note) {
-        newRequest.note = order.note;
-      }
-      if (order.stops) {
-        newRequest.stops = order.stops;
-      }
-      if (order.service) {
-        newRequest.service = order.service;
-      }
-
-      await newRequest.save();
-      const request = await Order.findById(newRequest._id).populate(
-        "user ridertype service liability"
-      );
-      callback({
-        request,
-        success: true,
-        title: "Request sent",
-        message: "You have successfully sent a request to selected users!",
+  const { requestId, to_ids } = data;
+  
+  try {
+    const order = await Order.findById(requestId);
+    if (!order) {
+      return callback({
+        success: false,
+        title: "Order Not Found",
+        message: "Order not found.",
       });
-      const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
-      const users = await User.find({
-        _id: { $in: recipients },
-      }).lean();
-      let adminTokens;
-      let adminIds = await User.find({ type: "admin" })
-        .select("name type fcmtoken")
-        .lean();
-      adminTokens = [
-        ...new Set(
-          [...users, ...adminIds]
-            .map((item) => item.fcmtoken)
-            .filter((token) => token && token !== "")
-        ),
-      ];
+    }
 
-      for (const to_id of recipients) {
-        const to_user = await User.findById(to_id).lean();
+    // Instead of creating a new order, just update the existing one
+    const updatedOrder = await Order.findByIdAndUpdate(
+      requestId,
+      {
+        status: "pending", // Reset to pending
+        to_id: null, // Clear previous assignment
+        $unset: { 
+          accepted_by: 1, // Clear accepted_by array
+          rejected_by: 1  // Clear rejected_by array
+        },
+        reassigning: true,
+        userIds: to_ids || order.userIds // Update target users if provided
+      },
+      { new: true }
+    ).populate("user ridertype service liability");
 
-        if (to_user) {
-          console.log("Sending to user:", to_user._id);
-          // Send socket notification if user is connected
-          if (connectedUsers[to_id.toString()]) {
-            connectedUsers[to_id.toString()].forEach((socketId) => {
-              console.log("Emitting to socket:", socketId);
-              io.to(socketId).emit("recieve-request-rider", {
-                request,
-                to_user,
-                userType: to_user.type,
-                success: true,
-                title: "New Request",
-                message: `New request has been created by Admin`,
-              });
-            });
-          } else {
-            console.log(`User ${to_id} is not currently connected`);
-          }
-        } else {
-          console.log(`User ${to_id} not found`);
-        }
-      }
+    if (!updatedOrder) {
+      return callback({
+        success: false,
+        title: "Update Failed",
+        message: "Failed to update order.",
+      });
+    }
 
-      // Admin notifications (same in both branches)
-      for (let admin of adminIds) {
-        const adminId = admin._id.toString();
-        const sockets = connectedUsers[adminId];
-        if (sockets && sockets.size > 0) {
-          sockets.forEach((socketId) => {
+    callback({
+      request: updatedOrder,
+      success: true,
+      title: "Request sent",
+      message: "You have successfully sent a request to selected users!",
+    });
+
+    const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
+    const users = await User.find({
+      _id: { $in: recipients },
+    }).lean();
+    
+    let adminIds = await User.find({ type: "admin" })
+      .select("name type fcmtoken")
+      .lean();
+    
+    let adminTokens = [
+      ...new Set(
+        [...users, ...adminIds]
+          .map((item) => item.fcmtoken)
+          .filter((token) => token && token !== "")
+      ),
+    ];
+
+    // Send to selected riders
+    for (const to_id of recipients) {
+      const to_user = await User.findById(to_id).lean();
+
+      if (to_user) {
+        if (connectedUsers[to_id.toString()]) {
+          connectedUsers[to_id.toString()].forEach((socketId) => {
             io.to(socketId).emit("recieve-request-rider", {
-              request,
-              userType: request.user.type,
+              request: updatedOrder,
+              to_user,
+              userType: to_user.type,
               success: true,
               title: "New Request",
-              message: `New request has been created by Admin`,
+              message: `New request has been reassigned by Admin`,
             });
           });
-        } else {
-          console.log(`Admin ${adminId} not connected`);
         }
       }
+    }
 
-      // FCM notification logic (same in both branches)
-      const messageData = {
-        notiId: "request",
-        messageType: "request",
-        userType:
-          recipients.length > 0
-            ? (await User.findById(recipients[0]).lean()).type
-            : request.user.type,
-        ...Object.fromEntries(
-          Object.entries(request).map(([key, value]) => [key, String(value)])
-        ),
-      };
+    // Notify admins
+    for (let admin of adminIds) {
+      const adminId = admin._id.toString();
+      const sockets = connectedUsers[adminId];
+      if (sockets && sockets.size > 0) {
+        sockets.forEach((socketId) => {
+          io.to(socketId).emit("recieve-request-rider", {
+            request: updatedOrder,
+            userType: updatedOrder.user.type,
+            success: true,
+            title: "Request Reassigned",
+            message: `Request has been reassigned by Admin`,
+          });
+        });
+      }
+    }
 
-      const valueData = {
-        fcmTokens: adminTokens,
-        title: "'CabKN: New Request'",
-        description: "You have received a new request.",
-        image: "",
-        weburl: "",
-        data: messageData || {},
-      };
+    // Send FCM notification
+    const messageData = {
+      notiId: "request",
+      messageType: "request",
+      userType: recipients.length > 0 ? 
+        (await User.findById(recipients[0]).lean()).type : 
+        updatedOrder.user.type,
+      ...Object.fromEntries(
+        Object.entries(updatedOrder).map(([key, value]) => [key, String(value)])
+      ),
+    };
 
-      jobQueue.addJob({ data: valueData });
+    const valueData = {
+      fcmTokens: adminTokens,
+      title: "'CabKN: Reassigned Request'",
+      description: "You have received a reassigned request.",
+      image: "",
+      weburl: "",
+      data: messageData || {},
+    };
+
+    jobQueue.addJob({ data: valueData });
+    
+  } catch (error) {
+    console.log("error====>>", error);
+    callback({
+      success: false,
+      title: "Request Error",
+      message: error.message,
     });
+  }
+});
 
     socket.on("delete-request-customer", async ({ requestId }, callback) => {
       try {
@@ -907,329 +883,266 @@ module.exports = function (server, app) {
       }
     });
 
-    socket.on(
-      "update-request-rider",
-      async ({ requestId, status }, callback) => {
-        try {
-          const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
-          );
-          console.log("Hit update-request-rider");
-          if (!senderId) {
-            return callback({
-              success: false,
-              title: "Authentication Error",
-              message: "Sender ID not found.",
-            });
-          }
+ socket.on(
+  "update-request-rider",
+  async ({ requestId, status }, callback) => {
+    try {
+      const senderId = Object.keys(connectedUsers).find((userId) =>
+        connectedUsers[userId].has(socket.id)
+      );
 
-          const user = await User.findById(senderId).lean();
+      if (!senderId) {
+        return callback({
+          success: false,
+          title: "Authentication Error",
+          message: "Sender ID not found.",
+        });
+      }
 
-          if (user.status !== "online") {
-            return callback({
-              success: false,
-              user,
-              title: "Request Update",
-              message: "You are not online yet.",
-            });
-          }
+      const user = await User.findById(senderId).lean();
 
-          if (user.isVehicle !== true) {
-            return callback({
-              success: false,
-              user,
-              title: "Request Update",
-              message: "Your's vehicle is not added yet.",
-            });
-          }
+      if (user.status !== "online") {
+        return callback({
+          success: false,
+          user,
+          title: "Request Update",
+          message: "You are not online yet.",
+        });
+      }
 
-          const order = await Order.findById(requestId)
-            .populate("user")
-            .populate("ridertype service")
-            .populate("liability");
+      if (user.isVehicle !== true) {
+        return callback({
+          success: false,
+          user,
+          title: "Request Update",
+          message: "Your vehicle is not added yet.",
+        });
+      }
 
-          if (!order) {
-            return callback({
-              success: false,
-              title: "Request Update",
-              message: "Invalid request ID.",
-            });
-          }
-
-          if (order.status !== "pending") {
-            return callback({
-              success: false,
-              title: "Request Update",
-              message: "This request has already been booked.",
-            });
-          }
-
-          if (order.reassigning) {
-            const deletedOrder = await Order.findOne({
-              order_id: order.order_id,
-              deleted: true,
-            }).populate("accepted_by");
-            //  if (deletedOrder.accepted_by.find() === order.to_id._id) {
-            //   return callback({
-            //     success: false,
-            //     title: "Request Update",
-            //     message:
-            //       "This request is being reassigned by Admin, please wait.",
-            //   });
-            // }
-            // console.log("find order by Request Id", order);
-            let adminTokens = [
-              ...new Set(
-                [...order.accepted_by]
-                  .map((item) => item.fcmtoken)
-                  .filter((token) => token && token !== "")
-              ),
-            ];
-            const valueData = {
-              fcmTokens: adminTokens,
-              title: "'CabKN: Request Deleted'",
-              description: "Your Order has been Delete.",
-              image: "",
-              weburl: "",
-              data: {},
-            };
-
-            jobQueue.addJob({ data: valueData });
-            deletedOrder.status = "cancelled";
-            deletedOrder.reason = "Reassigned by Admin";
-            // deletedOrder.cancelled_by = "admin";
-            deletedOrder.cancelled_time = new Date();
-            deletedOrder.deleted = true;
-            await deletedOrder.save();
-            connectedUsers[deletedOrder.user._id.toString()]?.forEach(
-              (socketId) => {
-                io.to(socketId).emit("user_update", {
-                  success: true,
-                  user: user,
-                  message:
-                    "Your Ride has been transferred to another Rider by Admin.",
-                });
-              }
-            );
-            connectedUsers[deletedOrder.to_id._id.toString()]?.forEach(
-              (socketId) => {
-                io.to(socketId).emit("cancel-order-rider", {
-                  success: true,
-                  order: order,
-                  title: "Ride Update",
-                  message: "Your Ride has been cancelled by Admin.",
-                });
-              }
-            );
-            // await Order.findByIdAndDelete(deletedOrder._id);
-          }
-          let fcmTokens = [];
-          let adminIds = await User.find({ type: "admin" })
-            .select("name type fcmtoken")
-            .lean();
-
-          if (status === "rejected") {
-            const findorder = await Order.findOne({
-              _id: requestId,
-              rejected_by: { $in: senderId },
-            }).lean();
-
-            if (findorder) {
-              return callback({
-                success: false,
-                request: order,
-                title: "Request Update",
-                message: "The request has already been rejected.",
-              });
-            }
-            // Update order as rejected by this rider
-            await Order.findByIdAndUpdate(requestId, {
-              $addToSet: { rejected_by: senderId },
-            });
-            fcmTokens = [
-              ...new Set(
-                [...adminIds]
-                  .map((item) => item.fcmtoken)
-                  .filter((token) => token && token !== "")
-              ),
-            ];
-            // 1. Get all admins with their FCM tokens
-            const admins = await User.find({ type: "admin" })
-              .select("_id name type fcmtoken")
-              .lean();
-
-            // 2. Filter only admins with valid FCM tokens
-            const adminsWithTokens = admins.filter(
-              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
-            );
-
-            // 3. Send to all admins in parallel
-            await Promise.all(
-              adminsWithTokens.map((admin) =>
-                sendNotification({
-                  user: senderId, // Who triggered the rejection
-                  to_id: admin._id.toString(), // Current admin's ID
-                  description: `User ${
-                    user?.name || "Unknown"
-                  }'s request has been rejected.`,
-                  type: "order", // Special type for admin alerts
-                  title: "Request Rejected",
-                  fcmtoken: admin.fcmtoken, // Individual admin's token
-                  order: requestId,
-                  usertype: "admin", // Hardcoded since we know the recipient
-                  metadata: {
-                    rejected_user_id: user?._id, // Optional but useful
-                    rejected_by: senderId, // Who rejected the request
-                  },
-                })
-              )
-            );
-
-            return callback({
-              success: true,
-              request: order,
-              title: "Request Rejected",
-              message: "The request was successfully rejected.",
-            });
-          } else {
-             const alreadyAccepted = await Order.findOne({
+      // Use findOneAndUpdate with atomic operation to prevent race conditions
+      const order = await Order.findOneAndUpdate(
+        {
           _id: requestId,
-          accepted_by: { $in: [senderId] },
+          status: "pending" // Only allow updates to pending orders
+        },
+        {}, // No update needed here, just for locking
+        { new: true }
+      ).populate("user ridertype service liability");
+
+      if (!order) {
+        return callback({
+          success: false,
+          title: "Request Update",
+          message: "Invalid request ID or request has already been processed.",
+        });
+      }
+
+      if (status === "rejected") {
+        // Check if already rejected
+        const alreadyRejected = await Order.findOne({
+          _id: requestId,
+          rejected_by: { $in: [senderId] },
         }).lean();
 
-        if (alreadyAccepted) {
+        if (alreadyRejected) {
+          return callback({
+            success: false,
+            request: order,
+            title: "Request Update",
+            message: "The request has already been rejected.",
+          });
+        }
+
+        // Add to rejected list
+        await Order.findByIdAndUpdate(requestId, {
+          $addToSet: { rejected_by: senderId },
+        });
+
+        // Send notifications to admins
+        let adminIds = await User.find({ type: "admin" })
+          .select("name type fcmtoken")
+          .lean();
+
+        const adminsWithTokens = adminIds.filter(
+          (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
+        );
+
+        await Promise.all(
+          adminsWithTokens.map((admin) =>
+            sendNotification({
+              user: senderId,
+              to_id: admin._id.toString(),
+              description: `User ${user?.name || "Unknown"}'s request has been rejected.`,
+              type: "order",
+              title: "Request Rejected",
+              fcmtoken: admin.fcmtoken,
+              order: requestId,
+              usertype: "admin",
+              metadata: {
+                rejected_user_id: user?._id,
+                rejected_by: senderId,
+              },
+            })
+          )
+        );
+
+        return callback({
+          success: true,
+          request: order,
+          title: "Request Rejected",
+          message: "The request was successfully rejected.",
+        });
+        
+      } else {
+        // ACCEPTANCE LOGIC WITH ATOMIC UPDATE
+        const acceptedOrder = await Order.findOneAndUpdate(
+          {
+            _id: requestId,
+            status: "pending",
+            accepted_by: { $nin: [senderId] } // Ensure not already accepted by this user
+          },
+          {
+            status: "accepted",
+            to_id: senderId,
+            vehicle: user.vehicle,
+            $addToSet: { accepted_by: senderId }
+          },
+          { new: true }
+        ).populate("user ridertype service liability");
+
+        if (!acceptedOrder) {
           return callback({
             success: false,
             title: "Request Update",
-            message: "You have already accepted this request.",
+            message: "This request has already been accepted by you or another rider.",
           });
         }
-            await Order.findByIdAndUpdate(requestId, {
-              $addToSet: { accepted_by: senderId },
-            });
 
-            // Update the order status
-            order.status = "accepted";
-            order.vehicle = user.vehicle;
+        // Handle reassignment cleanup
+        if (acceptedOrder.reassigning) {
+          // Find and properly cancel any old orders with same order_id
+          const deletedOrders = await Order.find({
+            order_id: acceptedOrder.order_id,
+            deleted: true,
+            status: { $ne: "cancelled" }
+          }).populate("accepted_by to_id");
 
-            order.to_id = senderId;
-            await order.save();
-            console.log("check order After save ", order);
-            const date = new Date(order.schedule_date);
-            // fcmTokens = [
-            //   ...new Set(
-            //     [...adminIds]
-            //       .map((item) => item.fcmtoken)
-            //       .filter((token) => token && token !== "")
-            //   ),
-            // ];
-            // console.log(fcmTokens)
-            // Send notifications
-            // 1. Get all admins with their FCM tokens
-            const admins = await User.find({ type: "admin" })
-              .select("_id name type fcmtoken")
-              .lean();
+          for (const deletedOrder of deletedOrders) {
+            if (deletedOrder.to_id && deletedOrder.to_id._id.toString() !== senderId) {
+              // Cancel the old order properly
+              deletedOrder.status = "cancelled";
+              deletedOrder.reason = "Reassigned by Admin";
+              deletedOrder.cancelled_time = new Date();
+              await deletedOrder.save();
 
-            // 2. Filter only admins with valid FCM tokens
-            const adminsWithTokens = admins.filter(
-              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
-            );
+              // Notify the old rider
+              if (connectedUsers[deletedOrder.to_id._id.toString()]) {
+                connectedUsers[deletedOrder.to_id._id.toString()].forEach((socketId) => {
+                  io.to(socketId).emit("cancel-order-rider", {
+                    success: true,
+                    order: deletedOrder,
+                    title: "Ride Update",
+                    message: "Your ride has been reassigned by Admin.",
+                  });
+                });
+              }
+            }
+          }
 
-            // 3. Send to all admins in parallel
-            await Promise.all(
-              adminsWithTokens.map((admin) =>
-                sendNotification({
-                  user: senderId, // Who triggered the rejection
-                  to_id: admin._id, // Current admin's ID
-                  description: `Rider ${user.name} has accepted the ride request from ${order.user.name}`,
-                  type: "order", // Special type for admin alerts
-                  title: "Request Accepted",
-                  fcmtoken: admin.fcmtoken, // Individual admin's token
-                  order: requestId,
-                  usertype: "admin", // Hardcoded since we know the recipient
-                  metadata: {
-                    rejected_user_id: user?._id, // Optional but useful
-                    rejected_by: senderId, // Who rejected the request
-                  },
-                })
-              )
-            );
-            await sendNotification({
+          // Clear reassigning flag
+          await Order.findByIdAndUpdate(requestId, { reassigning: false });
+        }
+
+        const date = new Date(acceptedOrder.schedule_date);
+
+        // Send notifications to admins
+        const admins = await User.find({ type: "admin" })
+          .select("_id name type fcmtoken")
+          .lean();
+
+        const adminsWithTokens = admins.filter(
+          (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
+        );
+
+        await Promise.all(
+          adminsWithTokens.map((admin) =>
+            sendNotification({
               user: senderId,
-              to_id: order.user._id,
-              description:
-                order.bookingtype == "live"
-                  ? `Your ride has been accepted, and your driver is on the way.`
-                  : `Your request has been accepted by ${
-                      user?.name
-                    } and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+              to_id: admin._id,
+              description: `Rider ${user.name} has accepted the ride request from ${acceptedOrder.user.name}`,
               type: "order",
-              title: "Ride Accepted",
-              fcmtoken: order?.user?.fcmtoken,
+              title: "Request Accepted",
+              fcmtoken: admin.fcmtoken,
               order: requestId,
-              usertype: order?.user?.type,
-            });
-
-            // await sendNotification({
-            //   user: request.user?._id.toString(),
-            //   to_id: senderId,
-            //   description: `You have accepted an offer from ${request.user?.name} and your ride has been started.`,
-            //   type: "order",
-            //   title: "Offer Accepted",
-            //   fcmtoken: order?.user?.fcmtoken,
-            //   order: orderId,
-            //   request: requestId,
-            // });
-
-            connectedUsers[order.user._id.toString()]?.forEach((socketId) => {
-              io.to(socketId).emit("update-request-customer", {
-                success: true,
-                title: "Offer Accepted",
-                type: order.bookingtype,
-                message:
-                  order.bookingtype == "live"
-                    ? `Your offer has been accepted by ${order?.user?.name} and your order has been started.`
-                    : `Your offer has been accepted by ${
-                        order?.user?.name
-                      } and your order has been scheduled for ${date.toLocaleDateString()}.`,
-              });
-            });
-
-            // Notify other riders to filter out the request
-            const userIds = await User.find({
-              type: "rider",
-              status: { $in: ["online", "offline"] },
-              _id: { $ne: senderId.toString() },
+              usertype: "admin",
             })
-              .select("fcmtoken")
-              .lean();
+          )
+        );
 
-            for (let user of userIds) {
-              io.to(user._id.toString()).emit("filter-request-rider", {
+        // Notify customer
+        await sendNotification({
+          user: senderId,
+          to_id: acceptedOrder.user._id,
+          description:
+            acceptedOrder.bookingtype == "live"
+              ? `Your ride has been accepted, and your driver is on the way.`
+              : `Your request has been accepted by ${user?.name} and your ride has been scheduled for ${date.toLocaleDateString()}.`,
+          type: "order",
+          title: "Ride Accepted",
+          fcmtoken: acceptedOrder?.user?.fcmtoken,
+          order: requestId,
+          usertype: acceptedOrder?.user?.type,
+        });
+
+        // Socket notification to customer
+        connectedUsers[acceptedOrder.user._id.toString()]?.forEach((socketId) => {
+          io.to(socketId).emit("update-request-customer", {
+            success: true,
+            title: "Offer Accepted",
+            type: acceptedOrder.bookingtype,
+            message:
+              acceptedOrder.bookingtype == "live"
+                ? `Your offer has been accepted by ${acceptedOrder?.user?.name} and your order has been started.`
+                : `Your offer has been accepted by ${acceptedOrder?.user?.name} and your order has been scheduled for ${date.toLocaleDateString()}.`,
+          });
+        });
+
+        // Notify other riders to filter out the request
+        const otherRiders = await User.find({
+          type: "rider",
+          status: { $in: ["online", "offline"] },
+          _id: { $ne: senderId.toString() },
+        }).select("_id").lean();
+
+        for (let rider of otherRiders) {
+          if (connectedUsers[rider._id.toString()]) {
+            connectedUsers[rider._id.toString()].forEach((socketId) => {
+              io.to(socketId).emit("filter-request-rider", {
                 request: requestId,
                 success: true,
               });
-            }
-
-            return callback({
-              success: true,
-              title: "Offer Accepted",
-              message: "The order has been started and notifications sent.",
             });
           }
-        } catch (error) {
-          console.log(error);
-          console.error("Error updating request:", error.message);
-          // Emit error to client and invoke callback with error
-          socket.emit("receive_request_error", error.message);
-          return callback({
-            success: false,
-            title: "Error",
-            message: error.message,
-          });
         }
+
+        return callback({
+          success: true,
+          title: "Offer Accepted",
+          message: "The order has been started and notifications sent.",
+        });
       }
-    );
+    } catch (error) {
+      console.log(error);
+      console.error("Error updating request:", error.message);
+      socket.emit("receive_request_error", error.message);
+      return callback({
+        success: false,
+        title: "Error",
+        message: error.message,
+      });
+    }
+  }
+);
 
     socket.on("send-alert-rider", async ({ orderId }, callback) => {
       try {
