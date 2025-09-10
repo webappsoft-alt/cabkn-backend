@@ -682,7 +682,7 @@ module.exports = function (server, app) {
         start_address: order.start_address,
         end_address: order.end_address,
         type: order.type,
-        userIds: userIds,
+        userIds: order.userIds,
         bookingtype: order.bookingtype,
         liability: order.liability,
         ridertype: order.ridertype,
