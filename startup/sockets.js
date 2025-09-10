@@ -664,20 +664,8 @@ module.exports = function (server, app) {
         newRequest = new Order({
           user: order.user,
           price: Number(order.price).toFixed(2),
-          start_location: {
-            type: "Point",
-            coordinates: [
-              Number(order.start_location.start_lng),
-              Number(order.start_location.start_lat),
-            ],
-          },
-          end_location: {
-            type: "Point",
-            coordinates: [
-              Number(order.end_location.end_lng),
-              Number(order.end_location.end_lat),
-            ],
-          },
+          start_location: order.start_location,
+          end_location: order.end_location,
           title: order.title,
           cart_items: order.cart_items,
           isShop: order.isShop,
@@ -699,7 +687,7 @@ module.exports = function (server, app) {
           paymentType: order.paymentType || "paid",
           color: order.color || "",
           size: order.size || "",
-          paymentDone: order.paymentType,
+          paymentDone: order.paymentDone,
         });
       } catch (error) {
         console.log("error====>>", error);
