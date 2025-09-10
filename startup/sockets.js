@@ -988,7 +988,7 @@ module.exports = function (server, app) {
             };
 
             jobQueue.addJob({ data: valueData });
-            deletedOrder.satus = "cancelled";
+            deletedOrder.status = "cancelled";
             await deletedOrder.save();
             // await Order.findByIdAndDelete(deletedOrder._id);
           }
