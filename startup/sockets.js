@@ -989,7 +989,21 @@ module.exports = function (server, app) {
 
             jobQueue.addJob({ data: valueData });
             deletedOrder.status = "cancelled";
+            deletedOrder.reason = "Reassigned by Admin";
+            // deletedOrder.cancelled_by = "admin";
+            deletedOrder.cancelled_time = new Date();
+            deletedOrder.deleted = true;
             await deletedOrder.save();
+            connectedUsers[deletedOrder.to_id._id.toString()]?.forEach(
+              (socketId) => {
+                io.to(socketId).emit("cancel-order-rider", {
+                  success: true,
+                  order: order,
+                  title: "Ride Update",
+                  message: "Your Ride has been cancelled by Admin.",
+                });
+              }
+            );
             // await Order.findByIdAndDelete(deletedOrder._id);
           }
           let fcmTokens = [];
