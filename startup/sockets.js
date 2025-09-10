@@ -658,7 +658,7 @@ module.exports = function (server, app) {
     socket.on("resend-request-customer", async (data, callback) => {
       const { requestId, to_ids } = data;
       const order = await Order.findById(requestId);
-      let = newRequest;
+      let newRequest;
       try {
         newRequest = new Order({
           user: order.user,
