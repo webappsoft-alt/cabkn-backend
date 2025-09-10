@@ -969,14 +969,14 @@ module.exports = function (server, app) {
               order_id: order.order_id,
               deleted: true,
             }).populate("accepted_by");
-             if (deletedOrder.accepted_by.find() === order.to_id._id) {
-              return callback({
-                success: false,
-                title: "Request Update",
-                message:
-                  "This request is being reassigned by Admin, please wait.",
-              });
-            }
+            //  if (deletedOrder.accepted_by.find() === order.to_id._id) {
+            //   return callback({
+            //     success: false,
+            //     title: "Request Update",
+            //     message:
+            //       "This request is being reassigned by Admin, please wait.",
+            //   });
+            // }
             // console.log("find order by Request Id", order);
             let adminTokens = [
               ...new Set(
