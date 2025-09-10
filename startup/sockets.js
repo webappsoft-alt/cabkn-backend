@@ -755,7 +755,7 @@ module.exports = function (server, app) {
                 userType: to_user.type,
                 success: true,
                 title: "New Request",
-                message: `New request has been created by ${sender.name}`,
+                message: `New request has been created by Admin`,
               });
             });
           } else {
