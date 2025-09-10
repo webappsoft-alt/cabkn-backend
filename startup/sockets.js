@@ -969,7 +969,14 @@ module.exports = function (server, app) {
               order_id: order.order_id,
               deleted: true,
             }).populate("accepted_by");
-            console.log("requestId", deletedOrder);
+             if (deletedOrder.accepted_by.find() === order.to_id._id) {
+              return callback({
+                success: false,
+                title: "Request Update",
+                message:
+                  "This request is being reassigned by Admin, please wait.",
+              });
+            }
             // console.log("find order by Request Id", order);
             let adminTokens = [
               ...new Set(
@@ -999,7 +1006,8 @@ module.exports = function (server, app) {
                 io.to(socketId).emit("user_update", {
                   success: true,
                   user: user,
-                  message: "Your Ride has been transferred to another Rider by Admin.",
+                  message:
+                    "Your Ride has been transferred to another Rider by Admin.",
                 });
               }
             );
@@ -1084,6 +1092,18 @@ module.exports = function (server, app) {
               message: "The request was successfully rejected.",
             });
           } else {
+             const alreadyAccepted = await Order.findOne({
+          _id: requestId,
+          accepted_by: { $in: [senderId] },
+        }).lean();
+
+        if (alreadyAccepted) {
+          return callback({
+            success: false,
+            title: "Request Update",
+            message: "You have already accepted this request.",
+          });
+        }
             await Order.findByIdAndUpdate(requestId, {
               $addToSet: { accepted_by: senderId },
             });
