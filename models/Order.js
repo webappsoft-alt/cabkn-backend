@@ -182,6 +182,15 @@ const orderSchema = new mongoose.Schema({
   image: String,
   cart_items: String,
   isShop: Boolean,
+  reassigning:{
+    type: Boolean,
+    default: false,
+  },
+  deleted: {
+    type: Boolean,
+    default: false,
+  },
+
 });
 
 // // Explicitly define geospatial indexes

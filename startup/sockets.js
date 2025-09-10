@@ -658,6 +658,8 @@ module.exports = function (server, app) {
     socket.on("resend-request-customer", async (data, callback) => {
       const { requestId, to_ids } = data;
       const order = await Order.findById(requestId);
+      order.deleted = true;
+      await order.save();
       console.log("order", order);
       let newRequest;
       try {
@@ -688,6 +690,7 @@ module.exports = function (server, app) {
           color: order.color || "",
           size: order.size || "",
           paymentDone: order.paymentDone,
+          reassigning: true,
         });
       } catch (error) {
         console.log("error====>>", error);
@@ -726,7 +729,7 @@ module.exports = function (server, app) {
         _id: { $in: recipients },
       }).lean();
       let adminTokens = [];
-
+      let adminIds;
       adminTokens = [
         ...new Set(
           [...users, ...adminIds]
@@ -957,6 +960,32 @@ module.exports = function (server, app) {
               title: "Request Update",
               message: "This request has already been booked.",
             });
+          }
+
+          if (order.reassigning) {
+            const deletedOrder = await Order.findOne({
+              order_id: order.order_id,
+              deleted: true,
+            }).populate("accepted_by");
+
+            let adminTokens = [
+              ...new Set(
+                [...order.accepted_by]
+                  .map((item) => item.fcmtoken)
+                  .filter((token) => token && token !== "")
+              ),
+            ];
+            const valueData = {
+              fcmTokens: adminTokens,
+              title: "'CabKN: Request Deleted'",
+              description: "Your Order has been Delete.",
+              image: "",
+              weburl: "",
+              data: messageData || {},
+            };
+
+            jobQueue.addJob({ data: valueData });
+            await Order.findOneAndDelete({ _id: deletedOrder._id });
           }
           let fcmTokens = [];
           let adminIds = await User.find({ type: "admin" })
