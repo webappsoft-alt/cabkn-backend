@@ -728,8 +728,10 @@ module.exports = function (server, app) {
       const users = await User.find({
         _id: { $in: recipients },
       }).lean();
-      let adminTokens = [];
-      let adminIds;
+      let adminTokens;
+      let adminIds = await User.find({ type: "admin" })
+        .select("name type fcmtoken")
+        .lean();
       adminTokens = [
         ...new Set(
           [...users, ...adminIds]
