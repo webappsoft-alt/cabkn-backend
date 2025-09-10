@@ -983,7 +983,7 @@ module.exports = function (server, app) {
               description: "Your Order has been Delete.",
               image: "",
               weburl: "",
-              data: messageData || {},
+              data: {},
             };
 
             jobQueue.addJob({ data: valueData });
@@ -1172,8 +1172,8 @@ module.exports = function (server, app) {
             });
           }
         } catch (error) {
+          console.log(error);
           console.error("Error updating request:", error.message);
-
           // Emit error to client and invoke callback with error
           socket.emit("receive_request_error", error.message);
           return callback({
