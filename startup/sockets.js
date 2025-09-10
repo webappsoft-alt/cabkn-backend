@@ -713,7 +713,7 @@ module.exports = function (server, app) {
       if (order.stops) {
         newRequest.stops = order.stops;
       }
-      if (service) {
+      if (order.service) {
         newRequest.service = order.service;
       }
 
