@@ -987,11 +987,7 @@ module.exports = function (server, app) {
             };
 
             jobQueue.addJob({ data: valueData });
-            try {
-              await Order.findOneAndDelete(deletedOrder._id);
-            } catch (error) {
-              console.log;
-            }
+            await Order.findOneAndDelete({ _id: deletedOrder._id });
           }
           let fcmTokens = [];
           let adminIds = await User.find({ type: "admin" })
