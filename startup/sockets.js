@@ -658,57 +658,53 @@ module.exports = function (server, app) {
     socket.on("resend-request-customer", async (data, callback) => {
       const { requestId, to_ids } = data;
       const order = await Order.findById(requestId);
-      let newRequest;
-      try {
-        newRequest = new Order({
-          user: order.user,
-          price: Number(order.price).toFixed(2),
-          start_location: {
-            type: "Point",
-            coordinates: [
-              Number(order.start_location.start_lng),
-              Number(order.start_location.start_lat),
-            ],
-          },
-          end_location: {
-            type: "Point",
-            coordinates: [
-              Number(order.end_location.end_lng),
-              Number(order.end_location.end_lat),
-            ],
-          },
-          title: order.title,
-          cart_items: order.cart_items,
-          isShop: order.isShop,
-          image: order.image,
-          start_address: order.start_address,
-          end_address: order.end_address,
-          type: order.type,
-          userIds: userIds,
-          bookingtype: order.bookingtype,
-          liability: order.liability,
-          ridertype: order.ridertype,
-          pincode: order.pincode,
-          adminprice: (Number(order.price) * 0.2).toFixed(2),
-          paymentId: order.paymentId || "",
-          payment_status: "completed",
-          order_id: order.order_id || "",
-          passengerCount: order.passengerCount || 0,
-          quantity: order.quantity || 0,
-          paymentType: order.paymentType || "paid",
-          color: order.color || "",
-          size: order.size || "",
-          paymentDone: order.paymentType,
-        });
-      } catch (err) {
-        console.log("error====>>", err);
-      }
+      const newRequest = new Order({
+        user: order.user,
+        price: Number(order.price).toFixed(2),
+        start_location: {
+          type: "Point",
+          coordinates: [
+            Number(order.start_location.start_lng),
+            Number(order.start_location.start_lat),
+          ],
+        },
+        end_location: {
+          type: "Point",
+          coordinates: [
+            Number(order.end_location.end_lng),
+            Number(order.end_location.end_lat),
+          ],
+        },
+        title: order.title,
+        cart_items: order.cart_items,
+        isShop: order.isShop,
+        image: order.image,
+        start_address: order.start_address,
+        end_address: order.end_address,
+        type: order.type,
+        userIds: userIds,
+        bookingtype: order.bookingtype,
+        liability: order.liability,
+        ridertype: order.ridertype,
+        pincode: order.pincode,
+        adminprice: (Number(order.price) * 0.2).toFixed(2),
+        paymentId: order.paymentId || "",
+        payment_status: "completed",
+        order_id: order.order_id || "",
+        passengerCount: order.passengerCount || 0,
+        quantity: order.quantity || 0,
+        paymentType: order.paymentType || "paid",
+        color: order.color || "",
+        size: order.size || "",
+        paymentDone: order.paymentType,
+      });
 
       if (order.bookingtype == "schedule") {
         newRequest.schedule_date = order.schedule_date;
         newRequest.schedule_time = order.schedule_time;
       }
       if (order.distance) {
+        console.log("order.distance", order.distance);
         newRequest.distance = order.distance;
       }
       if (order.note) {
