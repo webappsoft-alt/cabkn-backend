@@ -507,6 +507,17 @@ exports.AdminRides = async (req, res) => {
           as: "accepted_by",
         },
       },
+      {
+        $lookup: {
+          from: "liabilties", // 👈 must match collection name (check your DB!)
+          localField: "liability",
+          foreignField: "_id",
+          as: "liability",
+        },
+      },
+      {
+        $unwind: { path: "$liability", preserveNullAndEmptyArrays: true },
+      },
     ]).exec();
 
     for (let post of applications) {
