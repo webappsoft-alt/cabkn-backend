@@ -434,7 +434,7 @@ exports.AdminRides = async (req, res) => {
           $match: {
             $or: [
               { order_id: { $regex: req.body.search, $options: "i" } },
-              // { "user.name": { $regex: req.body.search, $options: "i" } },
+              { "user.name": { $regex: req.body.search, $options: "i" } },
               // { "to_id.name": { $regex: req.body.search, $options: "i" } },
               // { "start_address": { $regex: req.body.search, $options: "i" } },
               // { "end_address": { $regex: req.body.search, $options: "i" } },
