@@ -659,7 +659,7 @@ module.exports = function (server, app) {
       const { requestId, to_ids } = data;
 
       try {
-        console.log(to_ids);
+        console.log("Recived to Ids ====>", to_ids);
         const order = await Order.findById(requestId);
         if (!order) {
           return callback({
@@ -701,10 +701,11 @@ module.exports = function (server, app) {
         });
 
         const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
+        console.log("recipients ======>", recipients);
         const users = await User.find({
           _id: { $in: recipients },
         }).lean();
-        console.log(users);
+        console.log("find users in Recipeints ======>", users);
         let adminIds = await User.find({ type: "admin" })
           .select("name type fcmtoken")
           .lean();
@@ -719,7 +720,9 @@ module.exports = function (server, app) {
 
         // Send to selected riders
         for (const to_id of recipients) {
+          console.log("Extect To Id form Rescipnts", to_id);
           const to_user = await User.findById(to_id).lean();
+          console.log("Extect user from to_id", to_user);
 
           if (to_user) {
             if (connectedUsers[to_id.toString()]) {
