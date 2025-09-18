@@ -717,7 +717,7 @@ module.exports = function (server, app) {
               .filter((token) => token && token !== "")
           ),
         ];
-
+        console.log(adminTokens)
         // Send to selected riders
         for (const to_id of recipients) {
           console.log("Extect To Id form Rescipnts", to_id);
