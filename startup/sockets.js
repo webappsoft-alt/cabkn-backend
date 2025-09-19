@@ -717,7 +717,7 @@ module.exports = function (server, app) {
               .filter((token) => token && token !== "")
           ),
         ];
-        console.log("FCM Tockents ==========>", adminTokens)
+        console.log("FCM Tockents ==========>", adminTokens);
         // Send to selected riders
         for (const to_id of recipients) {
           console.log("Extect To Id form Rescipnts", to_id);
@@ -727,6 +727,7 @@ module.exports = function (server, app) {
           if (to_user) {
             if (connectedUsers[to_id.toString()]) {
               connectedUsers[to_id.toString()].forEach((socketId) => {
+                console.log("socketId=========>", socketId);
                 io.to(socketId).emit("recieve-request-rider", {
                   request: updatedOrder,
                   to_user,
@@ -743,6 +744,7 @@ module.exports = function (server, app) {
         // Notify admins
         for (let admin of adminIds) {
           const adminId = admin._id.toString();
+          console.log("admin testing =========>",admin)
           const sockets = connectedUsers[adminId];
           if (sockets && sockets.size > 0) {
             sockets.forEach((socketId) => {
