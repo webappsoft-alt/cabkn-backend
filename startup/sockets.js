@@ -656,6 +656,9 @@ module.exports = function (server, app) {
     });
 
     socket.on("resend-request-customer", async (data, callback) => {
+      console.log(
+        "=============================================> Start Socket <====================================================================="
+      );
       const { requestId, to_ids } = data;
 
       try {
@@ -742,22 +745,23 @@ module.exports = function (server, app) {
         }
 
         // Notify admins
-        // for (let admin of adminIds) {
-        //   const adminId = admin._id.toString();
-        //   console.log("admin testing =========>",admin)
-        //   const sockets = connectedUsers[adminId];
-        //   if (sockets && sockets.size > 0) {
-        //     sockets.forEach((socketId) => {
-        //       io.to(socketId).emit("recieve-request-rider", {
-        //         request: updatedOrder,
-        //         userType: updatedOrder.user.type,
-        //         success: true,
-        //         title: "Request Reassigned",
-        //         message: `Request has been reassigned by Admin`,
-        //       });
-        //     });
-        //   }
-        // }
+        for (let admin of adminIds) {
+          const adminId = admin._id.toString();
+          console.log("admin testing =========>", admin);
+          const sockets = connectedUsers[adminId];
+          if (sockets && sockets.size > 0) {
+            sockets.forEach((socketId) => {
+              console.log("admin testing socket =========>", admin);
+              io.to(socketId).emit("recieve-request-rider", {
+                request: updatedOrder,
+                userType: updatedOrder.user.type,
+                success: true,
+                title: "Request Reassigned",
+                message: `Request has been reassigned by Admin`,
+              });
+            });
+          }
+        }
 
         // Send FCM notification
         const messageData = {
@@ -784,7 +788,10 @@ module.exports = function (server, app) {
           data: messageData || {},
         };
 
-        jobQueue.addJob({ data: valueData });
+        console.log(jobQueue.addJob({ data: valueData }));
+        console.log(
+          "=============================================> End Socket <====================================================================="
+        );
       } catch (error) {
         console.log("error====>>", error);
         callback({
