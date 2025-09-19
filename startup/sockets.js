@@ -659,7 +659,7 @@ module.exports = function (server, app) {
       const { requestId, to_ids } = data;
 
       try {
-        console.log("Recived to Ids ====>", to_ids);
+        console.log("Received to Ids ====>", to_ids);
         const order = await Order.findById(requestId);
         if (!order) {
           return callback({
@@ -669,18 +669,18 @@ module.exports = function (server, app) {
           });
         }
 
-        // Instead of creating a new order, just update the existing one
+        // Update the order
         const updatedOrder = await Order.findByIdAndUpdate(
           requestId,
           {
-            status: "pending", // Reset to pending
-            to_id: null, // Clear previous assignment
+            status: "pending",
+            to_id: null,
             $unset: {
-              accepted_by: 1, // Clear accepted_by array
-              rejected_by: 1, // Clear rejected_by array
+              accepted_by: 1,
+              rejected_by: 1,
             },
             reassigning: true,
-            userIds: to_ids || order.userIds, // Update target users if provided
+            userIds: to_ids || order.userIds,
           },
           { new: true }
         ).populate("user ridertype service liability");
@@ -702,49 +702,43 @@ module.exports = function (server, app) {
 
         const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
         console.log("recipients ======>", recipients);
+
+        // Get the specific rider(s)
         const users = await User.find({
           _id: { $in: recipients },
         }).lean();
-        console.log("find users in Recipeints ======>", users);
+        console.log("find users in Recipients ======>", users);
+
+        // Get admins (for socket notifications only, not FCM)
         let adminIds = await User.find({ type: "admin" })
-          .select("name type fcmtoken")
+          .select("name type fcmtoken _id")
           .lean();
 
-        let adminTokens = [
-          ...new Set(
-            [...users, ...adminIds]
-              .map((item) => item.fcmtoken)
-              .filter((token) => token && token !== "")
-          ),
-        ];
-        console.log("FCM Tockents ==========>", adminTokens);
-        // Send to selected riders
+        // Send to selected riders via socket
         for (const to_id of recipients) {
-          console.log("Extect To Id form Rescipnts", to_id);
+          console.log("Extract To Id from Recipients", to_id);
           const to_user = await User.findById(to_id).lean();
-          console.log("Extect user from to_id", to_user);
+          console.log("Extract user from to_id", to_user);
 
-          if (to_user) {
-            if (connectedUsers[to_id.toString()]) {
-              connectedUsers[to_id.toString()].forEach((socketId) => {
-                console.log("socketId=========>", socketId);
-                io.to(socketId).emit("recieve-request-rider", {
-                  request: updatedOrder,
-                  to_user,
-                  userType: to_user.type,
-                  success: true,
-                  title: "New Request",
-                  message: `New request has been reassigned by Admin`,
-                });
+          if (to_user && connectedUsers[to_id.toString()]) {
+            connectedUsers[to_id.toString()].forEach((socketId) => {
+              console.log("socketId=========>", socketId);
+              io.to(socketId).emit("recieve-request-rider", {
+                request: updatedOrder,
+                to_user,
+                userType: to_user.type,
+                success: true,
+                title: "New Request",
+                message: `New request has been reassigned by Admin`,
               });
-            }
+            });
           }
         }
 
-        // Notify admins
+        // Notify admins via socket (but not FCM)
         for (let admin of adminIds) {
           const adminId = admin._id.toString();
-          console.log("admin testing =========>",admin)
+          console.log("admin testing =========>", admin);
           const sockets = connectedUsers[adminId];
           if (sockets && sockets.size > 0) {
             sockets.forEach((socketId) => {
@@ -759,32 +753,39 @@ module.exports = function (server, app) {
           }
         }
 
-        // Send FCM notification
-        const messageData = {
-          notiId: "request",
-          messageType: "request",
-          userType:
-            recipients.length > 0
-              ? (await User.findById(recipients[0]).lean()).type
-              : updatedOrder.user.type,
-          ...Object.fromEntries(
-            Object.entries(updatedOrder).map(([key, value]) => [
-              key,
-              String(value),
-            ])
+        // Send FCM notification ONLY to the specific rider(s)
+        const riderTokens = [
+          ...new Set(
+            users
+              .map((item) => item.fcmtoken)
+              .filter((token) => token && token !== "")
           ),
-        };
+        ];
 
-        const valueData = {
-          fcmTokens: adminTokens,
-          title: "'CabKN: Reassigned Request'",
-          description: "You have received a reassigned request.",
-          image: "",
-          weburl: "",
-          data: messageData || {},
-        };
+        if (riderTokens.length > 0) {
+          const messageData = {
+            notiId: "request",
+            messageType: "request",
+            userType: users[0]?.type || "rider",
+            ...Object.fromEntries(
+              Object.entries(updatedOrder).map(([key, value]) => [
+                key,
+                String(value),
+              ])
+            ),
+          };
 
-        jobQueue.addJob({ data: valueData });
+          const valueData = {
+            fcmTokens: riderTokens, // ONLY rider tokens
+            title: "CabKN: New Request",
+            description: "You have received a new ride request.",
+            image: "",
+            weburl: "",
+            data: messageData || {},
+          };
+
+          jobQueue.addJob({ data: valueData });
+        }
       } catch (error) {
         console.log("error====>>", error);
         callback({
