@@ -656,45 +656,44 @@ module.exports = function (server, app) {
     });
 
     socket.on("resend-request-customer", async (data, callback) => {
-      console.log(
-        "=============================================> Start Socket <====================================================================="
-      );
+      console.log("====== START SOCKET: resend-request-customer ======");
       const { requestId, to_ids } = data;
 
       try {
-        console.log("Recived to Ids ====>", to_ids);
+        console.log("1. Received data:", { requestId, to_ids });
+
         const order = await Order.findById(requestId);
         if (!order) {
+          console.log("1a. Order not found for ID:", requestId);
           return callback({
             success: false,
             title: "Order Not Found",
             message: "Order not found.",
           });
         }
+        console.log("1b. Found order:", order._id);
 
-        // Instead of creating a new order, just update the existing one
         const updatedOrder = await Order.findByIdAndUpdate(
           requestId,
           {
-            status: "pending", // Reset to pending
-            to_id: null, // Clear previous assignment
-            $unset: {
-              accepted_by: 1, // Clear accepted_by array
-              rejected_by: 1, // Clear rejected_by array
-            },
+            status: "pending",
+            to_id: null,
+            $unset: { accepted_by: 1, rejected_by: 1 },
             reassigning: true,
-            userIds: to_ids || order.userIds, // Update target users if provided
+            userIds: to_ids || order.userIds,
           },
           { new: true }
         ).populate("user ridertype service liability");
 
         if (!updatedOrder) {
+          console.log("2. Order update failed for ID:", requestId);
           return callback({
             success: false,
             title: "Update Failed",
             message: "Failed to update order.",
           });
         }
+        console.log("2a. Order updated successfully:", updatedOrder._id);
 
         callback({
           request: updatedOrder,
@@ -704,14 +703,21 @@ module.exports = function (server, app) {
         });
 
         const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
-        console.log("recipients ======>", recipients);
-        const users = await User.find({
-          _id: { $in: recipients },
-        }).lean();
-        console.log("find users in Recipeints ======>", users);
+        console.log("3. Recipients array:", recipients);
+
+        const users = await User.find({ _id: { $in: recipients } }).lean();
+        console.log(
+          "4. Found users for recipients:",
+          users.map((u) => ({ id: u._id, type: u.type, name: u.name }))
+        );
+
         let adminIds = await User.find({ type: "admin" })
-          .select("name type fcmtoken")
+          .select("name type fcmtoken _id")
           .lean();
+        console.log(
+          "5. Found admin users:",
+          adminIds.map((a) => ({ id: a._id, type: a.type, name: a.name }))
+        );
 
         let adminTokens = [
           ...new Set(
@@ -720,17 +726,43 @@ module.exports = function (server, app) {
               .filter((token) => token && token !== "")
           ),
         ];
-        console.log("FCM Tockents ==========>", adminTokens);
+        console.log("6. FCM Tokens to be sent:", adminTokens);
+
+        // DEBUG: Check connectedUsers structure
+        console.log("7. Connected users keys:", Object.keys(connectedUsers));
+        console.log(
+          "7a. Connected users sample:",
+          Object.entries(connectedUsers)
+            .slice(0, 3)
+            .map(([id, sockets]) => ({ userId: id, socketCount: sockets.size }))
+        );
+
         // Send to selected riders
+        console.log("8. Starting rider notification loop");
         for (const to_id of recipients) {
-          console.log("Extect To Id form Rescipnts", to_id);
+          console.log("8a. Processing recipient:", to_id);
           const to_user = await User.findById(to_id).lean();
-          console.log("Extect user from to_id", to_user);
+          console.log("8b. Found user for recipient:", {
+            id: to_user?._id,
+            type: to_user?.type,
+            name: to_user?.name,
+          });
 
           if (to_user) {
-            if (connectedUsers[to_id.toString()]) {
-              connectedUsers[to_id.toString()].forEach((socketId) => {
-                console.log("socketId=========>", socketId);
+            const userKey = to_id.toString();
+            console.log("8c. Checking connectedUsers for key:", userKey);
+            if (connectedUsers[userKey]) {
+              console.log(
+                "8d. Found sockets for user:",
+                connectedUsers[userKey].size
+              );
+              connectedUsers[userKey].forEach((socketId) => {
+                console.log(
+                  "8e. Emitting to rider socket:",
+                  socketId,
+                  "for user:",
+                  userKey
+                );
                 io.to(socketId).emit("recieve-request-rider", {
                   request: updatedOrder,
                   to_user,
@@ -740,18 +772,38 @@ module.exports = function (server, app) {
                   message: `New request has been reassigned by Admin`,
                 });
               });
+            } else {
+              console.log("8f. No connected sockets found for user:", userKey);
             }
+          } else {
+            console.log("8g. User not found for ID:", to_id);
           }
         }
 
         // Notify admins
+        console.log("9. Starting admin notification loop");
         for (let admin of adminIds) {
           const adminId = admin._id.toString();
-          console.log("admin testing =========>", admin);
+          console.log("9a. Processing admin:", {
+            id: adminId,
+            type: admin.type,
+            name: admin.name,
+          });
+
           const sockets = connectedUsers[adminId];
+          console.log(
+            "9b. Found sockets for admin:",
+            sockets ? sockets.size : 0
+          );
+
           if (sockets && sockets.size > 0) {
             sockets.forEach((socketId) => {
-              console.log("admin testing socket =========>", admin);
+              console.log(
+                "9c. Emitting to admin socket:",
+                socketId,
+                "for admin:",
+                adminId
+              );
               io.to(socketId).emit("recieve-request-rider", {
                 request: updatedOrder,
                 userType: updatedOrder.user.type,
@@ -760,10 +812,13 @@ module.exports = function (server, app) {
                 message: `Request has been reassigned by Admin`,
               });
             });
+          } else {
+            console.log("9d. No sockets found for admin:", adminId);
           }
         }
 
         // Send FCM notification
+        console.log("10. Preparing FCM notification");
         const messageData = {
           notiId: "request",
           messageType: "request",
@@ -788,12 +843,16 @@ module.exports = function (server, app) {
           data: messageData || {},
         };
 
-        console.log(jobQueue.addJob({ data: valueData }));
         console.log(
-          "=============================================> End Socket <====================================================================="
+          "11. Adding FCM job to queue with tokens:",
+          adminTokens.length
         );
+        jobQueue.addJob({ data: valueData });
+
+        console.log("====== END SOCKET: resend-request-customer ======");
       } catch (error) {
-        console.log("error====>>", error);
+        console.log("ERROR in socket:", error);
+        console.log("Error stack:", error.stack);
         callback({
           success: false,
           title: "Request Error",
