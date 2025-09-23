@@ -63,7 +63,7 @@ exports.fetchrequestOrder = async (req, res) => {
         console.log("application ====> with isAssigned condition", application, userId);
         if (application.isAssigned) {
           console.log("application.to_id_assigned ====>", application.to_id_assigned, userId);
-          if (application.to_id_assigned.includes(mongoose.Types.ObjectId(userId))) {
+          if (application.to_id_assigned.includes(new mongoose.Types.ObjectId(userId))) {
             requests.push(application);
           }
         } else {
