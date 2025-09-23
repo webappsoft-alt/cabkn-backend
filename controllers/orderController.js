@@ -3,6 +3,7 @@ const Order = require("../models/Order");
 const Request = require("../models/Request");
 const { User } = require("../models/user");
 const { sendNotification } = require("./notificationCreateService");
+const mongoose = require("mongoose");
 
 exports.fetchrequestOrder = async (req, res) => {
   let query = {};
@@ -62,7 +63,7 @@ exports.fetchrequestOrder = async (req, res) => {
         console.log("application ====> with isAssigned condition", application, userId);
         if (application.isAssigned) {
           console.log("application.to_id_assigned ====>", application.to_id_assigned, userId);
-          if (application.to_id_assigned.includes(userId)) {
+          if (application.to_id_assigned.includes(mongoose.Types.ObjectId(userId))) {
             requests.push(application);
           }
         } else {
