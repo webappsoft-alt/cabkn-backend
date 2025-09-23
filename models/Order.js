@@ -186,6 +186,16 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isAssigned: {
+    type: Boolean,
+    default: false,
+  },
+  to_id_assigned: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
+  ],
   deleted: {
     type: Boolean,
     default: false,

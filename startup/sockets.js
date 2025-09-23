@@ -494,6 +494,9 @@ module.exports = function (server, app) {
         if (to_ids) {
           // If to_ids is an array, loop through each recipient
           const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
+          request.isAssigned = true;
+          request.to_id_assigned = recipients;
+          await request.save();
           const users = await User.find({
             _id: { $in: recipients },
           }).lean();
@@ -517,14 +520,15 @@ module.exports = function (server, app) {
               // Send socket notification if user is connected
               if (connectedUsers[to_id.toString()]) {
                 connectedUsers[to_id.toString()].forEach((socketId) => {
-                  console.log("Emitting to socket:", socketId);
+                  console.log("Emitting to socket:", socketId, "for user:", to_id);
                   io.to(socketId).emit("recieve-request-rider", {
-                    to_user,
+                    request,
                     userType: to_user.type,
                     success: true,
                     title: "New Request",
                     message: `New request has been created by ${sender.name}`,
                   });
+                  console.log("Emitting to socket:", socketId, "for user:", to_id);
                 });
               } else {
                 console.log(`User ${to_id} is not currently connected`);
@@ -568,9 +572,9 @@ module.exports = function (server, app) {
               ])
             ),
           };
-
+          // console.log("FCM Tokens  ========>", adminTokens);
           const valueData = {
-            fcmTokens: fcmTokens,
+            fcmTokens: adminTokens,
             title: "'CabKN: New Request'",
             description: "You have received a new request.",
             image: "",

@@ -57,7 +57,18 @@ exports.fetchrequestOrder = async (req, res) => {
       .lean();
 
     if (applications.length > 0) {
-      res.status(200).json({ success: true, requests: applications });
+      let requests = [];
+      applications.forEach(async (application) => {
+        if (application.isAssigned) {
+          if (application.to_id_assigned.includes(userId)) {
+            requests.push(application);
+          }
+        } else {
+          requests.push(application);
+        }
+      });
+      console.log(requests);
+      res.status(200).json({ success: true, requests: requests });
     } else {
       res.status(200).json({
         success: false,
