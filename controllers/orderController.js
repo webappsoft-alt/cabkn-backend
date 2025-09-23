@@ -58,19 +58,40 @@ exports.fetchrequestOrder = async (req, res) => {
       .lean();
 
     if (applications.length > 0) {
-      const requests = await Promise.all(
-        applications.map(async (application) => {
-            if (application.isAssigned) {
-                if (application.to_id_assigned.includes(new mongoose.Types.ObjectId(userId))) {
-                    return application;
-                }
-                return null; // Skip this one
-            } else {
-                return application;
-            }
-        })
-    ).then(results => results.filter(Boolean)); // Remove null values
-      // Now requests will contain the filtered results
+      let requests = [];
+      applications.forEach(async (application) => {
+        console.log(
+          "application ====> with isAssigned condition",
+          application,
+          userId
+        );
+        if (application.isAssigned) {
+          console.log(
+            "application.to_id_assigned ====>",
+            application.to_id_assigned,
+            userId
+          );
+          if (
+            application.to_id_assigned.some(
+              (id) => id.toString() === userId.toString()
+            )
+          ) {
+            console.log(
+              "application ====> with isAssigned condition and to_id_assigned condition",
+              application,
+              userId
+            );
+            requests.push(application);
+          }
+        } else {
+          console.log(
+            "application ====> else condtion with isAssigned condition",
+            application,
+            userId
+          );
+          requests.push(application);
+        }
+      });
       console.log(requests);
       res.status(200).json({ success: true, requests: requests });
     } else {
