@@ -59,19 +59,41 @@ exports.fetchrequestOrder = async (req, res) => {
 
     if (applications.length > 0) {
       let requests = [];
-      applications.forEach(async (application) => {
-        console.log("application ====> with isAssigned condition", application, userId);
+      for (const application of applications) {
+        console.log(
+          "application ====> with isAssigned condition",
+          application,
+          userId
+        );
+
         if (application.isAssigned) {
-          console.log("application.to_id_assigned ====>", application.to_id_assigned, userId);
-          if (application.to_id_assigned.includes(new mongoose.Types.ObjectId(userId))) {
-            console.log("application ====> with isAssigned condition and to_id_assigned condition", application, userId);
+          console.log(
+            "application.to_id_assigned ====>",
+            application.to_id_assigned,
+            userId
+          );
+          if (
+            application.to_id_assigned.includes(
+              new mongoose.Types.ObjectId(userId)
+            )
+          ) {
+            console.log(
+              "application ====> with isAssigned condition and to_id_assigned condition",
+              application,
+              userId
+            );
             requests.push(application);
           }
         } else {
-          console.log("application ====> else condtion with isAssigned condition", application, userId);
+          console.log(
+            "application ====> else condition with isAssigned condition",
+            application,
+            userId
+          );
           requests.push(application);
         }
-      });
+      }
+      // Now requests will contain the filtered results
       console.log(requests);
       res.status(200).json({ success: true, requests: requests });
     } else {
