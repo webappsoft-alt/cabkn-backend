@@ -64,6 +64,7 @@ exports.fetchrequestOrder = async (req, res) => {
             requests.push(application);
           }
         } else {
+          console.log(application);
           requests.push(application);
         }
       });
