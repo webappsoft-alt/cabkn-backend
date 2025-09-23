@@ -59,14 +59,14 @@ exports.fetchrequestOrder = async (req, res) => {
     if (applications.length > 0) {
       let requests = [];
       applications.forEach(async (application) => {
-        console.log("application ====>", application);
+        console.log("application ====> with isAssigned condition", application, userId);
         if (application.isAssigned) {
-          console.log("application.to_id_assigned ====>", application.to_id_assigned);
+          console.log("application.to_id_assigned ====>", application.to_id_assigned, userId);
           if (application.to_id_assigned.includes(userId)) {
             requests.push(application);
           }
         } else {
-          console.log("application ====>", application);
+          console.log("application ====> else condtion with isAssigned condition", application, userId);
           requests.push(application);
         }
       });
