@@ -579,6 +579,7 @@ module.exports = function (server, app) {
           };
 
           jobQueue.addJob({ data: valueData });
+          return;
         } else {
           adminTokens = [
             ...new Set(
