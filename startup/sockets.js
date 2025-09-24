@@ -113,7 +113,7 @@ module.exports = function (server, app) {
           const newMessage = new Message({
             sender: senderId,
             conversationId: conversationId,
-            message: messageText,
+            message: messageText || "",
             image: image,
             seen: [senderId],
             type: type,
@@ -194,7 +194,7 @@ module.exports = function (server, app) {
           const newMessage = new Message({
             sender: senderId,
             conversationId: conversationId,
-            message: messageText,
+            message: messageText || "",
             seen: [senderId],
             type: type,
           });

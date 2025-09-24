@@ -11,6 +11,6 @@ router.get('/messages/:userId/:id?', messageController.getMessages);
 router.get('/groupMessages/:conversation/:id?', messageController.getGroupMessages);
 router.put('/seen/:userId', messageController.allSeen);
 router.get('/new-msg/:userId/:id', messageController.newMessage);
-router.get('/admin-conversation/:id', messageController.getMessageConversationById);
-router.get('/admin-conversations', messageController.getAllConversations);
+router.get('/admin-conversation/:id', admin,messageController.getMessageConversationById);
+router.get('/admin-conversations', admin,messageController.getAllConversations);
 module.exports = router;
