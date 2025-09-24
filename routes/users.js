@@ -1090,13 +1090,14 @@ router.delete("/:id", [auth, admin], async (req, res) => {
 });
 
 router.put("/update-user/:id", [auth, admin], async (req, res) => {
-  const { status, insurancetype } = req.body;
+  const { status, insurancetype, bedge } = req.body;
 
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
     Object.entries({
       status,
       insurancetype,
+      bedge,
     }).filter(([key, value]) => value !== undefined)
   );
 
