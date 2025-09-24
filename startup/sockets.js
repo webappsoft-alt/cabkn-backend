@@ -67,7 +67,7 @@ module.exports = function (server, app) {
     // Handle private messages
     socket.on(
       "send-message",
-      async ({ recipientId, messageText, name }, callback) => {
+      async ({ recipientId, messageText, name, image }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
             connectedUsers[userId].has(socket.id)
@@ -100,6 +100,7 @@ module.exports = function (server, app) {
             sender: senderId,
             conversationId: conversationId,
             message: messageText,
+            image: image,
             seen: [senderId],
           });
 
