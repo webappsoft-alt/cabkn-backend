@@ -18,6 +18,11 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  type:{
+    type:String,
+    default :"text",
+    enum:["text", "image", "both"]
+  },
   deleted_by: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',

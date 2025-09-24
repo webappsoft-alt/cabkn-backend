@@ -67,7 +67,7 @@ module.exports = function (server, app) {
     // Handle private messages
     socket.on(
       "send-message",
-      async ({ recipientId, messageText, name, image }, callback) => {
+      async ({ recipientId, messageText, name, image, type }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
             connectedUsers[userId].has(socket.id)
@@ -83,7 +83,9 @@ module.exports = function (server, app) {
           });
 
           let conversationId = !conversation ? "" : conversation._id;
-
+          let adminIds = await User.find({ type: "admin" })
+          .select("name type fcmtoken")
+          .lean();
           if (!conversation) {
             // Create a new conversation if it doesn't exist
             const newConversation = new Conversation({
@@ -91,9 +93,7 @@ module.exports = function (server, app) {
             });
             conversationId = newConversation._id;
             await newConversation.save();
-            let adminIds = await User.find({ type: "admin" })
-            .select("name type fcmtoken")
-            .lean();
+           
             for (const admin of adminIds) {
               await sendNotification({
                 user: senderId,
@@ -116,6 +116,7 @@ module.exports = function (server, app) {
             message: messageText,
             image: image,
             seen: [senderId],
+            type: type,
           });
 
           const savedMessage = await newMessage.save();
@@ -123,6 +124,9 @@ module.exports = function (server, app) {
           // Send message to recipient
           connectedUsers[recipientId]?.forEach((socketId) => {
             io.to(socketId).emit("recieved-message", savedMessage);
+          });
+          connectedUsers[adminIds]?.forEach((socketId) => {
+            io.to(socketId).emit("admin-recieved-message", savedMessage);
           });
 
           const recipient = await User.findById(recipientId)
@@ -179,7 +183,7 @@ module.exports = function (server, app) {
 
     socket.on(
       "send-group-message",
-      async ({ conversationId, messageText, user }) => {
+      async ({ conversationId, messageText, user, type }) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
             connectedUsers[userId].has(socket.id)
@@ -192,6 +196,7 @@ module.exports = function (server, app) {
             conversationId: conversationId,
             message: messageText,
             seen: [senderId],
+            type: type,
           });
 
           const savedMessage = await newMessage.save();
