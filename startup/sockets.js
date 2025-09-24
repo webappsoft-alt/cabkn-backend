@@ -91,6 +91,20 @@ module.exports = function (server, app) {
             });
             conversationId = newConversation._id;
             await newConversation.save();
+            let adminIds = await User.find({ type: "admin" })
+            .select("name type fcmtoken")
+            .lean();
+            for (const admin of adminIds) {
+              await sendNotification({
+                user: senderId,
+                to_id: admin._id,
+                description: `@${sender.name} sent a message: ${messageText}`,
+                type: "message",
+                title: "New Message",
+                fcmtoken: admin.fcmtoken || "",
+                usertype: sender.type,
+              });
+            }
           } else {
             conversation.updateAt = Date.now();
             await conversation.save();
