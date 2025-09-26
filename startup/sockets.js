@@ -123,13 +123,15 @@ module.exports = function (server, app) {
 
           // Send message to recipient
           connectedUsers[recipientId]?.forEach((socketId) => {
+            console.log("Saved message sent to recipient", savedMessage);
             io.to(socketId).emit("recieved-message", savedMessage);
           });
 
           for (const admin of adminIds) {
             connectedUsers[admin._id]?.forEach(async (socketId) => {
               console.log("Admin socketId", socketId);
-              const data = await savedMessage.populate("sender");
+              const data = await savedMessage.populate("sender").lean();
+              console.log("Admin data", data);
               io.to(socketId).emit("admin-recieved-message", data);
             });
           }
