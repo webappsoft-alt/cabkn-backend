@@ -464,7 +464,7 @@ module.exports = function (server, app) {
           liability,
           ridertype,
           pincode,
-          adminprice: (Number(price) * 0.2).toFixed(2),
+          adminprice: ((Number(price) * 0.2) + 8).toFixed(2),
           paymentId: paymentId || "",
           payment_status: "completed",
           order_id: order_id || "",
