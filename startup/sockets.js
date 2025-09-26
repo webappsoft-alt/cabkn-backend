@@ -125,9 +125,13 @@ module.exports = function (server, app) {
           connectedUsers[recipientId]?.forEach((socketId) => {
             io.to(socketId).emit("recieved-message", savedMessage);
           });
-          connectedUsers[adminIds]?.forEach((socketId) => {
-            io.to(socketId).emit("admin-recieved-message", savedMessage);
-          });
+          
+          for (const admin of adminIds) {
+            connectedUsers[admin._id]?.forEach((socketId) => {
+              console.log("Admin socketId", socketId);
+              io.to(socketId).emit("admin-recieved-message", savedMessage);
+            });
+          }
 
           const recipient = await User.findById(recipientId)
             .select("fcmtoken type")
