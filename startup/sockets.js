@@ -128,9 +128,9 @@ module.exports = function (server, app) {
           });
 
           for (const admin of adminIds) {
-            connectedUsers[admin._id]?.forEach(async (socketId) => {
+            const data = await savedMessage.populate("sender").lean();
+            connectedUsers[admin._id]?.forEach((socketId) => {
               console.log("Admin socketId", socketId);
-              const data = await savedMessage.populate("sender").lean();
               console.log("Admin data", data);
               io.to(socketId).emit("admin-recieved-message", data);
             });
