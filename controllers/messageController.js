@@ -469,7 +469,7 @@ exports.getMessageConversationById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Conversation not found" });
     }
     const messages = await Message.find({ conversationId: conversation._id })
-      .sort({ _id: -1 })
+      .sort({ _id: -1 }).populate("sender")
       .limit(30)
       .lean()
       .exec();
