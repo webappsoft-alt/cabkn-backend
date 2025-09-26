@@ -17,6 +17,7 @@ const ratingRoutes = require("../routes/ratingRoutes");
 const couponRoute = require("../routes/couponRoute");
 const BannerRoute = require("../routes/BannerRoute");
 const ShopOrder = require("../routes/ShopOrder");
+const invoiceRoute = require("../routes/invoiceRoute");
 
 module.exports = function (app) {
   app.use(express.json());
@@ -36,5 +37,6 @@ module.exports = function (app) {
   app.use("/api/support", supportRoute);
   app.use("/api/banner", BannerRoute);
   app.use("/api/shop-order", ShopOrder);
+  app.use("/api/payment", invoiceRoute);
   app.use(error);
 };
