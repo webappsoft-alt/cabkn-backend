@@ -182,6 +182,7 @@ module.exports = function (server, app) {
 
           return callback(savedMessage);
         } catch (error) {
+          console.log("Error sending private message:", error);
           console.error("Error sending private message:", error.message);
           socket.emit("send_message_error", error.message);
         }
