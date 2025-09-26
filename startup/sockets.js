@@ -84,8 +84,8 @@ module.exports = function (server, app) {
 
           let conversationId = !conversation ? "" : conversation._id;
           let adminIds = await User.find({ type: "admin" })
-          .select("name type fcmtoken")
-          .lean();
+            .select("name type fcmtoken")
+            .lean();
           if (!conversation) {
             // Create a new conversation if it doesn't exist
             const newConversation = new Conversation({
@@ -93,7 +93,7 @@ module.exports = function (server, app) {
             });
             conversationId = newConversation._id;
             await newConversation.save();
-           
+
             for (const admin of adminIds) {
               await sendNotification({
                 user: senderId,
@@ -125,11 +125,12 @@ module.exports = function (server, app) {
           connectedUsers[recipientId]?.forEach((socketId) => {
             io.to(socketId).emit("recieved-message", savedMessage);
           });
-          
+
           for (const admin of adminIds) {
-            connectedUsers[admin._id]?.forEach((socketId) => {
+            connectedUsers[admin._id]?.forEach(async (socketId) => {
               console.log("Admin socketId", socketId);
-              io.to(socketId).emit("admin-recieved-message", savedMessage.populate("sender"));
+              const data = await savedMessage.populate("sender");
+              io.to(socketId).emit("admin-recieved-message", data);
             });
           }
 
@@ -468,7 +469,7 @@ module.exports = function (server, app) {
           liability,
           ridertype,
           pincode,
-          adminprice: ((Number(price) * 0.2) + 8).toFixed(2),
+          adminprice: (Number(price) * 0.2 + 8).toFixed(2),
           paymentId: paymentId || "",
           payment_status: "completed",
           order_id: order_id || "",
@@ -544,7 +545,12 @@ module.exports = function (server, app) {
               // Send socket notification if user is connected
               if (connectedUsers[to_id.toString()]) {
                 connectedUsers[to_id.toString()].forEach((socketId) => {
-                  console.log("Emitting to socket:", socketId, "for user:", to_id);
+                  console.log(
+                    "Emitting to socket:",
+                    socketId,
+                    "for user:",
+                    to_id
+                  );
                   io.to(socketId).emit("recieve-request-rider", {
                     request,
                     userType: to_user.type,
@@ -552,7 +558,12 @@ module.exports = function (server, app) {
                     title: "New Request",
                     message: `New request has been created by ${sender.name}`,
                   });
-                  console.log("Emitting to socket:", socketId, "for user:", to_id);
+                  console.log(
+                    "Emitting to socket:",
+                    socketId,
+                    "for user:",
+                    to_id
+                  );
                 });
               } else {
                 console.log(`User ${to_id} is not currently connected`);
@@ -608,7 +619,6 @@ module.exports = function (server, app) {
 
           jobQueue.addJob({ data: valueData });
           return;
-          
         } else {
           adminTokens = [
             ...new Set(
