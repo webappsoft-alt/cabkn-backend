@@ -327,8 +327,8 @@ module.exports = function (server, app) {
         if (customerId) {
           senderId = customerId;
           // console.log("Updated senderId =======>",senderId);
-          connectedUsers[senderId] = new Set([socket.id]);
-          socket.join(senderId);          
+          // connectedUsers[senderId] = new Set([socket.id]);
+          // socket.join(senderId);          
         }
         // console.log("senderId =======>",senderId);
         const sender = await User.findById(senderId);
