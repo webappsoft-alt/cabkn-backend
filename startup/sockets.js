@@ -324,7 +324,7 @@ module.exports = function (server, app) {
           connectedUsers[userId].has(socket.id)
         );
         console.log("senderId =======>",senderId, "\n customerId =======>", customerId);
-        if (mongoose.Types.ObjectId.isValid(customerId)) {
+        if (customerId) {
           senderId = customerId;
           console.log("Updated senderId =======>",senderId);
           connectedUsers[senderId] = new Set([socket.id]);
