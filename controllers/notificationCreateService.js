@@ -29,7 +29,7 @@ exports.sendNotification = async ({
         support,
       }).filter(([key, value]) => value !== "")
     );
-    console.log("user", user, "to_id", to_id);
+    // console.log("user", user, "to_id", to_id);
     const notification = new Notification(updateFields);
     console.log("hit", notification);
     await notification.save();

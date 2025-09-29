@@ -323,16 +323,16 @@ module.exports = function (server, app) {
         let senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
-        console.log("senderId =======>",senderId, "\n customerId =======>", customerId);
+        // console.log("senderId =======>",senderId, "\n customerId =======>", customerId);
         if (customerId) {
           senderId = customerId;
-          console.log("Updated senderId =======>",senderId);
+          // console.log("Updated senderId =======>",senderId);
           connectedUsers[senderId] = new Set([socket.id]);
           socket.join(senderId);          
         }
-        console.log("senderId =======>",senderId);
+        // console.log("senderId =======>",senderId);
         const sender = await User.findById(senderId);
-        console.log("sender =======>",sender);
+        // console.log("sender =======>",sender);
         if (!senderId) {
           return callback({
             success: false,
@@ -684,7 +684,7 @@ module.exports = function (server, app) {
             ),
           };
           fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
-          console.log(fcmTokens);
+          // console.log(fcmTokens);
           const valueData = {
             fcmTokens: fcmTokens,
             title: "'CabKN: New Request'",
@@ -707,11 +707,11 @@ module.exports = function (server, app) {
     });
 
     socket.on("resend-request-customer", async (data, callback) => {
-      console.log("====== START SOCKET: resend-request-customer ======");
+      // console.log("====== START SOCKET: resend-request-customer ======");
       const { requestId, to_ids } = data;
 
       try {
-        console.log("1. Received data:", { requestId, to_ids });
+        // console.log("1. Received data:", { requestId, to_ids });
 
         const order = await Order.findById(requestId);
         if (!order) {
@@ -722,7 +722,7 @@ module.exports = function (server, app) {
             message: "Order not found.",
           });
         }
-        console.log("1b. Found order:", order._id);
+        // console.log("1b. Found order:", order._id);
 
         const updatedOrder = await Order.findByIdAndUpdate(
           requestId,
@@ -737,14 +737,14 @@ module.exports = function (server, app) {
         ).populate("user ridertype service liability");
 
         if (!updatedOrder) {
-          console.log("2. Order update failed for ID:", requestId);
+          // console.log("2. Order update failed for ID:", requestId);
           return callback({
             success: false,
             title: "Update Failed",
             message: "Failed to update order.",
           });
         }
-        console.log("2a. Order updated successfully:", updatedOrder._id);
+        // console.log("2a. Order updated successfully:", updatedOrder._id);
 
         callback({
           request: updatedOrder,
@@ -754,21 +754,21 @@ module.exports = function (server, app) {
         });
 
         const recipients = Array.isArray(to_ids) ? to_ids : [to_ids];
-        console.log("3. Recipients array:", recipients);
+        // console.log("3. Recipients array:", recipients);
 
         const users = await User.find({ _id: { $in: recipients } }).lean();
-        console.log(
-          "4. Found users for recipients:",
-          users.map((u) => ({ id: u._id, type: u.type, name: u.name }))
-        );
+        // console.log(
+        //   "4. Found users for recipients:",
+        //   users.map((u) => ({ id: u._id, type: u.type, name: u.name }))
+        // );
 
         let adminIds = await User.find({ type: "admin" })
           .select("name type fcmtoken _id")
           .lean();
-        console.log(
-          "5. Found admin users:",
-          adminIds.map((a) => ({ id: a._id, type: a.type, name: a.name }))
-        );
+        // console.log(
+        //   "5. Found admin users:",
+        //   adminIds.map((a) => ({ id: a._id, type: a.type, name: a.name }))
+        // );
 
         let adminTokens = [
           ...new Set(
@@ -777,43 +777,43 @@ module.exports = function (server, app) {
               .filter((token) => token && token !== "")
           ),
         ];
-        console.log("6. FCM Tokens to be sent:", adminTokens);
+        // console.log("6. FCM Tokens to be sent:", adminTokens);
 
-        // DEBUG: Check connectedUsers structure
-        console.log("7. Connected users keys:", Object.keys(connectedUsers));
-        console.log(
-          "7a. Connected users sample:",
-          Object.entries(connectedUsers)
-            .slice(0, 3)
-            .map(([id, sockets]) => ({ userId: id, socketCount: sockets.size }))
-        );
+        // // DEBUG: Check connectedUsers structure
+        // console.log("7. Connected users keys:", Object.keys(connectedUsers));
+        // console.log(
+        //   "7a. Connected users sample:",
+        //   Object.entries(connectedUsers)
+        //     .slice(0, 3)
+        //     .map(([id, sockets]) => ({ userId: id, socketCount: sockets.size }))
+        // );
 
         // Send to selected riders
-        console.log("8. Starting rider notification loop");
+        // console.log("8. Starting rider notification loop");
         for (const to_id of recipients) {
-          console.log("8a. Processing recipient:", to_id);
+          // console.log("8a. Processing recipient:", to_id);
           const to_user = await User.findById(to_id).lean();
-          console.log("8b. Found user for recipient:", {
-            id: to_user?._id,
-            type: to_user?.type,
-            name: to_user?.name,
-          });
+          // console.log("8b. Found user for recipient:", {
+          //   id: to_user?._id,
+          //   type: to_user?.type,
+          //   name: to_user?.name,
+          // });
 
           if (to_user) {
             const userKey = to_id.toString();
-            console.log("8c. Checking connectedUsers for key:", userKey);
+            // console.log("8c. Checking connectedUsers for key:", userKey);
             if (connectedUsers[userKey]) {
-              console.log(
-                "8d. Found sockets for user:",
-                connectedUsers[userKey].size
-              );
+              // console.log(
+              //   "8d. Found sockets for user:",
+              //   connectedUsers[userKey].size
+              // );
               connectedUsers[userKey].forEach((socketId) => {
-                console.log(
-                  "8e. Emitting to rider socket:",
-                  socketId,
-                  "for user:",
-                  userKey
-                );
+                // console.log(
+                //   "8e. Emitting to rider socket:",
+                //   socketId,
+                //   "for user:",
+                //   userKey
+                // );
                 io.to(socketId).emit("recieve-request-rider", {
                   request: updatedOrder,
                   to_user,
@@ -832,7 +832,7 @@ module.exports = function (server, app) {
         }
 
         // Notify admins
-        console.log("9. Starting admin notification loop");
+        // console.log("9. Starting admin notification loop");
         for (let admin of adminIds) {
           const adminId = admin._id.toString();
           console.log("9a. Processing admin:", {
@@ -869,7 +869,7 @@ module.exports = function (server, app) {
         }
 
         // Send FCM notification
-        console.log("10. Preparing FCM notification");
+        // console.log("10. Preparing FCM notification");
         const messageData = {
           notiId: "request",
           messageType: "request",
@@ -2047,7 +2047,7 @@ module.exports = function (server, app) {
             fcmtoken: { $exists: true, $ne: "" },
           }).select("_id fcmtoken");
 
-          console.log("admins", admins);
+          // console.log("admins", admins);
           for (const admin of admins) {
             // console.log("admin", admin);
             await sendNotification({
