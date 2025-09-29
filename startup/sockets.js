@@ -23,7 +23,7 @@ const {
 } = require("../controllers/emailservice");
 const { Worker } = require("worker_threads");
 const jobQueue = require("../routes/jobsecondQueue");
-
+const mongoose = require("mongoose");
 const connectedUsers = {};
 
 module.exports = function (server, app) {
