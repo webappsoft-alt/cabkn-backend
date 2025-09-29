@@ -80,7 +80,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.put("/:id", async (req, res) => {
-  const { status } = req.body;
+  const { status, paymentId } = req.body;
   if (status !== "paid") {
     return res.status(400).json({ message: "Invalid status" });
   }
@@ -95,6 +95,7 @@ router.put("/:id", async (req, res) => {
     invoice.status = status;
     invoice.token = null;
     invoice.url = null;
+    invoice.paymentId = paymentId;
     await invoice.save();
     res
       .status(200)

@@ -12,6 +12,7 @@ const invoiceSchema = new mongoose.Schema(
     },
     token: String,
     url: String,
+    paymentId: String,
   },
   {
     timestamps: true,
