@@ -66,11 +66,11 @@ exports.fetchrequestOrder = async (req, res) => {
           userId
         );
         if (application.isAssigned) {
-          console.log(
-            "application.to_id_assigned ====>",
-            application.to_id_assigned,
-            userId
-          );
+          // console.log(
+          //   "application.to_id_assigned ====>",
+          //   application.to_id_assigned,
+          //   userId
+          // );
           if (
             application.to_id_assigned.some(
               (id) => id.toString() === userId.toString()
