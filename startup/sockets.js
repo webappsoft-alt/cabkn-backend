@@ -282,6 +282,7 @@ module.exports = function (server, app) {
     socket.on("send-request-customer", async (data, callback) => {
       try {
         const {
+          customerId,
           cart_items,
           isShop,
           to_ids,
@@ -318,10 +319,20 @@ module.exports = function (server, app) {
           color,
           size,
         } = data;
-        const senderId = Object.keys(connectedUsers).find((userId) =>
+
+        let senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
+        console.log("senderId =======>",senderId, "\n customerId =======>", customerId);
+        if (mongoose.Types.ObjectId.isValid(customerId)) {
+          senderId = customerId;
+          console.log("Updated senderId =======>",senderId);
+          connectedUsers[senderId] = new Set([socket.id]);
+          socket.join(senderId);          
+        }
+        console.log("senderId =======>",senderId);
         const sender = await User.findById(senderId);
+        console.log("sender =======>",sender);
         if (!senderId) {
           return callback({
             success: false,
