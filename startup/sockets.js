@@ -319,7 +319,7 @@ module.exports = function (server, app) {
           color,
           size,
         } = data;
-
+        console.log("data =======>",data);
         let senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
