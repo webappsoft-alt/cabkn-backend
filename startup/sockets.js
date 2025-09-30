@@ -323,7 +323,6 @@ module.exports = function (server, app) {
         let senderId = Object.keys(connectedUsers).find((userId) =>
           connectedUsers[userId].has(socket.id)
         );
-        const commition = paymentType == "cash" ? 0 : 8;
         // console.log("senderId =======>",senderId, "\n customerId =======>", customerId);
         if (customerId) {
           senderId = customerId;
@@ -481,7 +480,7 @@ module.exports = function (server, app) {
           liability,
           ridertype,
           pincode,
-          adminprice: (Number(price) * 0.2 + commition).toFixed(2),
+          adminprice: (Number(price) * 0.2).toFixed(2),
           paymentId: paymentId || "",
           payment_status: "completed",
           order_id: order_id || "",
