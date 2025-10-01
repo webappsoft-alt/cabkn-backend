@@ -137,7 +137,7 @@ const userSchema = new mongoose.Schema({
   },
   badgeColor: {
     type: String,
-    default: "#000000",
+    // default: "#000000",
   },
 });
 
