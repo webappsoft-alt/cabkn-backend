@@ -19,7 +19,7 @@ router.post("/create", [auth, admin], async (req, res) => {
     const invoice = new Invoice({ name, note, amount });
     invoice.status = "pending";
     invoice.token = token;
-    invoice.url = `https://cabkn.com/payment?token=${token}`;
+    invoice.url = `https://payment.cabkn.com/?token=${token}`;
     await invoice.save();
     res
       .status(200)

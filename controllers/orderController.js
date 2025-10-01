@@ -772,3 +772,25 @@ exports.creditDoneAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await Order.findOneAndDelete({
+      _id: new mongoose.Types.ObjectId(postId),
+      status: "pending",
+    });
+
+    if (!post)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+
+    res
+      .status(200)
+      .json({ success: true, message: "Order deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

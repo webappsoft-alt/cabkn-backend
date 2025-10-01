@@ -15,6 +15,6 @@ router.put('/admin/update-payment/:id',admin, orderController.updatePaymentByAdm
 router.put('/customer/pay/:id', orderController.updatePurchasePaymentByCustomer);
 router.put('/rider/approve/:id', orderController.updateApproveByRider);
 router.put('/rider/creditDone/:id', orderController.creditDoneAdmin);
-
+router.delete('/admin/delete/:id', admin, orderController.deleteOrder);
 
 module.exports = router;
