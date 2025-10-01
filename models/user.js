@@ -135,6 +135,10 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
     index: true,
   },
+  badgeColor: {
+    type: String,
+    default: "#000000",
+  },
 });
 
 userSchema.index({ location: "2dsphere" });
@@ -175,6 +179,7 @@ function validateUser(user) {
     docs: Joi.array().min(0).max(1024).optional(),
     account_info: Joi.object().optional(),
     bedge: Joi.string().min(0).max(1024).optional(),
+    badgeColor: Joi.string().min(0).max(1024).optional(),
   };
 
   const schema = Joi.object({

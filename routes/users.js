@@ -456,6 +456,7 @@ router.put("/update-user", auth, async (req, res) => {
     account_info,
     homeAddress,
     insurancetype,
+    badgeColor,
   } = req.body;
   // Create an object to store the fields to be updated
   const updateFields = Object.fromEntries(
@@ -477,6 +478,7 @@ router.put("/update-user", auth, async (req, res) => {
       account_info,
       homeAddress,
       insurancetype,
+      badgeColor,
     }).filter(([key, value]) => value !== undefined)
   );
 
