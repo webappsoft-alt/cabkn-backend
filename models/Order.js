@@ -175,6 +175,7 @@ const orderSchema = new mongoose.Schema({
     type: Date,
   },
   reason: String,
+  adminReason: String,
   cancelled_time: {
     type: Date,
   },

@@ -2147,6 +2147,7 @@ module.exports = function (server, app) {
             { _id: orderId },
             {
               status: status,
+              adminReason:adminReason,
               completed_date: Date.now(),
               reason: `Admin:${reason}`,
             },
