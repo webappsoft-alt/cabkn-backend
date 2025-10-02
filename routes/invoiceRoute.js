@@ -21,12 +21,10 @@ router.post("/create", [auth, admin], async (req, res) => {
     invoice.token = token;
     invoice.url = `https://payment.cabkn.com/?token=${token}`;
     await invoice.save();
-    res
-      .status(200)
-      .json({
-        message: "Invoice created successfully",
-        response: invoice,
-      });
+    res.status(200).json({
+      message: "Invoice created successfully",
+      response: invoice,
+    });
   } catch (error) {
     console.log(error);
     res
@@ -72,11 +70,14 @@ router.get("/:id/admin", [auth, admin], async (req, res) => {
 router.get("/:id", async (req, res) => {
   const invoice = await Invoice.findOne({ token: req.params.id });
   if (!invoice) {
-    return res.status(404).json({ message: "Invoice not found" });
+    return res.status(404).json({ message: "Payment not found" });
+  }
+  if (invoice.status === "paid") {
+    return res.status(400).json({ message: "Payment already paid", response: invoice });
   }
   res
     .status(200)
-    .json({ message: "Invoice fetched successfully", response: invoice });
+    .json({ message: "Payment fetched successfully", response: invoice });
 });
 
 router.put("/:id", async (req, res) => {
@@ -93,8 +94,6 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ message: "Invoice already paid" });
     }
     invoice.status = status;
-    invoice.token = null;
-    invoice.url = null;
     invoice.paymentId = paymentId;
     await invoice.save();
     res
