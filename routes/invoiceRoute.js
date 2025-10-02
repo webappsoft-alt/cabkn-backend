@@ -39,7 +39,7 @@ router.get("/", [auth, admin], async (req, res) => {
   const skip = (page - 1) * limit;
 
   try {
-    const invoices = await Invoice.find().skip(skip).limit(limit);
+    const invoices = await Invoice.find().skip(skip).limit(limit).sort({ createdAt: -1 });
 
     const totalInvoices = await Invoice.countDocuments();
 
