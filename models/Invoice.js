@@ -10,9 +10,16 @@ const invoiceSchema = new mongoose.Schema(
       default: "pending",
       enum: ["pending", "paid", "cancelled"],
     },
-    token: String,
+    token: {
+      type: String,
+      unique: true,
+    },
     url: String,
-    paymentId: String,
+    paymentId: {
+      type: String,
+      default: "",
+      unique: true,
+    },
   },
   {
     timestamps: true,
