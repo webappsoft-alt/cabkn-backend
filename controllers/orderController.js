@@ -356,7 +356,7 @@ exports.getAllSellerApplication = async (req, res) => {
 
   try {
     const applications = await Order.find(query)
-      .sort({ schedule_date: -1 })
+      .sort({ schedule_date: 1 })
       .populate("coupon service")
       .populate("to_id")
       .populate("ridertype")
