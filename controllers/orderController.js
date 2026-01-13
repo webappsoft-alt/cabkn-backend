@@ -60,11 +60,11 @@ exports.fetchrequestOrder = async (req, res) => {
     if (applications.length > 0) {
       let requests = [];
       applications.forEach(async (application) => {
-        console.log(
-          "application ====> with isAssigned condition",
-          application,
-          userId
-        );
+        // console.log(
+        //   "application ====> with isAssigned condition",
+        //   application,
+        //   userId
+        // );
         if (application.isAssigned) {
           // console.log(
           //   "application.to_id_assigned ====>",
@@ -76,23 +76,23 @@ exports.fetchrequestOrder = async (req, res) => {
               (id) => id.toString() === userId.toString()
             )
           ) {
-            console.log(
-              "application ====> with isAssigned condition and to_id_assigned condition",
-              application,
-              userId
-            );
+            // console.log(
+            //   "application ====> with isAssigned condition and to_id_assigned condition",
+            //   application,
+            //   userId
+            // );
             requests.push(application);
           }
         } else {
-          console.log(
-            "application ====> else condtion with isAssigned condition",
-            application,
-            userId
-          );
+          // console.log(
+          //   "application ====> else condtion with isAssigned condition",
+          //   application,
+          //   userId
+          // );
           requests.push(application);
         }
       });
-      console.log(requests);
+      // console.log(requests);
       res.status(200).json({ success: true, requests: requests });
     } else {
       res.status(200).json({
@@ -216,15 +216,13 @@ exports.getAllEmployeeApplication = async (req, res) => {
 
   const pageSize = 10;
   const skip = Math.max(0, lastId - 1) * pageSize;
+  const todaydate = new Date(Date.now());
+  query.schedule_date = { $gte: todaydate };
 
   try {
     const applications = await Order.find(query)
-      .sort({ schedule_date: -1 })
-      .populate("coupon service")
-      .populate("user")
-      .populate("vehicle")
-      .populate("ridertype")
-      .populate("liability")
+      .sort({ createdAt: -1 })
+      .populate(["coupon service", "user", "vehicle", "ridertype", "liability"])
       .skip(skip)
       .limit(pageSize)
       .lean();
@@ -353,15 +351,18 @@ exports.getAllSellerApplication = async (req, res) => {
 
   const pageSize = 10;
   const skip = Math.max(0, lastId - 1) * pageSize;
-
+  const todaydate = new Date(Date.now());
+  query.schedule_date = { $gte: todaydate };
   try {
     const applications = await Order.find(query)
-      .sort({ schedule_date: 1 })
-      .populate("coupon service")
-      .populate("to_id")
-      .populate("ridertype")
-      .populate("liability")
-      .populate("vehicle")
+      .sort({ createdAt: -1 })
+      .populate([
+        "coupon service",
+        "to_id",
+        "ridertype",
+        "liability",
+        "vehicle",
+      ])
       .skip(skip)
       .limit(pageSize)
       .lean();
@@ -483,7 +484,7 @@ exports.AdminRides = async (req, res) => {
       matchStage,
       ...(searchStage ? [searchStage] : []),
       ...(filterStage ? [filterStage] : []),
-      { $sort: { schedule_date: -1 } },
+      { $sort: { createdAt: -1 } },
       { $skip: skip },
       { $limit: pageSize },
       // { $sort: { schedule_date: -1 } },
