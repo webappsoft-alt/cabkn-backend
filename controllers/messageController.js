@@ -433,10 +433,25 @@ exports.newMessage = async (req, res) => {
 
 exports.getAllConversations = async (req, res) => {
   try {
+    const search = req.query.search;
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
-    const conversation = await Conversation.find()
+    let query = {};
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      })
+        .select("_id")
+        .lean();
+      const userIds = users.map((user) => user._id);
+      query.participants = { $in: userIds };
+    }
+    // console.log(query);
+    const conversation = await Conversation.find(query)
       .skip(skip)
       .limit(limit)
       .populate("participants")
@@ -444,7 +459,7 @@ exports.getAllConversations = async (req, res) => {
       .sort({ updateAt: -1 })
       .lean()
       .exec();
-    const totalCount = await Conversation.countDocuments();
+    const totalCount = await Conversation.countDocuments(query);
     const totalPages = Math.ceil(totalCount / limit);
     res.status(200).json({
       success: true,
@@ -466,10 +481,13 @@ exports.getMessageConversationById = async (req, res) => {
       .lean()
       .exec();
     if (!conversation) {
-      return res.status(404).json({ success: false, message: "Conversation not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Conversation not found" });
     }
     const messages = await Message.find({ conversationId: conversation._id })
-      .sort({ _id: -1 }).populate("sender")
+      .sort({ _id: -1 })
+      .populate("sender")
       .limit(30)
       .lean()
       .exec();
