@@ -216,12 +216,12 @@ exports.getAllEmployeeApplication = async (req, res) => {
 
   const pageSize = 10;
   const skip = Math.max(0, lastId - 1) * pageSize;
-  const todaydate = new Date(Date.now());
-  query.schedule_date = { $gte: todaydate };
+  // const todaydate = new Date(Date.now());
+  // query.schedule_date = { $gte: todaydate };
 
   try {
     const applications = await Order.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ schedule_date: -1 })
       .populate(["coupon service", "user", "vehicle", "ridertype", "liability"])
       .skip(skip)
       .limit(pageSize)
@@ -351,11 +351,11 @@ exports.getAllSellerApplication = async (req, res) => {
 
   const pageSize = 10;
   const skip = Math.max(0, lastId - 1) * pageSize;
-  const todaydate = new Date(Date.now());
-  query.schedule_date = { $gte: todaydate };
+  // const todaydate = new Date(Date.now());
+  // query.schedule_date = { $gte: todaydate };
   try {
     const applications = await Order.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ schedule_date: -1 })
       .populate([
         "coupon service",
         "to_id",
