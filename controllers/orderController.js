@@ -221,7 +221,7 @@ exports.getAllEmployeeApplication = async (req, res) => {
 
   try {
     const applications = await Order.find(query)
-      .sort({ schedule_date: -1 })
+      .sort({ createdAt: -1 })
       .populate(["coupon service", "user", "vehicle", "ridertype", "liability"])
       .skip(skip)
       .limit(pageSize)
@@ -355,7 +355,7 @@ exports.getAllSellerApplication = async (req, res) => {
   // query.schedule_date = { $gte: todaydate };
   try {
     const applications = await Order.find(query)
-      .sort({ schedule_date: -1 })
+      .sort({ createdAt: -1 })
       .populate([
         "coupon service",
         "to_id",
