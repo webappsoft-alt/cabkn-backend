@@ -1,0 +1,797 @@
+const Coupon = require("../models/Coupon");
+const Order = require("../models/Order");
+const Request = require("../models/Request");
+const { User } = require("../models/user");
+const { sendNotification } = require("./notificationCreateService");
+const mongoose = require("mongoose");
+
+exports.fetchrequestOrder = async (req, res) => {
+  let query = {};
+  const userId = req.user._id;
+
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  const user = await User.findById(req.user._id).lean();
+
+  if (user.status !== "online") {
+    return res.status(200).json({
+      success: false,
+      requests: [],
+      message: "No more requests found",
+    });
+  }
+
+  if (user.isVehicle !== true) {
+    return res.status(200).json({
+      success: false,
+      requests: [],
+      message: "No more requests found",
+    });
+  }
+
+  // if (user.isRiding==true) {
+  //   return res.status(200).json({ success: false,requests:[], message: "No more requests found" });
+  // }
+
+  query.status = "pending";
+  query.rejected_by = { $nin: userId };
+  query.accepted_by = { $nin: userId };
+  const pageSize = 10;
+
+  if (["parcel"].includes(user.ride_type)) {
+    query.type = "parcel";
+  } else if (["ride"].includes(user.ride_type)) {
+    query.type = "driver";
+  }
+
+  try {
+    const applications = await Order.find(query)
+      .sort({ _id: -1 })
+      .populate("ridertype service")
+      .populate("coupon")
+      .populate("liability")
+      .populate("user")
+      .populate("vehicle")
+      .limit(pageSize)
+      .lean();
+
+    if (applications.length > 0) {
+      let requests = [];
+      applications.forEach(async (application) => {
+        // console.log(
+        //   "application ====> with isAssigned condition",
+        //   application,
+        //   userId
+        // );
+        if (application.isAssigned) {
+          // console.log(
+          //   "application.to_id_assigned ====>",
+          //   application.to_id_assigned,
+          //   userId
+          // );
+          if (
+            application.to_id_assigned.some(
+              (id) => id.toString() === userId.toString()
+            )
+          ) {
+            // console.log(
+            //   "application ====> with isAssigned condition and to_id_assigned condition",
+            //   application,
+            //   userId
+            // );
+            requests.push(application);
+          }
+        } else {
+          // console.log(
+          //   "application ====> else condtion with isAssigned condition",
+          //   application,
+          //   userId
+          // );
+          requests.push(application);
+        }
+      });
+      // console.log(requests);
+      res.status(200).json({ success: true, requests: requests });
+    } else {
+      res.status(200).json({
+        success: false,
+        requests: [],
+        message: "No more requests found",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.fetchrequestOrderOffers = async (req, res) => {
+  let query = {};
+  const userId = req.user._id;
+  const orderId = req.params.orderId;
+
+  if (req.params.id) {
+    query._id = { $lt: req.params.id };
+  }
+
+  query.status = "pending";
+  query.to_id = userId;
+  query.order = orderId;
+  const pageSize = 10;
+
+  try {
+    const applications = await Request.find(query)
+      .sort({ _id: -1 })
+      .populate("user")
+      .populate("order")
+      .populate("vehicle")
+      .limit(pageSize)
+      .lean();
+
+    if (applications.length > 0) {
+      res.status(200).json({ success: true, offers: applications });
+    } else {
+      res
+        .status(200)
+        .json({ success: false, offers: [], message: "No more offers found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getAllEmployeeApplication = async (req, res) => {
+  let query = {};
+  const userId = req.user._id;
+  const { status } = req.params;
+
+  const validStatuses = [
+    "all",
+    "accepted",
+    "order-start",
+    "completed",
+    "cancelled",
+  ];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+
+  const lastId = parseInt(req.params.id) || 1;
+
+  // Validate lastId
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: "Invalid last_id" });
+  }
+
+  if (req.body.bookingtype) {
+    query.bookingtype = req.body.bookingtype;
+  }
+  if (req.body.paymentType) {
+    query.paymentType = req.body.paymentType;
+  }
+
+  if (
+    req.body.paymentDone == false ||
+    req.body.paymentDone == "false" ||
+    req.body.paymentDone == true ||
+    req.body.paymentDone == "true"
+  ) {
+    query.paymentDone = req.body.paymentDone;
+  }
+  if (
+    req.body.adminPayment == false ||
+    req.body.adminPayment == "false" ||
+    req.body.adminPayment == true ||
+    req.body.adminPayment == "true"
+  ) {
+    query.adminPayment = req.body.adminPayment;
+  }
+  if (
+    req.body.refunded == false ||
+    req.body.refunded == "false" ||
+    req.body.refunded == true ||
+    req.body.refunded == "true"
+  ) {
+    query.refunded = req.body.refunded;
+  }
+
+  query.to_id = userId;
+
+  if (status == "all") {
+    query.status = { $in: ["accepted", "completed"] };
+  } else if (status == "accepted") {
+    query.status = { $in: ["accepted", "order-start"] };
+  } else {
+    query.status = status;
+  }
+
+  // if ((req.body.paymentDone==false||req.body.paymentDone=="false")&&(req.body.adminPayment==false||req.body.adminPayment=="false")) {
+  //   query.paymentDone=false;
+  //   query.adminPayment=false;
+  // }
+
+  const pageSize = 10;
+  const skip = Math.max(0, lastId - 1) * pageSize;
+  // const todaydate = new Date(Date.now());
+  // query.schedule_date = { $gte: todaydate };
+
+  try {
+    const applications = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .populate(["coupon service", "user", "vehicle", "ridertype", "liability"])
+      .skip(skip)
+      .limit(pageSize)
+      .lean();
+
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (applications.length > 0) {
+      res.status(200).json({
+        success: true,
+        orders: applications,
+        count: {
+          totalPage: totalPages,
+          currentPageSize: applications.length,
+        },
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        orders: [],
+        message: "No more Orders found",
+        count: {
+          totalPage: totalPages,
+          currentPageSize: applications.length,
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getOrderDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("likes").lean();
+
+    const applications = await Order.findById(req.params.id)
+      .populate("user coupon service liability ridertype")
+      .populate({
+        path: "to_id",
+        populate: [{ path: "vehicle", model: "Vehicle" }],
+      })
+      .lean();
+
+    if (!applications)
+      return res
+        .status(200)
+        .json({ success: false, message: "No more Orders found" });
+
+    const likes =
+      Array.isArray(user.likes) &&
+      user.likes.some(
+        (like) =>
+          like.otherUser.toString() === applications.to_id._id.toString()
+      );
+
+    res
+      .status(200)
+      .json({ success: true, order: { ...applications, likes: likes } });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getofferDetails = async (req, res) => {
+  try {
+    const applications = await Request.findById(req.params.id)
+      .populate("user")
+      .populate("order")
+      .populate("vehicle")
+      .populate("to_id")
+      .lean();
+
+    if (!applications)
+      return res
+        .status(200)
+        .json({ success: false, message: "No more offers found" });
+
+    res.status(200).json({ success: true, offers: applications });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getAllSellerApplication = async (req, res) => {
+  let query = {};
+  const userId = req.user._id;
+  const { status } = req.params;
+
+  const validStatuses = [
+    "all",
+    "pending",
+    "accepted",
+    "order-start",
+    "completed",
+    "cancelled",
+  ];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+
+  const lastId = parseInt(req.params.id) || 1;
+
+  // Validate lastId
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: "Invalid last_id" });
+  }
+
+  if (req.body.bookingtype) {
+    query.bookingtype = req.body.bookingtype;
+  }
+
+  query.user = userId;
+
+  if (status == "all") {
+    query.status = { $in: ["accepted", "completed"] };
+  } else if (status == "accepted") {
+    query.status = { $in: ["accepted", "order-start"] };
+  } else {
+    query.status = status;
+  }
+
+  const pageSize = 10;
+  const skip = Math.max(0, lastId - 1) * pageSize;
+  // const todaydate = new Date(Date.now());
+  // query.schedule_date = { $gte: todaydate };
+  try {
+    const applications = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .populate([
+        "coupon service",
+        "to_id",
+        "ridertype",
+        "liability",
+        "vehicle",
+      ])
+      .skip(skip)
+      .limit(pageSize)
+      .lean();
+
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (applications.length > 0) {
+      res.status(200).json({
+        success: true,
+        orders: applications,
+        count: {
+          totalPage: totalPages,
+          currentPageSize: applications.length,
+        },
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        orders: [],
+        message: "No more Orders found",
+        count: {
+          totalPage: totalPages,
+          currentPageSize: applications.length,
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.AdminRides = async (req, res) => {
+  let query = {};
+  const lastId = parseInt(req.params.id) || 1;
+
+  // Validate lastId
+  if (isNaN(lastId) || lastId < 0) {
+    return res.status(400).json({ error: "Invalid last_id" });
+  }
+
+  const { status } = req.params;
+  const validStatuses = [
+    "all",
+    "pending",
+    "accepted",
+    "order-start",
+    "completed",
+    "cancelled",
+    "active",
+  ];
+
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+
+  if (status !== "all") {
+    query.status = status;
+  }
+  if (status == "active") {
+    query.status = { $in: ["accepted", "order-start"] };
+  }
+
+  if (req.body.bookingtype) {
+    query.bookingtype = req.body.bookingtype;
+  }
+
+  if (req.body.paymentType) {
+    query.paymentType = req.body.paymentType;
+  }
+
+  if (req.body?.adminPayment == true || req.body?.adminPayment == false) {
+    query.adminPayment = req.body.adminPayment;
+  }
+
+  if (req.body?.paymentDone == true || req.body?.paymentDone == false) {
+    query.paymentDone = req.body.paymentDone;
+  }
+
+  if (req.body.refunded) {
+    query.refunded = req.body.refunded;
+  }
+  if (req.body.service == true || req.body.service == "true") {
+    query.service = { $exists: true };
+  }
+
+  const pageSize = 10;
+  const currentPage = Math.max(1, parseInt(lastId)); // Ensure ≥1 and integer
+  const skip = (currentPage - 1) * pageSize;
+
+  try {
+    const matchStage = { $match: query };
+
+    const searchStage = {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+      },
+    };
+
+    const filterStage = req.body.search
+      ? {
+          $match: {
+            $or: [
+              { order_id: { $regex: req.body.search, $options: "i" } },
+              { "user.name": { $regex: req.body.search, $options: "i" } },
+              // { "to_id.name": { $regex: req.body.search, $options: "i" } },
+              // { "start_address": { $regex: req.body.search, $options: "i" } },
+              // { "end_address": { $regex: req.body.search, $options: "i" } },
+            ],
+          },
+        }
+      : null;
+
+    const applications = await Order.aggregate([
+      matchStage,
+      ...(searchStage ? [searchStage] : []),
+      ...(filterStage ? [filterStage] : []),
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: pageSize },
+      // { $sort: { schedule_date: -1 } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "to_id",
+          foreignField: "_id",
+          as: "to_id",
+        },
+      },
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "customer_rating",
+          foreignField: "_id",
+          as: "customer_rating",
+        },
+      },
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "driver_rating",
+          foreignField: "_id",
+          as: "driver_rating",
+        },
+      },
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicle",
+          foreignField: "_id",
+          as: "vehicle",
+        },
+      },
+      {
+        $lookup: {
+          from: "coupons",
+          localField: "coupon",
+          foreignField: "_id",
+          as: "coupon",
+        },
+      },
+      {
+        $lookup: {
+          from: "servicessubcategories",
+          localField: "service",
+          foreignField: "_id",
+          as: "service",
+        },
+      },
+      {
+        $lookup: {
+          from: "users", // Assuming "accepted_by" refers to a user
+          localField: "accepted_by",
+          foreignField: "_id",
+          as: "accepted_by",
+        },
+      },
+      {
+        $lookup: {
+          from: "liabilties", // 👈 must match collection name (check your DB!)
+          localField: "liability",
+          foreignField: "_id",
+          as: "liability",
+        },
+      },
+      {
+        $unwind: { path: "$liability", preserveNullAndEmptyArrays: true },
+      },
+    ]).exec();
+
+    for (let post of applications) {
+      post.paidAmount = post.payment.reduce((a, b) => a + Number(b.amount), 0);
+      post.totalPayment = Number(post.price) - Number(post?.adminprice || 0);
+    }
+
+    const totalCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    if (applications.length > 0) {
+      res.status(200).json({
+        success: true,
+        orders: applications,
+        count: { totalPage: totalPages, currentPageSize: applications.length },
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        orders: [],
+        message: "No more Orders found",
+        count: { totalPage: totalPages, currentPageSize: applications.length },
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.updatePurchasePaymentByAdmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const { paymentDone, payment } = req.body;
+    const payemntObject = { amount: payment, date: Date.now() };
+
+    const post = await Order.findOneAndUpdate(
+      { _id: postId },
+      { paymentDone: paymentDone, $push: { payment: payemntObject } },
+      { new: true }
+    );
+
+    if (!post)
+      return res.status(404).send({
+        success: false,
+        message: "The Purchase with the given ID was not found.",
+      });
+
+    res.send({
+      success: true,
+      message: "Purchase payed successfully",
+      purchase: post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+exports.updatePaymentByAdmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Order.findOneAndUpdate(
+      { _id: postId },
+      { adminPayment: true },
+      { new: true }
+    );
+
+    if (!post)
+      return res.status(404).send({
+        success: false,
+        message: "The payment with the given ID was not found.",
+      });
+
+    res.send({
+      success: true,
+      message: "Payment recieved successfully",
+      purchase: post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.updatePurchasePaymentByCustomer = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user._id;
+    const { paymentId, tip, couponId, note } = req.body;
+
+    let query = {
+      paymentId: paymentId,
+      tip: tip || 0,
+      payment_status: "completed",
+    };
+    if (note) {
+      query = {
+        ...query,
+        note: note,
+      };
+    }
+    if (couponId) {
+      await Coupon.findByIdAndUpdate(couponId, {
+        $addToSet: { used_by: userId },
+      }).lean();
+      query = {
+        ...query,
+        coupon: couponId,
+      };
+    }
+
+    const post = await Order.findOneAndUpdate(
+      { _id: postId, user: userId },
+      query,
+      { new: true }
+    )
+      .populate("to_id service")
+      .lean();
+
+    if (!post)
+      return res.status(404).send({
+        success: false,
+        message: "The Order with the given ID was not found.",
+      });
+
+    // Notify the customer about the update
+    await sendNotification({
+      user: userId,
+      to_id: post.to_id._id.toString(),
+      description: `Customer have paid your order amount.`,
+      type: "order",
+      title: "Order Update",
+      fcmtoken: post.to_id.fcmtoken,
+      order: postId,
+      usertype: post.to_id.type,
+    });
+
+    res.send({
+      success: true,
+      message: "Payment payed successfully",
+      order: post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.updateApproveByRider = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user._id;
+
+    const post = await Order.findOneAndUpdate(
+      { _id: postId, to_id: userId },
+      { payment_status: "recieved" },
+      { new: true }
+    )
+      .populate("user service")
+      .lean();
+
+    if (!post)
+      return res.status(404).send({
+        success: false,
+        message: "The Order with the given ID was not found.",
+      });
+
+    // Notify the customer about the update
+    await sendNotification({
+      user: userId,
+      to_id: post.user._id.toString(),
+      description: `Rider have approved the amount of your order.`,
+      type: "order",
+      title: "Order Update",
+      fcmtoken: post.user.fcmtoken,
+      order: postId,
+      usertype: post.user.type,
+    });
+
+    res.send({
+      success: true,
+      message: "Payment approved successfully",
+      order: post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.creditDoneAdmin = async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Order.findOneAndUpdate(
+      { _id: postId },
+      { creditDone: true },
+      { new: true }
+    ).lean();
+
+    if (!post)
+      return res.status(404).send({
+        success: false,
+        message: "The Order with the given ID was not found.",
+      });
+
+    res.send({
+      success: true,
+      message: "Credit added successfully",
+      order: post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const post = await Order.findOneAndDelete({
+      _id: new mongoose.Types.ObjectId(postId),
+      status: "pending",
+    });
+
+    if (!post)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+
+    res
+      .status(200)
+      .json({ success: true, message: "Order deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};

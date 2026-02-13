@@ -1,0 +1,14 @@
+node_modules/
+.env
+App.js
+.yarn
+.yarnrc.yml
+*.log
+logfile.log
+uncaughtExceptions.log
+data.tx
+
+*.test.js
+
+.vscode/
+.DS_Store

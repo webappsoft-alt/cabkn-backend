@@ -1,0 +1,1184 @@
+{
+  "info": {
+    "name": "inDriveBackend API",
+    "description": "Complete API collection for inDriveBackend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\",\n    \"fcmtoken\": \"your-fcm-token\",\n    \"type\": \"rider\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth"]
+            },
+            "description": "User login endpoint"
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "admin"]
+            },
+            "description": "Admin login endpoint"
+          }
+        },
+        {
+          "name": "Social Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"fcmtoken\": \"your-fcm-token\",\n    \"name\": \"User Name\",\n    \"type\": \"rider\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/social-login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "social-login"]
+            },
+            "description": "Social login endpoint"
+          }
+        },
+        {
+          "name": "Forget Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"type\": \"rider\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/forget-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "forget-password"]
+            },
+            "description": "Request password reset code"
+          }
+        },
+        {
+          "name": "Update Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "id-auth-token",
+                "value": "{{idToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"password\": \"newpassword123\",\n    \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/update-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "update-password"]
+            },
+            "description": "Update password with verification code"
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            },
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"oldPassword\": \"password123\",\n    \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "change-password"]
+            },
+            "description": "Change user password"
+          }
+        },
+        {
+          "name": "Send Registration Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"newuser@example.com\",\n    \"type\": \"rider\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/send-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "send-code"]
+            },
+            "description": "Send verification code for registration"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order",
+      "item": [
+        {
+          "name": "Fetch Rider Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/rider/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "rider", "request"]
+            },
+            "description": "Get rider requests"
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/detail/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "detail", "{{orderId}}"]
+            },
+            "description": "Get order details"
+          }
+        },
+        {
+          "name": "Get Order Offer Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/offer/detail/{{offerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "offer", "detail", "{{offerId}}"]
+            },
+            "description": "Get details of an order offer"
+          }
+        },
+        {
+          "name": "Fetch Customer Offers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/customer/offer/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "customer", "offer", "{{orderId}}"]
+            },
+            "description": "Get customer order offers"
+          }
+        },
+        {
+          "name": "Rider Orders (Accept)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingtype\": \"live\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/order/rider/accepted/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "rider", "accepted", "1"]
+            },
+            "description": "Get rider's accepted orders"
+          }
+        },
+        {
+          "name": "Customer Orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingtype\": \"live\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/order/customer/accepted/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "customer", "accepted", "1"]
+            },
+            "description": "Get customer's orders"
+          }
+        },
+        {
+          "name": "Admin Orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingtype\": \"live\",\n    \"paymentDone\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/order/admin/all/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "admin", "all", "1"]
+            },
+            "description": "Get admin orders"
+          }
+        },
+        {
+          "name": "Rider Approve Payment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/rider/approve/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "rider", "approve", "{{orderId}}"]
+            },
+            "description": "Rider approves payment for order"
+          }
+        },
+        {
+          "name": "Customer Pay",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"paymentId\": \"payment_123\",\n    \"tip\": 5,\n    \"note\": \"Great service!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/order/customer/pay/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "customer", "pay", "{{orderId}}"]
+            },
+            "description": "Customer pays for order"
+          }
+        },
+        {
+          "name": "Admin Update Purchase Payment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"paymentDone\": true,\n    \"payment\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/order/admin/update-purchases/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "admin", "update-purchases", "{{orderId}}"]
+            },
+            "description": "Admin updates purchase payment"
+          }
+        },
+        {
+          "name": "Admin Update Payment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/admin/update-payment/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "admin", "update-payment", "{{orderId}}"]
+            },
+            "description": "Admin updates payment"
+          }
+        },
+        {
+          "name": "Credit Done",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/order/rider/creditDone/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "order", "rider", "creditDone", "{{orderId}}"]
+            },
+            "description": "Mark credit as done"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rating",
+      "item": [
+        {
+          "name": "Create Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"to_id\": \"{{userId}}\",\n    \"order\": \"{{orderId}}\",\n    \"rating\": 5,\n    \"description\": \"Excellent service!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rating/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rating", "create"]
+            },
+            "description": "Create a rating"
+          }
+        },
+        {
+          "name": "Get User Ratings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rating/all/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rating", "all", "{{userId}}"]
+            },
+            "description": "Get ratings for a user"
+          }
+        },
+        {
+          "name": "Create Web Subcat Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"subcat\": \"{{subcatId}}\",\n    \"rating\": 5,\n    \"description\": \"Great subcategory!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rating/websubcat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rating", "websubcat"]
+            },
+            "description": "Create a web subcategory rating"
+          }
+        },
+        {
+          "name": "Get Web Subcat Ratings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rating/websubcat/{{subcatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rating", "websubcat", "{{subcatId}}"]
+            },
+            "description": "Get ratings for a web subcategory"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Category",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"New Category\",\n    \"image\": \"image_url\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/category/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "category", "create"]
+            },
+            "description": "Create a new category"
+          }
+        },
+        {
+          "name": "Get Admin Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/category/admin-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "category", "admin-all"]
+            },
+            "description": "Get all categories for admin"
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/category/admin/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "category", "admin", "{{categoryId}}"]
+            },
+            "description": "Get category by ID"
+          }
+        },
+        {
+          "name": "Get All Customer Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/category/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "category", "all"]
+            },
+            "description": "Get all categories for customers"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coupon",
+      "item": [
+        {
+          "name": "Create Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"DISCOUNT20\",\n    \"discount\": 20,\n    \"expiry\": \"2023-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupon/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coupon", "create"]
+            },
+            "description": "Create a new coupon"
+          }
+        },
+        {
+          "name": "Edit Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"code\": \"DISCOUNT25\",\n    \"discount\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/coupon/edit/{{couponId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coupon", "edit", "{{couponId}}"]
+            },
+            "description": "Edit a coupon"
+          }
+        },
+        {
+          "name": "Get My Coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coupon/me/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coupon", "me", "{{userId}}"]
+            },
+            "description": "Get user's coupons"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Message",
+      "item": [
+        {
+          "name": "Get User Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/msg/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "msg", "conversations"]
+            },
+            "description": "Get user's conversations"
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/msg/messages/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "msg", "messages", "{{userId}}"]
+            },
+            "description": "Get messages with a user"
+          }
+        },
+        {
+          "name": "Mark Messages as Seen",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/msg/seen/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "msg", "seen", "{{userId}}"]
+            },
+            "description": "Mark messages as seen"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notification",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification", "all"]
+            },
+            "description": "Get user notifications"
+          }
+        },
+        {
+          "name": "Check Unseen Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification/check-seen",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification", "check-seen"]
+            },
+            "description": "Check for unseen notifications"
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notification/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notification", "{{notificationId}}"]
+            },
+            "description": "Delete a notification"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Banner",
+      "item": [
+        {
+          "name": "Create Banner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"New Promotion\",\n    \"image\": \"banner_image_url\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/banner/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "banner", "create"]
+            },
+            "description": "Create a new banner"
+          }
+        },
+        {
+          "name": "Get All Banners",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/banner/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "banner", "all"]
+            },
+            "description": "Get all banners"
+          }
+        },
+        {
+          "name": "Edit Banner",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Updated Promotion\",\n    \"image\": \"new_banner_image_url\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/banner/edit/{{bannerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "banner", "edit", "{{bannerId}}"]
+            },
+            "description": "Edit a banner"
+          }
+        },
+        {
+          "name": "Delete Banner",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/banner/{{bannerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "banner", "{{bannerId}}"]
+            },
+            "description": "Delete a banner"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Support",
+      "item": [
+        {
+          "name": "Create Support Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Help Request\",\n    \"description\": \"I need assistance with my order\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/support/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "support", "create"]
+            },
+            "description": "Create a support ticket"
+          }
+        },
+        {
+          "name": "Get Admin Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/support/admin/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "support", "admin", "1"]
+            },
+            "description": "Get admin support tickets"
+          }
+        },
+        {
+          "name": "Mark Support Ticket as Attended",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "x-auth-token",
+                "value": "{{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/support/attended/{{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "support", "attended", "{{ticketId}}"]
+            },
+            "description": "Mark a support ticket as attended"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Socket.IO",
+      "item": [
+        {
+          "name": "WebSocket Connection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Connect to WebSocket at {{baseUrl}} - Use Socket.IO client"
+          }
+        },
+        {
+          "name": "Authenticate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'authenticate' event with this payload: {\"token\": \"{{authToken}}\"}"
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'send-message' event with this payload: {\"recipientId\": \"user_id\", \"messageText\": \"Hello!\", \"name\": \"Sender Name\"}"
+          }
+        },
+        {
+          "name": "Send Customer Request",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'send-request-customer' event with ride details"
+          }
+        },
+        {
+          "name": "Rider Accept Request",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'update-request-rider' event with this payload: {\"requestId\": \"request_id\", \"status\": \"accepted\"}"
+          }
+        },
+        {
+          "name": "Rider Cancel/Complete Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'update-order-rider' event with this payload: {\"orderId\": \"order_id\", \"status\": \"completed\"}"
+          }
+        },
+        {
+          "name": "Customer Cancel Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'cancel-order-customer' event with this payload: {\"orderId\": \"order_id\", \"reason\": \"Changed my mind\"}"
+          }
+        },
+        {
+          "name": "Rider Start Ride",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'pick-rider' event with this payload: {\"orderId\": \"order_id\"}"
+          }
+        },
+        {
+          "name": "Rider Send Arrival Alert",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'send-alert-rider' event with this payload: {\"orderId\": \"order_id\"}"
+          }
+        },
+        {
+          "name": "Customer Tip Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Emit 'tip-order-customer' event with this payload: {\"orderId\": \"order_id\", \"amount\": 5}"
+          }
+        }
+      ],
+      "description": "Socket.IO endpoints - Note: Postman has limited Socket.IO support. For full testing, use Socket.IO client or custom code. Refer to inDriveBackend_Socket_Events.md for details."
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5400",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2N2ZkMDY4MzhmN2EwYzBiOTFjODYzNmYiLCJ0eXBlIjoicmlkZXIiLCJpYXQiOjE3NDcyMDYyNTh9.9uzX8Mqf0FVN0cA-gWRmnqRfj8AS9X-ZSdxIdIvxWU8",
+      "type": "string"
+    },
+    {
+      "key": "idToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "couponId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subcatId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bannerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "offerId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+} 

@@ -1,0 +1,14 @@
+TYPE="service_account"
+PROJECTID= "cabkn-63397"
+PRIVATE_KEY_ID = "08c57fb7fd2948ea8e8dd4db5d2a3585636c16a7"
+PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC+qq0X3WA3ulsG\naZ54ZIKSglc4WOcIIFDfIROk4xetiAFRkvhnlFSgkG9+J40leVFoZ+AFPMrSbq/K\nJe0v+ENUieycMbZvfxJuAUmD00B5rYe3ijYXeMDpbSPM9liqwFr7R05pfpqca5xg\nifWJDby56br/hiwoaPuE/EUhAFu9VNJfLg17I+ohlBdeuUlwktP1XQ+GUIKge7sM\nBC4IzQ2yz7ObMFDY9cHE9WZoEH+EhFy6X1zpok9UdSD6nkWRLVvI+Z48N2lDp3Zc\nLwtG1thFj+6kmbDjgVaJOZcwYqaKN6HL4+ZlkXtI+jp1I4iipf3AMuSUPZHys7sq\nSVruuz5NAgMBAAECggEAAxXW9DZoWq6Az5NA9bjGpiFG0QobPvXq6RlrbHUiSnQT\ndWL38xEi53A+5Z81OQCEETjxFpSbwZj57j773hVZ3ZHXytVBGv/G6BHMQz5VYkKt\nGgq6Alo5YO2bsTLhT24KatuGCM38KYDSSHujBgM7ZRTDqmPc7hB41XeRlM2hLmic\nRb4AlJfRWyGp3rQH7I33y6+dO6e6qhFoODJYe4w1NiMJ08IlmSlci7Tbx6A7aRm7\nkNIOSI9pcLV82GtscMiwBKZUS5RiFmTqSUKNMueLe7kalEa6OxKv8YZEwXwLJ6cl\nxasnRRZECn53LBQw+NZLYB1F3cKuQ/k6m7U8JopJkQKBgQD4glwXhPBIOVq0YzMD\nfevrIc5xB82gEvQQjEEa8IuECUCZxq0nCAOH4kh/NwN4XpIrN3p8V32C6YOOFByv\n4rc6CWh77sHNXywuWH/4fAyuT0cUp48TOkDEW4dYNsjzIEsHeALluoFllzA74erE\nnqHJoZzZiKxmS9HtlZ+ZY55wZQKBgQDEafhir/rqszut986KXORhfK0s2kAuwxo+\nkfi96GnosGDh4BsJJ0E7rfQeO8pF85SczH2I6pFtKHThQXKH/hdPpxojpvle34hF\n65Vf7bu1D9n6XUjGBbn9L7Jrc4231QfmDK9pImyhCafL/fOX9ELqRkKGY+gRD6Yo\nmiHibW+TyQKBgQDRAGIPbcDgHUyJ1bw7vZXCxUXojhWEASy/FhZTX+cWfumT6yIJ\nZ5YAnHE4fL4wZ+kq65faJ4LprRb1UTjnPBe5edwkDyNzZA22VLwb8ciAeTBg0KNm\nGmIKQqhLqpfK0mgHuglFyFu3YzYvxss53ehXudI+qdHEnxPJa0M1MDE6eQKBgGsz\nDz8Fn2QjiMoNeyvnQTq36miVgfxDvfoyf1lfFRbL1UTSpM7dHuxsp9Usetys8gqW\nTVnB9LdoIkqjBtiUZLKzmD+nLWmLhPvsdW2S+iT7TtQnv8VccMNwGegtfEa+PX5g\npAg0oqdN9sgOhboEtdTZngttUcamDOESJrZHVmOJAoGBAOkX8UfcZx3TD2ta92VS\n99a9fa9L3XRlxYYvUuJzlg0uYin+doP4Jj+aelxdLcP6Z+PewdR+ilc5vXb7F1CJ\n8yANcjjbErGwSFkynJdJZGFBrH4pC6DT8qw1fXqVdSRrJokn3pOxJHDgdUl/V4IS\nBYtzWNrbuwGfA7aSb+G5+XRk\n-----END PRIVATE KEY-----\n"
+CLIENT_EMAIL = "firebase-adminsdk-mhhwd@cabkn-63397.iam.gserviceaccount.com"
+CLIENTID =  "103808104485935466677"
+AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
+TOKEN_URL =  "https://oauth2.googleapis.com/token"
+AUTHPROVIDER = "https://www.googleapis.com/oauth2/v1/certs"
+CLIENT_CERT = "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-mhhwd%40cabkn-63397.iam.gserviceaccount.com"
+DOMAIN = "googleapis.com"
+
+
+EMAIL_PASSWORD="Kevind35$"

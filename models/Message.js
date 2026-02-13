@@ -1,0 +1,42 @@
+const mongoose = require('mongoose');
+
+const messageSchema = new mongoose.Schema({
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    required: true,
+  },
+  conversationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Conversation',
+  },
+  message: {
+    type: String,
+    default: "",
+    // required: true,
+  },
+  image: {
+    type: String,
+    required: false,
+  },
+  type:{
+    type:String,
+    default :"text",
+    enum:["text", "image", "both"]
+  },
+  deleted_by: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+  }],
+  seen:[{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
+});
+
+module.exports = mongoose.model('Message', messageSchema);
