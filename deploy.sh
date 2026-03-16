@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 VPS_HOST="85.31.238.45"
 VPS_USER="root"
 REMOTE_DIR="/root/RiderAppBackend"  # Changed path to a more standard location
-PM2_APP_NAME="server2"
+PM2_APP_NAME="1"
 
 # Check if git status is clean
 if [[ -n $(git status -s) ]]; then

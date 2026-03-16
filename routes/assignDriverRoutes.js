@@ -7,6 +7,7 @@ const {
   sendNotification,
 } = require("../controllers/notificationCreateService");
 const { io, connectedUsers } = require("../startup/sockets");
+const LoyalityPoint = require("../models/LoyalityPoint");
 const { User } = require("../models/user");
 router.get("/:id", async (req, res) => {
   try {
@@ -85,12 +86,12 @@ router.post("/anonymous/:id", async (req, res) => {
       .select("fcmtoken")
       .lean();
 
-    for (let user of userIds) {
-      io.to(user._id.toString()).emit("filter-request-rider", {
-        request: order._id,
-        success: true,
-      });
-    }
+    // for (let user of userIds) {
+    //   io.to(user._id.toString()).emit("filter-request-rider", {
+    //     request: order._id,
+    //     success: true,
+    //   });
+    // }
     res.status(200).json({ order });
   } catch (error) {
     console.log(error);
