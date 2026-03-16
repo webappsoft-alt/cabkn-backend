@@ -114,7 +114,7 @@ router.put("/anonymous/:id", async (req, res) => {
       { status: "completed", completed_date: Date.now(), dropTime: Date.now() },
       { new: true },
     );
-    const user = await User.findById(updatedOrder.user._id);
+    const user = await User.findById(updatedOrder.user);
     const addresses = await LoyalityPoint.findOne({}).lean();
     user.points = Number(user.points) + (addresses?.points_per_ride || 10);
     await user.save();
