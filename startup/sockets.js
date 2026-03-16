@@ -25,6 +25,7 @@ const { Worker } = require("worker_threads");
 const jobQueue = require("../routes/jobsecondQueue");
 const mongoose = require("mongoose");
 const connectedUsers = {};
+// module.exports = connectedUsers;
 
 module.exports = function (server, app) {
   const io = require("socket.io")(server, {
@@ -70,7 +71,7 @@ module.exports = function (server, app) {
       async ({ recipientId, messageText, name, image, type }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
 
           // Get sender details to check if they're a customer
@@ -183,7 +184,7 @@ module.exports = function (server, app) {
           console.error("Error sending private message:", error.message);
           socket.emit("send_message_error", error.message);
         }
-      }
+      },
     );
 
     socket.on(
@@ -191,7 +192,7 @@ module.exports = function (server, app) {
       async ({ conversationId, messageText, user, type }) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
 
           const conversation = await Conversation.findById(conversationId);
@@ -236,13 +237,13 @@ module.exports = function (server, app) {
           // Handle error
           socket.emit("send_message_error", error.message);
         }
-      }
+      },
     );
 
     // Handle disconnection
     socket.on("seen-msg", async ({ recipientId }) => {
       const senderId = Object.keys(connectedUsers).find((userId) =>
-        connectedUsers[userId].has(socket.id)
+        connectedUsers[userId].has(socket.id),
       );
       // Remove user from connected users on disconnection
       await allSeen(senderId, recipientId);
@@ -253,7 +254,7 @@ module.exports = function (server, app) {
 
     socket.on("location-sent", async (data, callback) => {
       const senderId = Object.keys(connectedUsers).find((userId) =>
-        connectedUsers[userId].has(socket.id)
+        connectedUsers[userId].has(socket.id),
       );
 
       if (!senderId) {
@@ -321,14 +322,14 @@ module.exports = function (server, app) {
         } = data;
         // console.log("data =======>",data);
         let senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
         // console.log("senderId =======>",senderId, "\n customerId =======>", customerId);
         if (customerId) {
           senderId = customerId;
           // console.log("Updated senderId =======>",senderId);
           // connectedUsers[senderId] = new Set([socket.id]);
-          // socket.join(senderId);          
+          // socket.join(senderId);
         }
         // console.log("senderId =======>",senderId);
         const sender = await User.findById(senderId);
@@ -419,14 +420,14 @@ module.exports = function (server, app) {
             ...new Set(
               userIds
                 .map((item) => item.fcmtoken)
-                .filter((item) => item !== undefined || item !== "")
+                .filter((item) => item !== undefined || item !== ""),
             ),
           ];
           userIds = [
             ...new Set(
               userIds
                 .map((item) => item._id)
-                .filter((item) => item !== undefined || item !== "")
+                .filter((item) => item !== undefined || item !== ""),
             ),
           ];
         }
@@ -518,7 +519,7 @@ module.exports = function (server, app) {
 
         await newRequest.save();
         const request = await Order.findById(newRequest._id).populate(
-          "user ridertype service liability"
+          "user ridertype service liability",
         );
         callback({
           request,
@@ -541,7 +542,7 @@ module.exports = function (server, app) {
             ...new Set(
               [...users, ...adminIds]
                 .map((item) => item.fcmtoken)
-                .filter((token) => token && token !== "")
+                .filter((token) => token && token !== ""),
             ),
           ];
 
@@ -560,7 +561,7 @@ module.exports = function (server, app) {
                     "Emitting to socket:",
                     socketId,
                     "for user:",
-                    to_id
+                    to_id,
                   );
                   io.to(socketId).emit("recieve-request-rider", {
                     request,
@@ -573,7 +574,7 @@ module.exports = function (server, app) {
                     "Emitting to socket:",
                     socketId,
                     "for user:",
-                    to_id
+                    to_id,
                   );
                 });
               } else {
@@ -615,7 +616,7 @@ module.exports = function (server, app) {
               Object.entries(request).map(([key, value]) => [
                 key,
                 String(value),
-              ])
+              ]),
             ),
           };
           // console.log("FCM Tokens  ========>", adminTokens);
@@ -635,7 +636,7 @@ module.exports = function (server, app) {
             ...new Set(
               [...adminIds]
                 .map((item) => item.fcmtoken)
-                .filter((token) => token && token !== "")
+                .filter((token) => token && token !== ""),
             ),
           ];
           // Broadcast to all users (userIds) when no specific to_ids provided
@@ -680,7 +681,7 @@ module.exports = function (server, app) {
               Object.entries(request).map(([key, value]) => [
                 key,
                 String(value),
-              ])
+              ]),
             ),
           };
           fcmTokens = [...new Set([...fcmTokens, ...adminTokens])];
@@ -733,7 +734,7 @@ module.exports = function (server, app) {
             reassigning: true,
             userIds: to_ids || order.userIds,
           },
-          { new: true }
+          { new: true },
         ).populate("user ridertype service liability");
 
         if (!updatedOrder) {
@@ -774,7 +775,7 @@ module.exports = function (server, app) {
           ...new Set(
             [...users, ...adminIds]
               .map((item) => item.fcmtoken)
-              .filter((token) => token && token !== "")
+              .filter((token) => token && token !== ""),
           ),
         ];
         // console.log("6. FCM Tokens to be sent:", adminTokens);
@@ -844,7 +845,7 @@ module.exports = function (server, app) {
           const sockets = connectedUsers[adminId];
           console.log(
             "9b. Found sockets for admin:",
-            sockets ? sockets.size : 0
+            sockets ? sockets.size : 0,
           );
 
           if (sockets && sockets.size > 0) {
@@ -853,7 +854,7 @@ module.exports = function (server, app) {
                 "9c. Emitting to admin socket:",
                 socketId,
                 "for admin:",
-                adminId
+                adminId,
               );
               io.to(socketId).emit("recieve-request-rider", {
                 request: updatedOrder,
@@ -881,7 +882,7 @@ module.exports = function (server, app) {
             Object.entries(updatedOrder).map(([key, value]) => [
               key,
               String(value),
-            ])
+            ]),
           ),
         };
 
@@ -896,7 +897,7 @@ module.exports = function (server, app) {
 
         console.log(
           "11. Adding FCM job to queue with tokens:",
-          adminTokens.length
+          adminTokens.length,
         );
         jobQueue.addJob({ data: valueData });
 
@@ -915,7 +916,7 @@ module.exports = function (server, app) {
     socket.on("delete-request-customer", async ({ requestId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -1014,7 +1015,7 @@ module.exports = function (server, app) {
       async ({ requestId, status }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
 
           if (!senderId) {
@@ -1052,7 +1053,7 @@ module.exports = function (server, app) {
               status: "pending", // Only allow updates to pending orders
             },
             {}, // No update needed here, just for locking
-            { new: true }
+            { new: true },
           ).populate("user ridertype service liability");
 
           if (!order) {
@@ -1091,7 +1092,7 @@ module.exports = function (server, app) {
               .lean();
 
             const adminsWithTokens = adminIds.filter(
-              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
+              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== "",
             );
 
             await Promise.all(
@@ -1111,8 +1112,8 @@ module.exports = function (server, app) {
                     rejected_user_id: user?._id,
                     rejected_by: senderId,
                   },
-                })
-              )
+                }),
+              ),
             );
 
             return callback({
@@ -1135,7 +1136,7 @@ module.exports = function (server, app) {
                 vehicle: user.vehicle,
                 $addToSet: { accepted_by: senderId },
               },
-              { new: true }
+              { new: true },
             ).populate("user ridertype service liability");
 
             if (!acceptedOrder) {
@@ -1177,7 +1178,7 @@ module.exports = function (server, app) {
                           title: "Ride Update",
                           message: "Your ride has been reassigned by Admin.",
                         });
-                      }
+                      },
                     );
                   }
                 }
@@ -1195,7 +1196,7 @@ module.exports = function (server, app) {
               .lean();
 
             const adminsWithTokens = admins.filter(
-              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== ""
+              (admin) => admin.fcmtoken && admin.fcmtoken.trim() !== "",
             );
 
             await Promise.all(
@@ -1209,8 +1210,8 @@ module.exports = function (server, app) {
                   fcmtoken: admin.fcmtoken,
                   order: requestId,
                   usertype: "admin",
-                })
-              )
+                }),
+              ),
             );
 
             // Notify customer
@@ -1244,7 +1245,7 @@ module.exports = function (server, app) {
                           acceptedOrder?.user?.name
                         } and your order has been scheduled for ${date.toLocaleDateString()}.`,
                 });
-              }
+              },
             );
 
             // Notify other riders to filter out the request
@@ -1283,13 +1284,13 @@ module.exports = function (server, app) {
             message: error.message,
           });
         }
-      }
+      },
     );
 
     socket.on("send-alert-rider", async ({ orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -1363,7 +1364,7 @@ module.exports = function (server, app) {
     socket.on("reminder-alert-rider", async ({ orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -1396,7 +1397,7 @@ module.exports = function (server, app) {
           user: senderId,
           to_id: order.user._id.toString(),
           description: `Your upcoming ride is on ${moment(
-            order.schedule_date
+            order.schedule_date,
           ).format("MM/DD/YYYY")} from ${order.start_address} to ${
             order.end_address
           }`,
@@ -1411,7 +1412,7 @@ module.exports = function (server, app) {
           user: senderId,
           to_id: order.to_id._id.toString(),
           description: `Your upcoming ride is on ${moment(
-            order.schedule_date
+            order.schedule_date,
           ).format("MM/DD/YYYY")} from ${order.start_address} to ${
             order.end_address
           }`,
@@ -1444,7 +1445,7 @@ module.exports = function (server, app) {
     socket.on("send-payment-alert-rider", async ({ orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -1516,7 +1517,7 @@ module.exports = function (server, app) {
       async ({ requestId, status, orderId }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
 
           if (!senderId) {
@@ -1701,13 +1702,13 @@ module.exports = function (server, app) {
             message: error.message,
           });
         }
-      }
+      },
     );
 
     socket.on("update-order-admin", async ({ to_id, orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -1836,7 +1837,7 @@ module.exports = function (server, app) {
     socket.on("pick-rider", async ({ orderId }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -1850,7 +1851,7 @@ module.exports = function (server, app) {
         const order = await Order.findByIdAndUpdate(
           orderId,
           { status: "order-start", pickTime: Date.now() },
-          { new: true }
+          { new: true },
         ).populate("user");
 
         if (!order) {
@@ -1916,7 +1917,7 @@ module.exports = function (server, app) {
       async ({ orderId, status, reason }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
 
           if (!senderId) {
@@ -1944,7 +1945,7 @@ module.exports = function (server, app) {
               to_id: senderId,
             },
             { status: status, completed_date: Date.now() },
-            { new: true }
+            { new: true },
           )
             .populate("to_id")
             .populate("user")
@@ -1967,7 +1968,7 @@ module.exports = function (server, app) {
             await Order.findOneAndUpdate(
               { _id: orderId, to_id: senderId },
               { refunded: true, reason: `Rider:${reason}` },
-              { new: true }
+              { new: true },
             );
 
             if (updatedOrder.paymentType == "paid") {
@@ -2016,11 +2017,11 @@ module.exports = function (server, app) {
               updatedOrder.vehicle?.license || updatedOrder.vehicle?.name || "",
               updatedOrder.price,
               updatedOrder.price,
-              reviewLink
+              reviewLink,
             );
             await Order.findOneAndUpdate(
               { _id: orderId },
-              { dropTime: Date.now() }
+              { dropTime: Date.now() },
             );
             const transaction = new Transaction({
               user: updatedOrder.user._id,
@@ -2039,7 +2040,7 @@ module.exports = function (server, app) {
             await User.findByIdAndUpdate(
               senderId,
               { isRiding: false },
-              { new: true }
+              { new: true },
             );
           }
           const admins = await User.find({
@@ -2088,7 +2089,7 @@ module.exports = function (server, app) {
                 order: updatedOrder,
                 title: "Ride Update",
                 message: "Your Ride has been cancelled.",
-              }
+              },
             );
           } else {
             io.to(updatedOrder.user._id.toString()).emit(
@@ -2098,7 +2099,7 @@ module.exports = function (server, app) {
                 order: updatedOrder,
                 title: "Ride Update",
                 message: `Your Ride have been successfully ${status}.`,
-              }
+              },
             );
           }
 
@@ -2116,7 +2117,7 @@ module.exports = function (server, app) {
             message: error.message,
           });
         }
-      }
+      },
     );
 
     socket.on(
@@ -2124,7 +2125,7 @@ module.exports = function (server, app) {
       async ({ orderId, reason, adminReason }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
           if (!reason) {
             return callback({
@@ -2147,11 +2148,11 @@ module.exports = function (server, app) {
             { _id: orderId },
             {
               status: status,
-              adminReason:adminReason,
+              adminReason: adminReason,
               completed_date: Date.now(),
               reason: `Admin:${reason}`,
             },
-            { new: true }
+            { new: true },
           )
             .populate("to_id user ridertype liability vehicle")
             .lean();
@@ -2178,7 +2179,7 @@ module.exports = function (server, app) {
             await Order.findOneAndUpdate(
               { _id: orderId },
               { refunded: true },
-              { new: true }
+              { new: true },
             );
 
             user.amount = Number(user.amount) + Number(updatedOrder.price);
@@ -2205,13 +2206,13 @@ module.exports = function (server, app) {
             await User.findByIdAndUpdate(
               senderId,
               { isRiding: false },
-              { new: true }
+              { new: true },
             );
           }
 
           console.log(
             updatedOrder.user._id.toString(),
-            updatedOrder.to_id._id.toString()
+            updatedOrder.to_id._id.toString(),
           );
           const admins = await User.find({
             type: "admin",
@@ -2274,7 +2275,7 @@ module.exports = function (server, app) {
             updatedOrder.distance,
             moment(updatedOrder.schedule_date).format("MM/DD/YYYY"),
             `Admin cancellation.${reasonText}`,
-            updatedOrder?.user?.email
+            updatedOrder?.user?.email,
           );
 
           // Send email to rider
@@ -2288,7 +2289,7 @@ module.exports = function (server, app) {
             updatedOrder.distance,
             moment(updatedOrder.schedule_date).format("MM/DD/YYYY"),
             `Admin cancellation.${reasonText}`,
-            updatedOrder?.to_id?.email
+            updatedOrder?.to_id?.email,
           );
 
           io.to(updatedOrder.user._id.toString()).emit(
@@ -2300,7 +2301,7 @@ module.exports = function (server, app) {
               message:
                 "Your Ride has been cancelled by admin." +
                 (adminReason ? ` Reason: ${adminReason}` : ""),
-            }
+            },
           );
 
           io.to(updatedOrder.to_id._id.toString()).emit(
@@ -2312,7 +2313,7 @@ module.exports = function (server, app) {
               message:
                 "Your Ride has been cancelled by admin." +
                 (adminReason ? ` Reason: ${adminReason}` : ""),
-            }
+            },
           );
 
           // Callback success response
@@ -2329,13 +2330,13 @@ module.exports = function (server, app) {
             message: error.message,
           });
         }
-      }
+      },
     );
 
     socket.on("tip-order-customer", async ({ orderId, amount }, callback) => {
       try {
         const senderId = Object.keys(connectedUsers).find((userId) =>
-          connectedUsers[userId].has(socket.id)
+          connectedUsers[userId].has(socket.id),
         );
 
         if (!senderId) {
@@ -2378,7 +2379,7 @@ module.exports = function (server, app) {
         await Order.findOneAndUpdate(
           { _id: orderId, user: senderId },
           { tip: Number(amount) },
-          { new: true }
+          { new: true },
         );
 
         user.amount = Number(user.amount) + Number(amount);
@@ -2414,7 +2415,7 @@ module.exports = function (server, app) {
               title: "Ride Update",
               message: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
             });
-          }
+          },
         );
 
         // Callback success response
@@ -2438,7 +2439,7 @@ module.exports = function (server, app) {
       async ({ orderId, reason }, callback) => {
         try {
           const senderId = Object.keys(connectedUsers).find((userId) =>
-            connectedUsers[userId].has(socket.id)
+            connectedUsers[userId].has(socket.id),
           );
 
           if (!senderId) {
@@ -2494,14 +2495,14 @@ module.exports = function (server, app) {
             await Order.findOneAndUpdate(
               { _id: orderId, user: senderId },
               { status: status, refunded: true, completed_date: Date.now() },
-              { new: true }
+              { new: true },
             );
 
             if (updatedOrder.paymentType == "paid") {
               user.amount =
                 Number(user.amount) +
                 Number(
-                  Number(updatedOrder.price) - Number(updatedOrder.adminprice)
+                  Number(updatedOrder.price) - Number(updatedOrder.adminprice),
                 );
               await user.save();
 
@@ -2515,7 +2516,7 @@ module.exports = function (server, app) {
               const transaction = new Transaction({
                 user: senderId,
                 amount: Number(
-                  Number(updatedOrder.price) - Number(updatedOrder.adminprice)
+                  Number(updatedOrder.price) - Number(updatedOrder.adminprice),
                 ),
                 type: "refunded",
                 order: orderId,
@@ -2529,7 +2530,7 @@ module.exports = function (server, app) {
             await Order.findOneAndUpdate(
               { _id: orderId, user: senderId },
               { status: status, refunded: false },
-              { new: true }
+              { new: true },
             );
           }
 
@@ -2538,7 +2539,7 @@ module.exports = function (server, app) {
               await User.findByIdAndUpdate(
                 updatedOrder.to_id._id,
                 { isRiding: false },
-                { new: true }
+                { new: true },
               );
             }
           }
@@ -2552,7 +2553,7 @@ module.exports = function (server, app) {
             updatedOrder.price,
             updatedOrder.distance,
             moment(updatedOrder.schedule_date).format("MM/DD/YYYY"),
-            reason
+            reason,
           );
           const admins = await User.find({
             type: "admin",
@@ -2588,7 +2589,7 @@ module.exports = function (server, app) {
           const order = await Order.findOneAndUpdate(
             { _id: orderId, user: senderId },
             { status: status, reason: `Customer:${reason}` },
-            { new: true }
+            { new: true },
           )
             .populate("to_id")
             .populate("user")
@@ -2604,7 +2605,7 @@ module.exports = function (server, app) {
                 title: "Ride Update",
                 message: "Your Ride has been cancelled.",
               });
-            }
+            },
           );
 
           // Callback success response
@@ -2621,12 +2622,12 @@ module.exports = function (server, app) {
             message: error.message,
           });
         }
-      }
+      },
     );
 
     socket.on("seen-group-msg", async ({ conversationId }) => {
       const senderId = Object.keys(connectedUsers).find((userId) =>
-        connectedUsers[userId].has(socket.id)
+        connectedUsers[userId].has(socket.id),
       );
       // Remove user from connected users on disconnection
       await conversationAllseen(senderId, conversationId);
@@ -2657,7 +2658,7 @@ const conversationAllseen = async (senderId, conversationId) => {
   try {
     const message = await Message.updateMany(
       { conversationId: conversationId, seen: { $nin: [senderId] } },
-      { $addToSet: { seen: senderId } }
+      { $addToSet: { seen: senderId } },
     );
 
     // const user=await User.findById(senderId).select("messageCount")
@@ -2680,7 +2681,7 @@ const allSeen = async (senderId, recipientId) => {
     if (conversation) {
       const message = await Message.updateMany(
         { conversationId: conversation._id, seen: { $nin: [senderId] } },
-        { $addToSet: { seen: senderId } }
+        { $addToSet: { seen: senderId } },
       );
 
       // const user=await User.findById(senderId).select("messageCount")
@@ -2701,5 +2702,5 @@ jobQueue.processJobs(
     new Promise((resolve) => {
       worker.postMessage(job);
       worker.once("message", resolve);
-    })
+    }),
 );

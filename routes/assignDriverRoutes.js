@@ -17,7 +17,7 @@ router.get("/:id", async (req, res) => {
         populate: [{ path: "vehicle", model: "Vehicle" }],
       })
       .lean();
-    if (!order || order.status !== "completed") {
+    if (!order || order.status === "completed") {
       return res.status(404).json({ message: "Order not found" });
     }
     res.status(200).json({ order });
@@ -27,6 +27,7 @@ router.get("/:id", async (req, res) => {
 });
 router.post("/anonymous/:id", async (req, res) => {
   try {
+    console.log(req.params.id, "req.params.id");
     const order = await Order.findById(req.params.id)
       .populate("user")
       .populate("ridertype")
@@ -54,21 +55,21 @@ router.post("/anonymous/:id", async (req, res) => {
     const admin = await User.findOne({ type: "admin" }).lean();
     await sendNotification({
       user: admin?._id.toString(),
-      to_id: to_user?._id.toString(),
+      to_id: admin?._id.toString(),
       description:
         order.bookingtype == "live"
           ? `You have been assigned by admin to a ride and your ride has been started.`
           : `You have been assigned by admin to a ride and your ride has been scheduled for ${date.toLocaleDateString()}.`,
       type: "order",
       title: "Offer Accepted",
-      fcmtoken: to_user?.fcmtoken,
+      fcmtoken: admin?.fcmtoken,
       order: order._id,
-      usertype: to_user?.type,
+      usertype: admin?.type,
     });
     await sendNotification({
       user: order.user?._id.toString(),
       to_id: admin._id.toString(),
-      description: `You have assigned an offer to ${to_user?.name} and your ride has been started.`,
+      description: `You have assigned an offer to admin and your ride has been started.`,
       type: "order",
       title: "Offer Accepted",
       fcmtoken: admin?.fcmtoken,
@@ -79,21 +80,20 @@ router.post("/anonymous/:id", async (req, res) => {
     const userIds = await User.find({
       type: "rider",
       status: { $in: ["online", "offline"] },
-      _id: { $ne: to_user._id.toString() },
+      _id: { $ne: admin._id.toString() },
     })
       .select("fcmtoken")
       .lean();
 
     for (let user of userIds) {
-      connectedUsers[user._id.toString()]?.forEach((socketId) => {
-        io.to(socketId).emit("filter-request-rider", {
-          request: order._id,
-          success: true,
-        });
+      io.to(user._id.toString()).emit("filter-request-rider", {
+        request: order._id,
+        success: true,
       });
     }
     res.status(200).json({ order });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -130,26 +130,27 @@ router.put("/anonymous/:id", async (req, res) => {
         order: updatedOrder._id,
         usertype: "admin",
       });
+      // Notify the customer about the update
+      await sendNotification({
+        user: admin._id.toString(),
+        to_id: updatedOrder.user._id.toString(),
+        description: `Your Ride has been completed by ${
+          updatedOrder?.to_id?.name
+        } and you have successfully earned ${
+          addresses?.points_per_ride || 10
+        } points for this ride.`,
+        type: "order",
+        title: "Ride Update",
+        fcmtoken: updatedOrder.user.fcmtoken,
+        order: updatedOrder._id,
+        noti: false,
+        usertype: updatedOrder.user?.type,
+      });
     }
 
-    // Notify the customer about the update
-    await sendNotification({
-      user: admin._id.toString(),
-      to_id: updatedOrder.user._id.toString(),
-      description: `Your Ride has been completed by ${
-        updatedOrder?.to_id?.name
-      } and you have successfully earned ${
-        addresses?.points_per_ride || 10
-      } points for this ride.`,
-      type: "order",
-      title: "Ride Update",
-      fcmtoken: updatedOrder.user.fcmtoken,
-      order: updatedOrder._id,
-      noti: false,
-      usertype: updatedOrder.user?.type,
-    });
     res.status(200).json({ updatedOrder });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
