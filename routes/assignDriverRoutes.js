@@ -18,8 +18,13 @@ router.get("/:id", async (req, res) => {
         populate: [{ path: "vehicle", model: "Vehicle" }],
       })
       .lean();
-    if (!order || order.status === "completed") {
+    if (!order) {
       return res.status(404).json({ message: "Order not found" });
+    }
+    if (order.status === "completed") {
+      return res
+        .status(400)
+        .json({ message: "Order has already been completed." });
     }
     res.status(200).json({ order });
   } catch (error) {
@@ -104,7 +109,7 @@ router.put("/anonymous/:id", async (req, res) => {
       {
         _id: req.params.id,
         status: { $in: ["accepted", "order-start"] },
-        to_id: null,
+        // to_id: null,
       },
       { status: "completed", completed_date: Date.now(), dropTime: Date.now() },
       { new: true },
