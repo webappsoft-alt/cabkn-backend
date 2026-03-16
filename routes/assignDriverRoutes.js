@@ -154,10 +154,10 @@ router.put("/anonymous/:id", async (req, res) => {
       });
     }
 
-    res.status(200).json({ updatedOrder });
+    res.status(200).json({ success: true, updatedOrder });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 router.post("/:id", auth, async (req, res) => {
