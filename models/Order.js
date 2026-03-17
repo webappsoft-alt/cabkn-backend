@@ -183,7 +183,7 @@ const orderSchema = new mongoose.Schema({
   image: String,
   cart_items: String,
   isShop: Boolean,
-  reassigning:{
+  reassigning: {
     type: Boolean,
     default: false,
   },
@@ -201,7 +201,10 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-
+  metadata: {
+    type: Object,
+    default: {},
+  },
 });
 
 // // Explicitly define geospatial indexes
