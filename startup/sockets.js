@@ -2407,18 +2407,17 @@ module.exports = function (server, app) {
             noti: false,
             usertype: updatedOrder.to_id?.type,
           });
+          connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(
+            (socketId) => {
+              io.to(socketId).emit("tip-order-rider", {
+                success: true,
+                order: updatedOrder,
+                title: "Ride Update",
+                message: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
+              });
+            },
+          );
         }
-
-        connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(
-          (socketId) => {
-            io.to(socketId).emit("tip-order-rider", {
-              success: true,
-              order: updatedOrder,
-              title: "Ride Update",
-              message: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
-            });
-          },
-        );
 
         // Callback success response
         return callback({
