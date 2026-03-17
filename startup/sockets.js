@@ -2395,7 +2395,7 @@ module.exports = function (server, app) {
         await transaction.save();
 
         // Notify the customer about the update
-        if (updatedOrder.to_id._id) {
+        if (updatedOrder?.to_id?._id) {
           await sendNotification({
             user: senderId,
             to_id: updatedOrder.to_id._id.toString(),
@@ -2427,6 +2427,7 @@ module.exports = function (server, app) {
           message: `You have successfully given ${amount} as a tip`,
         });
       } catch (error) {
+        console.log(error);
         return callback({
           success: false,
           title: "Error",
