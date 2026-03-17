@@ -2395,17 +2395,19 @@ module.exports = function (server, app) {
         await transaction.save();
 
         // Notify the customer about the update
-        await sendNotification({
-          user: senderId,
-          to_id: updatedOrder.to_id._id.toString(),
-          description: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
-          type: "order",
-          title: "Ride update",
-          fcmtoken: updatedOrder.to_id.fcmtoken,
-          order: orderId,
-          noti: false,
-          usertype: updatedOrder.to_id?.type,
-        });
+        if (updatedOrder.to_id._id) {
+          await sendNotification({
+            user: senderId,
+            to_id: updatedOrder.to_id._id.toString(),
+            description: `Congratulations you have got ${amount} tip from ${updatedOrder?.user?.name}.`,
+            type: "order",
+            title: "Ride update",
+            fcmtoken: updatedOrder.to_id.fcmtoken,
+            order: orderId,
+            noti: false,
+            usertype: updatedOrder.to_id?.type,
+          });
+        }
 
         connectedUsers[updatedOrder.to_id._id.toString()]?.forEach(
           (socketId) => {
