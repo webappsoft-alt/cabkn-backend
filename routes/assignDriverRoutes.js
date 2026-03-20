@@ -31,6 +31,23 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+router.put("/anonymous/:id/update-location", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    order.metadata = {
+      ...order.metadata,
+      ...req.body,
+    };
+    order.markModified("metadata");
+    await order.save();
+    res.status(200).json({ order });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 router.post("/anonymous/:id", async (req, res) => {
   try {
     console.log(req.params.id, "req.params.id");
